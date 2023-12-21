@@ -1,0 +1,65 @@
+from .db import create_connection
+from flask import Blueprint
+
+player = Blueprint("player", __name__)
+
+
+@player.route('/player', methods=['POST'])
+def add_player(json_dict):
+    connection = create_connection()
+    cursor=connection.cursor()
+    last_name = json_dict['last_name']
+    first_name = json_dict['first_name']
+    position = json_dict['position']
+    player_name = first_name + ' ' + last_name
+    # CHECK IF THE PLAYER DATA FOR THAT YEAR IS ALREADY IN THE TABLE
+    cursor.execute("SELECT id, last_name, first_name, position FROM player WHERE last_name = %s and first_name = %s and position = %s;",
+        [last_name, first_name, position])
+
+    result = cursor.fetchone()
+
+    if result:
+        print(f"{player_name}'s is already in player table.")
+
+    else:
+        cursor.execute("INSERT INTO player (last_name, first_name, position) VALUES (%s, %s, %s)", (last_name, first_name, position))
+        connection.commit()
+        print(f"{player_name} has been added to player tabel.")
+
+    result = {'last_name': last_name, 'first_name': first_name, 'position': position}
+    return result
+
+
+@player.route('/player/<player_name_pos>', methods=['POST'])
+def get_player(player_name:str):
+    # json_dict = jsonify(json_dict)
+    connection = create_connection()
+    cursor=connection.cursor()
+    player_name = player_name.split('_')
+    last_name = player_name[1]
+    first_name = player_name[0]
+    position = player_name[-1]
+    cursor.execute("SELECT id, last_name, first_name, position FROM player")
+
+    # cursor.execute("SELECT id, last_name, first_name, position FROM player WHERE last_name = %s and first_name = %s and position = %s;",
+    #     [last_name, first_name, position])
+
+    result = cursor.fetchall()
+    print(result)
+    # result_list = []
+    # player_dict = {'id': result[0], 'last_name': result[1], 'first_name': result[2], 'position': result[3]}
+    # result_list.append(player_dict)
+    # return result_list
+
+
+@player.route('/player', methods=['GET'])
+def get_players():
+    connection = create_connection()
+    cursor = connection.cursor()
+    cursor.execute("SELECT id, last_name, first_name, position FROM player")
+    results = list(cursor.fetchall())
+    result_list = []
+    for result in results:
+        player_dict = {'id': result[0], 'last_night': result[1], 'first_name': result[2], 'position': result[3]}
+        result_list.append(player_dict)
+    return result_list
