@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint
+from flask import Blueprint, request
 
 player = Blueprint("player", __name__)
 
@@ -30,9 +30,8 @@ def add_player(json_dict):
     return result
 
 
-@player.route('/player/<player_name_pos>', methods=['POST'])
+@player.route('/player/<player_name>', methods=['POST'])
 def get_player(player_name:str):
-    # json_dict = jsonify(json_dict)
     connection = create_connection()
     cursor=connection.cursor()
     player_name = player_name.split('_')
@@ -41,25 +40,31 @@ def get_player(player_name:str):
     position = player_name[-1]
     cursor.execute("SELECT id, last_name, first_name, position FROM player")
 
-    # cursor.execute("SELECT id, last_name, first_name, position FROM player WHERE last_name = %s and first_name = %s and position = %s;",
-    #     [last_name, first_name, position])
+    cursor.execute("SELECT id, last_name, first_name, position FROM player WHERE last_name = %s and first_name = %s and position = %s;",
+        [last_name, first_name, position])
 
     result = cursor.fetchall()
     print(result)
-    # result_list = []
-    # player_dict = {'id': result[0], 'last_name': result[1], 'first_name': result[2], 'position': result[3]}
-    # result_list.append(player_dict)
-    # return result_list
 
 
 @player.route('/player', methods=['GET'])
-def get_players():
+def player_drop_down():
+    sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, last_name, first_name, position FROM player")
+    cursor.execute('''
+                SELECT player.id, player.first_name, player.last_name 
+                    FROM player_teams
+                        JOIN 
+                    player ON player.id = player_teams.player_id
+                        JOIN    
+                    team ON team.id = player_teams.team_id
+                        WHERE team.sport_id = %s
+                        GROUP BY player_teams.player_id''',
+                   [sport_id])
     results = list(cursor.fetchall())
     result_list = []
     for result in results:
-        player_dict = {'id': result[0], 'last_night': result[1], 'first_name': result[2], 'position': result[3]}
+        player_dict = {'id': result[0], 'last_night': result[1], 'first_name': result[2]}
         result_list.append(player_dict)
     return result_list

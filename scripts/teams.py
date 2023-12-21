@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint
+from flask import Blueprint, request
 
 team = Blueprint("team", __name__)
 
@@ -46,13 +46,19 @@ def get_team(team_name):
     return result_list
 
 @team.route('/team', methods=['GET'])
-def get_teams():
+def team_drop_down():
+    sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT id, name, sport_id FROM team")
+    cursor.execute('''SELECT team.id, team.name FROM player_teams
+                    JOIN    
+                team ON team.id = player_teams.team_id
+                    WHERE team.sport_id = %s
+                    GROUP BY player_teams.team_id''',
+        [sport_id])
     results = cursor.fetchall()
     result_list = []
     for result in results:
-        team_dict = {'id': result[0], 'name': result[1], 'sport_id': result[2]}
+        team_dict = {'id': result[0], 'name': result[1]}
         result_list.append(team_dict)
     return result_list

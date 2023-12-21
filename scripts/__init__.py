@@ -2,14 +2,13 @@ from flask import Flask
 
 from . import db
 
-
 def create_app():
     app = Flask(__name__)
     app.app_context().push()
 
     from .weathers import weather
     from .players import player
-    from player_games import player_stats
+    from .player_games import player_stats
     from .teams import team
     from .sports import sport
     from .games import games

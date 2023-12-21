@@ -1,2 +1,4 @@
-venv_bb
 upload_templates
+bb_archive
+
+.env

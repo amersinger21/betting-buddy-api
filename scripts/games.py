@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint
+from flask import Blueprint, request
 
 
 games = Blueprint("game", __name__)
