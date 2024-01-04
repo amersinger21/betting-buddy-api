@@ -5,12 +5,12 @@ import os
 import sqlite3
 import pickle
 
-db_file = '/Users/martymcflynn/Projects/betting_buddy_local/betting_buddy_local.db'
+db_file = '/Users/martymcflynn/Projects/bb_archive/betting_buddy_local/betting_buddy_local.db'
 team_dict = pickle.load(open('/Users/martymcflynn/Projects/gamble_project/docs/team_dict.p', "rb"))[0]
 
 # Offense Files:
 dvoa = '/Users/martymcflynn/Documents/Football_Documents/team_stats/other_team_wb/dvoa_stats.csv'
-epa = '/Users/martymcflynn/Documents/Football_Documents/team_stats/other_team_wb/epa_stats.csv'
+epa = '/Users/martymcflynn/Documents/Football_Documents/team_stats/other_team_wb/epa_defense_stats.csv'
 conversions = '/Users/martymcflynn/Documents/Football_Documents/team_stats/defense/team_conversions.csv'
 drives = '/Users/martymcflynn/Documents/Football_Documents/team_stats/defense/drive_results.csv'
 scoring = '/Users/martymcflynn/Documents/Football_Documents/team_stats/defense/scoring_defense.csv'
@@ -28,8 +28,6 @@ teams = []
 for team in tm_lst:
 	if team not in teams:
 		teams.append(team)
-# print(len(teams))
-
 
 years = list(range(2018, 2024))
 for team in teams:
@@ -182,7 +180,7 @@ for team in teams:
 		for index, row in df_wr_split.iterrows():
 			row_dict['WR_targets'] = row['Tgt']
 			row_dict['WR_rec'] = row['Rec']
-			row_dict['WR_rec'] = row['Yds']
+			row_dict['WR_yards'] = row['Yds']
 			row_dict['WR_td'] = row['TD']
 		for index, row in df_rb_split.iterrows():
 			row_dict['RB_targets'] = row['Tgt']
@@ -200,4 +198,4 @@ for team in teams:
 			row_dict['QB_rush_yards'] = row['RusYds']
 			row_dict['QB_rush_td'] = row['RusTD']
 		print(row_dict)
-		# add_team_defense(row_dict)
+		add_team_defense(row_dict)

@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint
+from flask import Blueprint, request
 
 
 player_stats = Blueprint("player_stats", __name__)
@@ -50,30 +50,69 @@ def add_player_games(json_dict):
 
     return result
 
-@player_stats.route('/game', methods=['GET'])
+@player_stats.route('/player_stats', methods=['GET'])
 def get_games():
+    player_id = request.args.get('player_id', None)
+    column_name = request.args.get('column_name', None)
+    operator = request.args.get('operator', None)
+    value = float(request.args.get('value', None))
     connection = create_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM games")
-    results = cursor.fetchall()
-    result_list = []
-    for result in results:
-        id = result[0]
-        home_team_id = result[1]
-        away_team_id = result[2]
-        home_score = result[3]
-        away_score = result[4]
-        week = result[5]
-        year = result[6]
-        weather_id = result[7]
-        vegas_line = result[8]
-        vegas_line_result = result[9]
-        margin_of_victory = result[10]
-        over_under = result[11]
-        over_under_result = result[12]
+    print(f"player_id = {player_id}")
+    print(f"value = {value}")
+    print(f"operator = {operator}")
 
-        game_dict = {'id': id, 'home_team': home_team_id, 'away_team': away_team_id, 'home_score': home_score, 'away_score': away_score,
-                  'week': week, 'year': year, 'weather_id': weather_id, 'vegas_line': vegas_line, 'vegas_line_result': vegas_line_result,
-                  'margin_of_victory': margin_of_victory, 'over_under': over_under, 'over_under_results': over_under_result}
-        result_list.append(game_dict)
-    return result_list
+    column = 'fb_player_stats.' + column_name
+    print(f"column = {column}")
+
+    if operator == 'over':
+        op_val = '>'
+    else:
+        op_val = '<'
+
+    query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name,
+                    player.position, fb_player_stats.*
+                    FROM
+                    fb_player_stats
+                    JOIN
+                    player ON player.id = fb_player_stats.player_id
+                    WHERE player.id = %s AND {column} {op_val} %s'''
+    vals = [player_id, value]
+    cursor.execute(query, vals)
+
+    results = list(cursor.fetchall())
+
+    output = []
+    for result in results:
+        item = {'name': '', 'pos': '', 'id': 0, 'player_id': 0, 'game_id': 0, 'team_id': 0, 'opp_id': 0, 'pass_att': 0, 'pass_comp': 0, 'pass_yards': 0,
+                'pass_td': 0, 'pass_longest': 0, 'ints': 0, 'sacks': 0, 'rush_att': 0, 'rush_yards': 0, 'rush_td': 0,
+                'rush_longest': 0, 'targets': 0, 'rec': 0, 'rec_yards': 0, 'rec_td': 0, 'rec_longest': 0, 'fumbles': 0}
+        item['name'] = result[0]
+        item['pos'] = result[1]
+        item['id'] = result[2]
+        item['player_id'] = result[3]
+        item['game_id'] = result[4]
+        item['team_id'] = result[5]
+        item['opp_id'] = result[6]
+        item['pass_att'] = result[7]
+        item['pass_comp'] = result[8]
+        item['pass_yards'] = result[9]
+        item['pass_td'] = result[10]
+        item['pass_longest'] = result[11]
+        item['ints'] = result[12]
+        item['sacks'] = result[13]
+        item['rush_att'] = result[14]
+        item['rush_yards'] = result[15]
+        item['rush_td'] = result[16]
+        item['rush_longest'] = result[17]
+        item['targets'] = result[18]
+        item['rec'] = result[19]
+        item['rec_yards'] = result[20]
+        item['rec_td'] = result[21]
+        item['rec_longest'] = result[22]
+        item['fumbles'] = result[23]
+        output.append(item)
+
+    return output
+

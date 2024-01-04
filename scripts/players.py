@@ -3,7 +3,6 @@ from flask import Blueprint, request
 
 player = Blueprint("player", __name__)
 
-
 @player.route('/player', methods=['POST'])
 def add_player(json_dict):
     connection = create_connection()
