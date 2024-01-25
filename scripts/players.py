@@ -1,9 +1,9 @@
 from .db import create_connection
 from flask import Blueprint, request
 
-player = Blueprint("player", __name__)
+players = Blueprint("players", __name__)
 
-@player.route('/player', methods=['POST'])
+@players.route('/player', methods=['POST'])
 def add_player(json_dict):
     connection = create_connection()
     cursor=connection.cursor()
@@ -29,7 +29,7 @@ def add_player(json_dict):
     return result
 
 
-@player.route('/player/<player_name>', methods=['POST'])
+@players.route('/player/<player_name>', methods=['POST'])
 def get_player(player_name:str):
     connection = create_connection()
     cursor=connection.cursor()
@@ -46,8 +46,8 @@ def get_player(player_name:str):
     print(result)
 
 
-@player.route('/player', methods=['GET'])
-def player_drop_down():
+@players.route('/players', methods=['GET'])
+def get_players():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()

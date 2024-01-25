@@ -2,9 +2,9 @@ from .db import create_connection
 from flask import Blueprint, request
 
 
-games = Blueprint("game", __name__)
+games = Blueprint("games", __name__)
 
-@games.route('/game', methods=['POST'])
+@games.route('/games', methods=['POST'])
 def add_game(json_dict):
     home_team = json_dict['home_team_id']
     away_team = json_dict['away_team_id']
@@ -38,33 +38,50 @@ def add_game(json_dict):
 
     return result
 
-@games.route('/game', methods=['GET'])
+@games.route('/games', methods=['GET'])
 def get_games():
+    id = request.args.get('id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM games")
-    results = cursor.fetchall()
+    cursor.execute('''SELECT * FROM games
+                    WHERE home_team_id = %id OR away_team_id = %s ''',
+                   [id])
+    results = list(cursor.fetchall())
     result_list = []
     for result in results:
-        id = result[0]
-        home_team_id = result[1]
-        away_team_id = result[2]
-        home_score = result[3]
-        away_score = result[4]
-        week = result[5]
-        year = result[6]
-        weather_id = result[7]
-        vegas_line = result[8]
-        vegas_line_result = result[9]
-        margin_of_victory = result[10]
-        over_under = result[11]
-        over_under_result = result[12]
-
-        game_dict = {'id': id, 'home_team': home_team_id, 'away_team': away_team_id, 'home_score': home_score, 'away_score': away_score,
-                  'week': week, 'year': year, 'weather_id': weather_id, 'vegas_line': vegas_line, 'vegas_line_result': vegas_line_result,
-                  'margin_of_victory': margin_of_victory, 'over_under': over_under, 'over_under_results': over_under_result}
-        result_list.append(game_dict)
+        player_dict = {'id': result[0], 'home_team_id': result[1], 'away_team_id': result[2],
+                       'home_score': result[3], 'away_score': result[4], 'week': result[5], 'year': result[6], 'weather': result[7],
+                       'vegas_line': result[8], 'weather_id': result[9], 'margin_of_victory': result[10], 'over_under': result[11],
+                       'over_under_result': result[12]}
+        result_list.append(player_dict)
     return result_list
+# @games.route('/games', methods=['GET'])
+# def get_games():
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#     cursor.execute("SELECT * FROM games")
+#     results = cursor.fetchall()
+#     result_list = []
+#     for result in results:
+#         id = result[0]
+#         home_team_id = result[1]
+#         away_team_id = result[2]
+#         home_score = result[3]
+#         away_score = result[4]
+#         week = result[5]
+#         year = result[6]
+#         weather_id = result[7]
+#         vegas_line = result[8]
+#         vegas_line_result = result[9]
+#         margin_of_victory = result[10]
+#         over_under = result[11]
+#         over_under_result = result[12]
+#
+#         game_dict = {'id': id, 'home_team': home_team_id, 'away_team': away_team_id, 'home_score': home_score, 'away_score': away_score,
+#                   'week': week, 'year': year, 'weather_id': weather_id, 'vegas_line': vegas_line, 'vegas_line_result': vegas_line_result,
+#                   'margin_of_victory': margin_of_victory, 'over_under': over_under, 'over_under_results': over_under_result}
+#         result_list.append(game_dict)
+#     return result_list
 
 # @games.route('/game/<player_id>', methods=['GET'])
 # def get_games():

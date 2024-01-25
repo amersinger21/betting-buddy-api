@@ -7,23 +7,19 @@ def create_app():
     app.app_context().push()
 
     from .weathers import weather
-    from .players import player
-    from .player_games import player_stats
-    from .teams import team
-    from .sports import sport
+    from .players import players
+    from .player import player
+    from .teams import teams
     from .games import games
     from .rz_stats import rz_stats
-    from .team_offense import team_offense
-    from .team_defense import team_defense
+    from .team import team
 
-    app.register_blueprint(sport, url_prefix='/')
-    app.register_blueprint(team, url_prefix='/')
     app.register_blueprint(weather, url_prefix='/')
+    app.register_blueprint(players, url_prefix='/')
     app.register_blueprint(player, url_prefix='/')
+    app.register_blueprint(teams, url_prefix='/')
     app.register_blueprint(games, url_prefix='/')
     app.register_blueprint(rz_stats, url_prefix='/')
-    app.register_blueprint(team_offense, url_prefix='/')
-    app.register_blueprint(team_defense, url_prefix='/')
-    app.register_blueprint(player_stats, url_prefix='/')
+    app.register_blueprint(team, url_prefix='/')
 
     return app

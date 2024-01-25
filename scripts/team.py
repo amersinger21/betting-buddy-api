@@ -1,9 +1,9 @@
 from .db import create_connection
 from flask import jsonify, request, Blueprint
 
-team_offense = Blueprint("team_offense", __name__)
+team = Blueprint("team", __name__)
 
-@team_offense.route('/team_offense', methods=['POST'])
+@team.route('/team', methods=['POST'])
 def add_team_offense(json_dict):
     team_id = json_dict['team_id']
     year = json_dict['year']
@@ -69,9 +69,9 @@ def add_team_offense(json_dict):
     return result
 
 
-@team_offense.route('/team_stat', methods=['GET'])
-def get_games():
-    team_id = request.args.get('team_id', None)
+@team.route('/team', methods=['GET'])
+def get_team():
+    team_id = request.args.get('id', None)
     connection = create_connection()
     cursor = connection.cursor()
     print(f"team_id = {team_id}")
