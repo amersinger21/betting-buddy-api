@@ -72,18 +72,9 @@ def add_team_offense(json_dict):
 @team_offense.route('/team_stat', methods=['GET'])
 def get_games():
     team_id = request.args.get('team_id', None)
-    # column_name = request.args.get('column_name', None)
-    # operator = request.args.get('operator', None)
-    # value = float(request.args.get('value', None))
     connection = create_connection()
     cursor = connection.cursor()
     print(f"team_id = {team_id}")
-
-    # query = f'''SELECT team.name, fb_off_stats.*, fb_def_stats.*
-    #             FROM fb_off_stats
-    #             JOIN team ON team.id = fb_off_stats.team_id
-    #             JOIN fb_def_stats ON fb_def_stats.team_id = fb_off_stats.team_id
-    #             WHERE team.id = %s'''
 
     query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
                 FROM fb_off_stats
@@ -94,7 +85,6 @@ def get_games():
     cursor.execute(query, vals)
 
     results = list(cursor.fetchall())
-    print(results)
     output = []
     for result in results:
         item = {'name': result[0], 'id': result[1], 'team_id': result[2], 'year': result[3], 'games': result[4], 'off_dvoa': result[5],
@@ -121,5 +111,4 @@ def get_games():
         if item not in output:
             output.append(item)
 
-    # print(output)
     return output

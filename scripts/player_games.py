@@ -3,6 +3,7 @@ from flask import Blueprint, request
 
 
 player_stats = Blueprint("player_stats", __name__)
+
 @player_stats.route('/game', methods=['POST'])
 def add_player_games(json_dict):
     player_id = json_dict['player_id']

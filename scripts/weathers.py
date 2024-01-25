@@ -5,11 +5,8 @@ from flask import Blueprint
 
 weather = Blueprint("weather", __name__)
 
-
-
 @weather.route('/weather', methods=['POST'])
 def add_weather(json_dict):
-    # json_dict = jsonify(json_dict)
     connection = create_connection()
     cursor=connection.cursor()
     weather_type = json_dict['name']

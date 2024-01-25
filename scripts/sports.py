@@ -5,7 +5,6 @@ sport = Blueprint("sport", __name__)
 
 @sport.route('/sport', methods=['POST'])
 def add_sport(json_dict):
-    # json_dict = jsonify(json_dict)
     connection = create_connection()
     cursor=connection.cursor()
     sport_name = json_dict['name']
@@ -31,8 +30,6 @@ def add_sport(json_dict):
 def get_sport(sport_name):
     connection = create_connection()
     cursor=connection.cursor()
-    # team_name = team_split[0]
-    # sport_id = int(team_split[1])
 
     cursor.execute("SELECT id, name FROM type_sports WHERE name = %s;",
         [sport_name])
@@ -42,7 +39,6 @@ def get_sport(sport_name):
     sport_dict = {'id': result[0], 'name': result[1]}
     result_list.append(sport_dict)
     return result_list
-
 
 @sport.route('/sport', methods=['GET'])
 def get_sports():
