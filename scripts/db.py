@@ -12,10 +12,10 @@ def create_connection():
         user=os.getenv("DB_USERNAME"),
         passwd=os.getenv("DB_PASSWORD"),
         db=os.getenv("DB_NAME"),
-        autocommit=True
-        # ssl={
-        #     "ca": "/etc/ssl/cert.pem"
-        # }
+        autocommit=True,
+        ssl={
+            "ca": os.getenv("SSL_PATH")
+        }
     )
 
     return connection
