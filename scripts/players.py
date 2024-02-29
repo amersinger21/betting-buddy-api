@@ -47,6 +47,6 @@ def get_players():
     results = list(cursor.fetchall())
     result_list = []
     for result in results:
-        player_dict = {'id': result[0], 'last_night': result[1], 'first_name': result[2]}
+        player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
         result_list.append(player_dict)
     return result_list
