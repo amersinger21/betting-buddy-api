@@ -1,9 +1,9 @@
 from .db import create_connection
 from flask import Blueprint, request
 
-players = Blueprint("players", __name__)
+player = Blueprint("player", __name__)
 
-@players.route('/player', methods=['POST'])
+@player.route('/player', methods=['POST'])
 def add_player(json_dict):
     connection = create_connection()
     cursor=connection.cursor()
@@ -28,25 +28,26 @@ def add_player(json_dict):
     result = {'last_name': last_name, 'first_name': first_name, 'position': position}
     return result
 
-
-@players.route('/players', methods=['GET'])
-def get_players():
+@player.route('/player', methods=['GET'])
+def get_player_dropdown():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()
+    # return sport_id
     cursor.execute('''
-                SELECT player.id, player.first_name, player.last_name 
+                SELECT player.id, player.first_name, player.last_name
                     FROM player_teams
-                        JOIN 
+                        JOIN
                     player ON player.id = player_teams.player_id
-                        JOIN    
+                        JOIN
                     team ON team.id = player_teams.team_id
                         WHERE team.sport_id = %s
                         GROUP BY player_teams.player_id''',
                    [sport_id])
     results = list(cursor.fetchall())
+
     result_list = []
     for result in results:
         player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
         result_list.append(player_dict)
-    return result_list
+    return results
