@@ -29,23 +29,6 @@ def add_player(json_dict):
     return result
 
 
-@players.route('/player/<player_name>', methods=['POST'])
-def get_player(player_name:str):
-    connection = create_connection()
-    cursor=connection.cursor()
-    player_name = player_name.split('_')
-    last_name = player_name[1]
-    first_name = player_name[0]
-    position = player_name[-1]
-    cursor.execute("SELECT id, last_name, first_name, position FROM player")
-
-    cursor.execute("SELECT id, last_name, first_name, position FROM player WHERE last_name = %s and first_name = %s and position = %s;",
-        [last_name, first_name, position])
-
-    result = cursor.fetchall()
-    print(result)
-
-
 @players.route('/players', methods=['GET'])
 def get_players():
     sport_id = request.args.get('sport_id', None)
@@ -64,6 +47,6 @@ def get_players():
     results = list(cursor.fetchall())
     result_list = []
     for result in results:
-        player_dict = {'id': result[0], 'last_night': result[1], 'first_name': result[2]}
+        player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
         result_list.append(player_dict)
     return result_list
