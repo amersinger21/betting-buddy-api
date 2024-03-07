@@ -168,6 +168,55 @@ def nfl_get_games():
         result_list.append(player_dict)
     return result_list
 
+
+
+
+@nfl.route('/nfl/team', methods=['GET'])
+def nfl_get_team():
+    team_id = request.args.get('id', None)
+    connection = create_connection()
+    cursor = connection.cursor()
+    print(f"team_id = {team_id}")
+
+    query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
+                FROM fb_off_stats
+                JOIN team ON team.id = fb_off_stats.team_id 
+                JOIN fb_def_stats ON (fb_def_stats.team_id =  fb_off_stats.team_id) AND (fb_def_stats.year =  fb_off_stats.year)
+                WHERE team.id = %s'''
+    vals = [team_id]
+    cursor.execute(query, vals)
+
+    results = list(cursor.fetchall())
+    output = []
+    for result in results:
+        item = {'name': result[0], 'id': result[1], 'team_id': result[2], 'year': result[3], 'games': result[4], 'off_dvoa': result[5],
+                'off_epa': result[6], 'dropback_epa': result[7], 'dropback_sr': result[8], 'rush_epa': result[9], 'rush_sr': result[10],
+                'pass_att': result[11], 'pass_comp': result[12], 'pass_yards': result[13], 'pass_td': result[14], 'int_thrown': result[15],
+                'pass_yard_att': result[16], 'pass_yards_per_game': result[17], 'sacks_taken': result[18], 'rush_att': result[19],
+                'rush_yards': result[20], 'rush_td': result[21], 'rush_yards_per_att': result[22], 'rush_yards_per_game': result[23],
+                'fumbles_lost': result[24], 'points_scored': result[25], 'points_scored_per_game': result[26], 'off_rz_plays': result[27],
+                'off_rz_td': result[28], 'total_drives': result[29], 'total_plays': result[30],  'scoring_percentage': result[31],
+                'to_percentage': result[32], 'avg_drive_play': result[33], 'avg_drive_points': result[34], 'avg_drive_yards': result[35], 'def_id': result[36],
+                'def_dvoa': result[40], 'def_epa': result[41], 'def_dropback_epa': result[42], 'def_dropback_sr': result[43], 'def_rush_epa': result[44],
+                'def_rush_sr': result[45], 'pass_comp_allowed': result[46], 'pass_att_faced': result[47], 'pass_yards_allowed': result[48],
+                'pass_td_allowed': result[49], 'allowed_pyards_per_att': result[50], 'allowed_pyards_per_game': result[51], 'qb_hits': result[52],
+                'qb_sacks': result[53], 'ints': result[54], 'rush_att_faced': result[55], 'rush_yards_allowed': result[56], 'rush_td_allowed': result[57],
+                'allowed_ryards_per_att': result[58], 'allowed_ryards_per_game': result[59], 'rec_allowed': result[60], 'rec_td_allowed': result[61],
+                'points_allowed': result[62], 'points_per_game_allowed': result[63], 'rz_att_faced': result[64], 'rz_td_allowed': result[65],
+                'rz_td_allowed_percentage': result[66], 'drives_faced': result[67], 'plays_faced': result[68], 'score_against_percentage': result[69],
+                'def_to_percentage': result[70], 'plays_faced_per_drive': result[71], 'yards_allowed_per_drive': result[72], 'points_allowed_per_drive': result[73],
+                'TE_targets': result[74], 'TE_rec': result[75], 'TE_yards': result[76], 'TE_td': result[77], 'WR_targets': result[78],
+                'WR_rec': result[79], 'WR_yards': result[80], 'WR_td': result[81], 'RB_targets': result[82], 'RB_rec': result[83],
+                'RB_rec_yards': result[84], 'RB_rec_td': result[85], 'RB_att': result[86], 'RB_rush_yards': result[87], 'RB_rush_td': result[88],
+                'QB_completions': result[89], 'QB_att': result[90], 'QB_yards': result[91], 'QB_rush_att': result[92], 'QB_rush_yards': result[93],
+                'QB_rush_td': result[94]}
+        if item not in output:
+            output.append(item)
+
+    return output
+
+
+# RED ZONE STATS:
 @nfl.route('/nfl/rz_stat', methods=['POST'])
 def nfl_add_rz_stat(json_dict):
     player_id = json_dict['player_id']
@@ -242,18 +291,55 @@ def nfl_add_rz_stat(json_dict):
 
     return result
 
+@nfl.route('/nfl/rz_stat', methods=['GET'])
+def nfl_get_rz_stat():
+    player_id = request.args.get('player_id', None)
+    team_id = request.args.get('team_id', None)
+    year = request.args.get('year', None)
+    prior_yr = int(year) - 2
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    query = f'''SELECT team.name, player.first_name, player.last_name, fb_red_zone.*
+                FROM fb_red_zone
+                JOIN team ON team.id = fb_red_zone.team_id
+                JOIN player ON player.id = fb_red_zone.player_id
+                WHERE fb_red_zone.team_id = %s AND fb_red_zone.player_id = %s AND fb_red_zone.year > %s'''
+
+    vals = [team_id, player_id, prior_yr]
+    cursor.execute(query, vals)
+
+    results = list(cursor.fetchall())
+    print(results)
+    output = []
+    for result in results:
+        item = {'name': result[1] + ' ' + result[2], 'team_name': result[0], 'team_id': result[5], 'player_id': result[4], 'year': result[6], 'rz_20_pass_att': result[7], 'rz_20_pass_yards': result[8],
+                'rz_20_pass_td': result[9], 'rz_20_pass_int': result[10], 'rz_20_comp_percentage': result[11], 'rz_10_pass_att': result[12],
+                'rz_10_pass_yards': result[13],  'rz_10_pass_td': result[14], 'rz_10_pass_int': result[15], 'rz_10_comp_percentage': result[16],
+                'rz_20_targets': result[16], 'rz_20_receptions': result[17], 'rz_20_rec_yards': result[18], 'rz_20_catch_percentage': result[19],
+                'rz_20_rec_td': result[20], 'rz_20_target_percentage': result[21], 'rz_10_targets': result[22], 'rz_10_receptions': result[23],
+                'rz_10_rec_yards': result[24], 'rz_10_catch_percentage': result[25], 'rz_10_rec_td': result[26], 'rz_10_target_percentage': result[27],
+                'rz_20_rush_att': result[28], 'rz_20_rush_yards': result[29], 'rz_20_rush_td': result[30], 'rz_20_rush_percentage': result[31],
+                'rz_10_rush_att': result[32], 'rz_10_rush_yards': result[33], 'rz_10_rush_td': result[34], 'rz_10_rush_percentage': result[35],
+                'rz_5_rush_att': result[36], 'rz_5_rush_yards': result[37], 'rz_5_rush_td': result[38], 'rz_5_rush_percentage': result[39]}
+        if item not in output:
+            output.append(item)
+    return output
 
 
-@nfl.route('/nfl/team', methods=['GET'])
-def nfl_get_team():
+
+
+@nfl.route('/nfl/team_stats', methods=['GET'])
+def nfl_get_team_stats():
     team_id = request.args.get('id', None)
+    year = request.args.get('year', None)
     connection = create_connection()
     cursor = connection.cursor()
     print(f"team_id = {team_id}")
 
     query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
                 FROM fb_off_stats
-                JOIN team ON team.id = fb_off_stats.team_id 
+                JOIN team ON team.id = fb_off_stats.team_id
                 JOIN fb_def_stats ON (fb_def_stats.team_id =  fb_off_stats.team_id) AND (fb_def_stats.year =  fb_off_stats.year)
                 WHERE team.id = %s'''
     vals = [team_id]
@@ -291,58 +377,9 @@ def nfl_get_team():
 
 
 
-# def nfl_get_team_stats():
-#     team_id = request.args.get('id', None)
-#     year = request.args.get('year', None)
-#     connection = create_connection()
-#     cursor = connection.cursor()
-#     print(f"team_id = {team_id}")
-#
-#     query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
-#                 FROM fb_off_stats
-#                 JOIN team ON team.id = fb_off_stats.team_id
-#                 JOIN fb_def_stats ON (fb_def_stats.team_id =  fb_off_stats.team_id) AND (fb_def_stats.year =  fb_off_stats.year)
-#                 WHERE team.id = %s'''
-#     vals = [team_id]
-#     cursor.execute(query, vals)
-#
-#     results = list(cursor.fetchall())
-#     output = []
-#     for result in results:
-#         item = {'name': result[0], 'id': result[1], 'team_id': result[2], 'year': result[3], 'games': result[4], 'off_dvoa': result[5],
-#                 'off_epa': result[6], 'dropback_epa': result[7], 'dropback_sr': result[8], 'rush_epa': result[9], 'rush_sr': result[10],
-#                 'pass_att': result[11], 'pass_comp': result[12], 'pass_yards': result[13], 'pass_td': result[14], 'int_thrown': result[15],
-#                 'pass_yard_att': result[16], 'pass_yards_per_game': result[17], 'sacks_taken': result[18], 'rush_att': result[19],
-#                 'rush_yards': result[20], 'rush_td': result[21], 'rush_yards_per_att': result[22], 'rush_yards_per_game': result[23],
-#                 'fumbles_lost': result[24], 'points_scored': result[25], 'points_scored_per_game': result[26], 'off_rz_plays': result[27],
-#                 'off_rz_td': result[28], 'total_drives': result[29], 'total_plays': result[30],  'scoring_percentage': result[31],
-#                 'to_percentage': result[32], 'avg_drive_play': result[33], 'avg_drive_points': result[34], 'avg_drive_yards': result[35], 'def_id': result[36],
-#                 'def_dvoa': result[40], 'def_epa': result[41], 'def_dropback_epa': result[42], 'def_dropback_sr': result[43], 'def_rush_epa': result[44],
-#                 'def_rush_sr': result[45], 'pass_comp_allowed': result[46], 'pass_att_faced': result[47], 'pass_yards_allowed': result[48],
-#                 'pass_td_allowed': result[49], 'allowed_pyards_per_att': result[50], 'allowed_pyards_per_game': result[51], 'qb_hits': result[52],
-#                 'qb_sacks': result[53], 'ints': result[54], 'rush_att_faced': result[55], 'rush_yards_allowed': result[56], 'rush_td_allowed': result[57],
-#                 'allowed_ryards_per_att': result[58], 'allowed_ryards_per_game': result[59], 'rec_allowed': result[60], 'rec_td_allowed': result[61],
-#                 'points_allowed': result[62], 'points_per_game_allowed': result[63], 'rz_att_faced': result[64], 'rz_td_allowed': result[65],
-#                 'rz_td_allowed_percentage': result[66], 'drives_faced': result[67], 'plays_faced': result[68], 'score_against_percentage': result[69],
-#                 'def_to_percentage': result[70], 'plays_faced_per_drive': result[71], 'yards_allowed_per_drive': result[72], 'points_allowed_per_drive': result[73],
-#                 'TE_targets': result[74], 'TE_rec': result[75], 'TE_yards': result[76], 'TE_td': result[77], 'WR_targets': result[78],
-#                 'WR_rec': result[79], 'WR_yards': result[80], 'WR_td': result[81], 'RB_targets': result[82], 'RB_rec': result[83],
-#                 'RB_rec_yards': result[84], 'RB_rec_td': result[85], 'RB_att': result[86], 'RB_rush_yards': result[87], 'RB_rush_td': result[88],
-#                 'QB_completions': result[89], 'QB_att': result[90], 'QB_yards': result[91], 'QB_rush_att': result[92], 'QB_rush_yards': result[93],
-#                 'QB_rush_td': result[94]}
-#         if item not in output:
-#             output.append(item)
-#
-#     return output
-
-
-
-# PUT ROUTES:
-# @nfl.route('/nfl/team_offense', method=['PUT']):
 
 
 # NFL TEAM OFFENSE ROUTES
-# @nfl.route('/nfl/team_offense', methods=['GET'])
 @nfl.route('/nfl/team_offense', methods=['POST'])
 def nfl_add_team_off_stats(json_dict):
     team_id = json_dict['team_id']
@@ -507,7 +544,6 @@ def nfl_get_off_stats():
             output.append(item)
 
     return output
-
 
 @nfl.route('/nfl/team_defense', methods=['POST'])
 def nfl_add_team_def_stats(json_dict):
@@ -773,21 +809,24 @@ def nfl_get_def_stats():
 
     results = list(cursor.fetchall())
 
-    # output = []
-    # for result in results:
-    #     item = {'team_id': result[2], 'year': result[3], 'games': result[4], 'def_dvoa': result[3], 'def_epa': result[4],
-    #           'def_dropback_epa': result[5],'def_dropback_sr': result[6], 'def_rush_epa': result[7], 'def_rush_sr': result[8],
-    #           'pass_att_faced': result[9],'pass_comp_allowed': result[10], 'pass_yards_allowed': result[11],'pass_td_allowed': result[12],
-    #           'allowed_pyards_per_att': result[13], 'allowed_pyards_per_game': result[14],'qb_hits': result[15],'qb_sacks': result[16],
-    #     'ints': result[17], 'rush_att_faced': result[18], 'rush_yards_allowed': result[19],'rush_td_allowed': result[20],
-    #     'allowed_ryards_per_att': result[21], 'allowed_ryards_per_game': result[22], 'rec_allowed': result[23], 'rec_td_allowed': result[24],
-    #     'def_to_percentage': result[25],'plays_faced_per_drive': result[26], 'yards_allowed_per_drive': result[27], 'points_allowed_per_drive': result[28],
-    #     'TE_targets': result[29], 'TE_rec': result[30], 'TE_yards': result[31], 'TE_td': result[32], 'WR_targets': result[33], 'WR_rec': result[34],
-    #     'WR_yards': result[36], 'WR_td': result[37], 'RB_targets': result[38], 'RB_rec': result[39], 'RB_rec_yards': result[40],
-    #     'RB_rec_td': result[41], 'RB_att': result[42], 'RB_rush_yards': result[43], 'RB_rush_td': result[44], 'QB_completions': result[45],
-    #     'QB_att': result[46], 'QB_yards': result[47], 'QB_rush_att': result[48], 'QB_rush_yards': result[49],
-    #           'QB_rush_td': result[50]}
-    #     if item not in output:
-    #         output.append(item)
-    return results
-    # return output
+    output = []
+    for result in results:
+        item = {'name': result[0], 'id': result[1], 'team_id': result[2], 'year': result[3], 'games': result[4], 'def_dvoa': result[5],
+                'def_epa': result[6], 'def_dropback_epa': result[7], 'def_dropback_sr': result[8], 'def_rush_epa': result[9],
+                'def_rush_sr': result[10], 'pass_comp_allowed': result[11], 'pass_att_faced': result[12], 'pass_yards_allowed': result[13],
+                'pass_td_allowed': result[14], 'allowed_pyards_per_att': result[15], 'allowed_pyards_per_game': result[16], 'qb_hit':result[17],
+                'qb_sacks': result[18], 'ints': result[19], 'rush_att_faced': result[20], 'rush_yards_allowed': result[21],
+                'rush_td_allowed': result[22], 'allowed_ryards_per_att': result[23], 'allowed_ryards_per_game': result[24],
+                'rec_allowed': result[25], 'rec_td_allowed': result[26], 'points_allowed': result[27], 'points_per_game_allowed': result[28],
+                'rz_att_faced': result[29], 'rz_td_allowed': result[30], 'rz_td_allowed_percentage': result[31], 'drives_faced': result[32],
+                'plays_faced': result[33], 'score_against_percentage': result[34], 'def_to_percentage': result[35], 'plays_faced_per_drive': result[36],
+                'yards_allowed_per_drive': result[37], 'points_allowed_per_drive': result[38], 'TE_targets': result[39],
+                'TE_rec': result[40], 'TE_yards': result[41], 'TE_td': result[42], 'WR_targets': result[43], 'WR_rec': result[44],
+                'WR_yards': result[45], 'WR_td': result[46], 'RB_targets': result[47], 'RB_rec': result[48], 'RB_rec_yards': result[49],
+                'RB_rec_td': result[50], 'RB_att': result[51], 'RB_rush_yards': result[52], 'RB_rush_td': result[53], 'QB_completions': result[54],
+                'QB_att': result[55], 'QB_yards': result[56], 'QB_rush_att': result[57], 'QB_rush_yards': result[58], 'QB_rush_td': result[59]}
+
+        if item not in output:
+            output.append(item)
+
+    return output
