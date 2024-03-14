@@ -116,6 +116,8 @@ def nfl_get_player_stats():
 
     return output
 
+
+# GAME INFO ROUTES
 @nfl.route('/nfl/games', methods=['POST'])
 def nfl_add_game(json_dict):
     home_team = json_dict['home_team_id']
@@ -163,7 +165,7 @@ def nfl_get_games():
     for result in results:
         player_dict = {'id': result[0], 'home_team_id': result[1], 'away_team_id': result[2],
                        'home_score': result[3], 'away_score': result[4], 'week': result[5], 'year': result[6], 'weather': result[7],
-                       'vegas_line': result[8], 'weather_id': result[9], 'margin_of_victory': result[10], 'over_under': result[11],
+                       'vegas_line': result[8], 'vegas_line_result': result[9], 'margin_of_victory': result[10], 'over_under': result[11],
                        'over_under_result': result[12]}
         result_list.append(player_dict)
     return result_list
@@ -220,7 +222,6 @@ def nfl_get_team():
 @nfl.route('/nfl/rz_stat', methods=['POST'])
 def nfl_add_rz_stat(json_dict):
     player_id = json_dict['player_id']
-    team_id = json_dict['team_id']
     year = json_dict['year']
     rz_20_pass_att = json_dict['rz_20_pass_att']
     rz_20_pass_yard = json_dict['rz_20_pass_yards']
@@ -257,7 +258,7 @@ def nfl_add_rz_stat(json_dict):
     rz_5_rush_td = json_dict['rz_5_rush_td']
     rz_5_rush_percentage = json_dict['rz_5_rush_percentage']
 
-    values = (player_id, team_id, year, rz_20_pass_att, rz_20_pass_yard, rz_20_pass_td, rz_20_pass_int, rz_20_pass_comp_percentage,
+    values = (player_id, year, rz_20_pass_att, rz_20_pass_yard, rz_20_pass_td, rz_20_pass_int, rz_20_pass_comp_percentage,
               rz_10_pass_att, rz_10_pass_yard, rz_10_pass_td, rz_10_pass_int, rz_10_comp_percentage, rz_20_targets, rz_20_receptions,
               rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
               rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_td,
@@ -267,18 +268,18 @@ def nfl_add_rz_stat(json_dict):
     connection = create_connection()
     cursor = connection.cursor()
 
-    cursor.execute("""INSERT INTO fb_red_zone (player_id, team_id, year, rz_20_pass_att, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int, rz_20_comp_percentage,
+    cursor.execute("""INSERT INTO fb_red_zone (player_id, year, rz_20_pass_att, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int, rz_20_comp_percentage,
               rz_10_pass_att, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_10_comp_percentage, rz_20_targets, rz_20_receptions,
               rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
               rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_td,
               rz_20_rush_yards, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_td, rz_10_rush_yards, rz_10_rush_percentage,
-              rz_5_rush_att, rz_5_rush_td, rz_5_rush_yards, rz_5_rush_percentage) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+              rz_5_rush_att, rz_5_rush_td, rz_5_rush_yards, rz_5_rush_percentage) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                    (values))
     connection.commit()
-    print(f"Game has been added to games tabel.")
+    print(f"Game has been added to games table.")
 
 
-    result = {'player_id':player_id, 'team_id': team_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_yard': rz_20_pass_yard,
+    result = {'player_id':player_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_yard': rz_20_pass_yard,
               'rz_20_pass_td': rz_20_pass_td, 'rz_20_pass_int': rz_20_pass_int, 'rz_20_pass_comp_percentage': rz_20_pass_comp_percentage,
               'rz_10_pass_att': rz_10_pass_att, 'rz_10_pass_yard': rz_10_pass_yard, 'rz_10_pass_td': rz_10_pass_td, 'rz_10_pass_int': rz_10_pass_int,
               'rz_10_comp_percentage': rz_10_comp_percentage, 'rz_20_targets': rz_10_comp_percentage, 'rz_20_receptions': rz_20_receptions,
@@ -294,38 +295,36 @@ def nfl_add_rz_stat(json_dict):
 @nfl.route('/nfl/rz_stat', methods=['GET'])
 def nfl_get_rz_stat():
     player_id = request.args.get('player_id', None)
-    team_id = request.args.get('team_id', None)
     year = request.args.get('year', None)
     prior_yr = int(year) - 2
     connection = create_connection()
     cursor = connection.cursor()
 
-    query = f'''SELECT team.name, player.first_name, player.last_name, fb_red_zone.*
+    query = f'''SELECT player.first_name, player.last_name, fb_red_zone.*
                 FROM fb_red_zone
-                JOIN team ON team.id = fb_red_zone.team_id
                 JOIN player ON player.id = fb_red_zone.player_id
-                WHERE fb_red_zone.team_id = %s AND fb_red_zone.player_id = %s AND fb_red_zone.year > %s'''
+                WHERE fb_red_zone.player_id = %s AND fb_red_zone.year > %s'''
 
-    vals = [team_id, player_id, prior_yr]
+    vals = [player_id, prior_yr]
     cursor.execute(query, vals)
 
     results = list(cursor.fetchall())
-    print(results)
+
     output = []
+    # return results
     for result in results:
-        item = {'name': result[1] + ' ' + result[2], 'team_name': result[0], 'team_id': result[5], 'player_id': result[4], 'year': result[6], 'rz_20_pass_att': result[7], 'rz_20_pass_yards': result[8],
-                'rz_20_pass_td': result[9], 'rz_20_pass_int': result[10], 'rz_20_comp_percentage': result[11], 'rz_10_pass_att': result[12],
-                'rz_10_pass_yards': result[13],  'rz_10_pass_td': result[14], 'rz_10_pass_int': result[15], 'rz_10_comp_percentage': result[16],
-                'rz_20_targets': result[16], 'rz_20_receptions': result[17], 'rz_20_rec_yards': result[18], 'rz_20_catch_percentage': result[19],
-                'rz_20_rec_td': result[20], 'rz_20_target_percentage': result[21], 'rz_10_targets': result[22], 'rz_10_receptions': result[23],
-                'rz_10_rec_yards': result[24], 'rz_10_catch_percentage': result[25], 'rz_10_rec_td': result[26], 'rz_10_target_percentage': result[27],
-                'rz_20_rush_att': result[28], 'rz_20_rush_yards': result[29], 'rz_20_rush_td': result[30], 'rz_20_rush_percentage': result[31],
-                'rz_10_rush_att': result[32], 'rz_10_rush_yards': result[33], 'rz_10_rush_td': result[34], 'rz_10_rush_percentage': result[35],
-                'rz_5_rush_att': result[36], 'rz_5_rush_yards': result[37], 'rz_5_rush_td': result[38], 'rz_5_rush_percentage': result[39]}
+        item = {'name': result[0] + ' ' + result[1], 'player_id': result[3], 'year': result[4], 'rz_20_pass_att': result[5], 'rz_20_pass_yards': result[6],
+                'rz_20_pass_td': result[7], 'rz_20_pass_int': result[8], 'rz_20_comp_percentage': result[9], 'rz_10_pass_att': result[10],
+                'rz_10_pass_yards': result[11],  'rz_10_pass_td': result[12], 'rz_10_pass_int': result[13], 'rz_10_comp_percentage': result[14],
+                'rz_20_targets': result[15], 'rz_20_receptions': result[16], 'rz_20_rec_yards': result[17], 'rz_20_catch_percentage': result[18],
+                'rz_20_rec_td': result[19], 'rz_20_target_percentage': result[20], 'rz_10_targets': result[21], 'rz_10_receptions': result[22],
+                'rz_10_rec_yards': result[23], 'rz_10_catch_percentage': result[24], 'rz_10_rec_td': result[25], 'rz_10_target_percentage': result[26],
+                'rz_20_rush_att': result[27], 'rz_20_rush_yards': result[28], 'rz_20_rush_td': result[29], 'rz_20_rush_percentage': result[30],
+                'rz_10_rush_att': result[31], 'rz_10_rush_yards': result[32], 'rz_10_rush_td': result[33], 'rz_10_rush_percentage': result[34],
+                'rz_5_rush_att': result[35], 'rz_5_rush_yards': result[36], 'rz_5_rush_td': result[37], 'rz_5_rush_percentage': result[38]}
         if item not in output:
             output.append(item)
     return output
-
 
 
 
