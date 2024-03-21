@@ -49,7 +49,6 @@ def nfl_add_player_stats(json_dict):
               'targets': targets, 'rec': rec, 'rec_yards': rec_yards, 'rec_td': rec_td, 'rec_longest': rec_longest, 'fumbles':fumbles}
 
     return result
-
 @nfl.route('/nfl/player_stats', methods=['GET'])
 def nfl_get_player_stats():
     player_id = request.args.get('id', None)
@@ -151,7 +150,6 @@ def nfl_add_game(json_dict):
               'over_under': over_under, 'over_under_result': over_under_results}
 
     return result
-
 @nfl.route('/nfl/games', methods=['GET'])
 def nfl_get_games():
     id = request.args.get('id', None)
@@ -291,7 +289,6 @@ def nfl_add_rz_stat(json_dict):
               'rz_5_rush_att': rz_5_rush_att, 'rz_5_rush_td': rz_5_rush_att, 'rz_5_rush_yards': rz_5_rush_yards, 'rz_5_rush_percentage': rz_5_rush_percentage}
 
     return result
-
 @nfl.route('/nfl/rz_stat', methods=['GET'])
 def nfl_get_rz_stat():
     player_id = request.args.get('player_id', None)

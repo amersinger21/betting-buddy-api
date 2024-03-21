@@ -29,19 +29,12 @@ def update_player(json_dict):
 
     player_name = first_name + ' ' + last_name
     values = (last_name, first_name, position, id)
-    # cursor.execute("""UPDATE fb_off_stats
-    #                 SET games = %s, off_dvoa = %s, off_epa = %s, dropback_epa = %s, dropback_sr = %s, rush_epa = %s, rush_sr = %s,
-    #                  pass_att = %s, pass_comp = %s, pass_yards = %s, pass_td = %s, int_thrown = %s, pass_yards_att = %s,
-    #                  pass_yards_per_game = %s, sacks_taken = %s, rush_att = %s, rush_yards = %s, rush_td = %s, rush_yards_per_att = %s,
-    #                  rush_yards_per_game = %s, fumbles_lost = %s, points_scored = %s, points_scored_per_game = %s,
-    #                  off_rz_plays = %s, off_rz_td = %s, total_drives = %s, total_plays = %s, scoring_percentage = %s, to_percentage = %s,
-    #                  avg_drive_play = %s, avg_drive_points = %s, avg_drive_yards = %s
-    #                  WHERE fb_off_stats.team_id = %s AND fb_off_stats.year = %s""",
-    #                (values))
+
     cursor.execute("""UPDATE player 
                    SET last_name = %s, first_name = %s, position = %s
                    WHERE player.id = %s""", (values))
     connection.commit()
+
     print(f"{player_name} has been added to player tabel.")
 
     result = {'last_name': last_name, 'first_name': first_name, 'position': position}
@@ -65,7 +58,7 @@ def get_player():
     #     player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
 
 
-@player.route('/player', methods=['GET'])
+@player.route('/players', methods=['GET'])
 def get_player_dropdown():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
