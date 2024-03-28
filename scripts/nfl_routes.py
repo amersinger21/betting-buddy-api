@@ -372,9 +372,6 @@ def nfl_get_team_stats():
 
 
 
-
-
-
 # NFL TEAM OFFENSE ROUTES
 @nfl.route('/nfl/team_offense', methods=['POST'])
 def nfl_add_team_off_stats(json_dict):
@@ -440,7 +437,6 @@ def nfl_add_team_off_stats(json_dict):
               'scoring_percentage': scoring_percentage, 'to_percentage': to_percentage, 'avg_drive_play':avg_drive_play,
               'avg_drive_points': avg_drive_points, 'avg_drive_yards': avg_drive_yards}
     return result
-
 @nfl.route('/nfl/team_offense', methods=['PUT'])
 def nfl_update_team_off_stats(json_dict):
     team_id = json_dict['team_id']
@@ -509,7 +505,6 @@ def nfl_update_team_off_stats(json_dict):
               'scoring_percentage': scoring_percentage, 'to_percentage': to_percentage, 'avg_drive_play':avg_drive_play,
               'avg_drive_points': avg_drive_points, 'avg_drive_yards': avg_drive_yards}
     return result
-
 @nfl.route('/nfl/team_offense', methods=['GET'])
 def nfl_get_off_stats():
     team_id = request.args.get('id', None)
@@ -541,6 +536,8 @@ def nfl_get_off_stats():
 
     return output
 
+
+# TEAM DEFENSE STATS
 @nfl.route('/nfl/team_defense', methods=['POST'])
 def nfl_add_team_def_stats(json_dict):
     team_id = json_dict['team_id']
@@ -638,7 +635,6 @@ def nfl_add_team_def_stats(json_dict):
         'RB_att': RB_att, 'RB_rush_yards': RB_rush_yards, 'RB_rush_td': RB_rush_td, 'QB_completions': QB_completions,
         'QB_att': QB_att, 'QB_yards': QB_yards, 'QB_rush_att': QB_rush_att, 'QB_rush_yards': QB_rush_yards, 'QB_rush_td': QB_rush_td}
     return result
-
 @nfl.route('/nfl/team_defense', methods=['PUT'])
 def nfl_update_team_def_stats(json_dict):
     team_id = json_dict['team_id']
@@ -787,7 +783,6 @@ def nfl_update_team_def_stats(json_dict):
 
     # print(len(result))
     return result
-
 @nfl.route('/nfl/team_defense', methods=['GET'])
 def nfl_get_def_stats():
     team_id = request.args.get('id', None)
