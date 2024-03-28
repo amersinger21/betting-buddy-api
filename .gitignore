@@ -4,4 +4,10 @@ upload_templates
 
 bb_env
 
+archive
 
+/scripts/api_testing.py
+
+docs
+
+run_nfl_data_update.py
