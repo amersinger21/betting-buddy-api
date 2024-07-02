@@ -19,6 +19,7 @@ def add_player(json_dict):
     result = {'last_name': last_name, 'first_name': first_name, 'position': position}
     return result
 
+@player.route('/player', methods=['PUT'])
 def update_player(json_dict):
     connection = create_connection()
     cursor=connection.cursor()

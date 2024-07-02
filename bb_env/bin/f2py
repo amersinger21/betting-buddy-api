@@ -1,4 +1,4 @@
-#!/Users/martymcflynn/Projects/betting-buddy-api/bb_env/bin/python3
+#!/Users/martymcflynn/Projects/betting-buddy-api/bb_env/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys

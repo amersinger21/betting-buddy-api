@@ -2,20 +2,21 @@ from dotenv import load_dotenv
 
 load_dotenv()
 import os
-import pymysql
+# import pymysql
+import mysql.connector
 
 from flask import current_app, g
 
 def create_connection():
-    connection = pymysql.connect(
+    connection = mysql.connector.connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USERNAME"),
         passwd=os.getenv("DB_PASSWORD"),
         db=os.getenv("DB_NAME"),
         autocommit=True,
-        ssl={
-            "ca": os.getenv("SSL_PATH")
-        }
+        # ssl={
+        #     "ca": os.getenv("SSL_PATH")
+        # }
     )
 
     return connection

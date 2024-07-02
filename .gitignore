@@ -9,5 +9,10 @@ archive
 /scripts/api_testing.py
 
 docs
+variables
 
 run_nfl_data_update.py
+
+scrap.py
+
+more_scrap.py

@@ -11,11 +11,13 @@ def create_app():
     from .player_route import player
     from .teams import teams
     from .home import home
+    from .nba_routes import nba
 
     app.register_blueprint(weather, url_prefix='/')
     app.register_blueprint(nfl, url_prefix='/')
     app.register_blueprint(player, url_prefix='/')
     app.register_blueprint(teams, url_prefix='/')
     app.register_blueprint(home, url_prefix='/')
+    app.register_blueprint(nba, url_prefix='/')
 
     return app
