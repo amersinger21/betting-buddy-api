@@ -13,6 +13,8 @@ variables
 
 run_nfl_data_update.py
 
+run_mlb_data_upload.py
+
 scrap.py
 
 more_scrap.py
