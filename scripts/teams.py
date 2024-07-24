@@ -3,6 +3,21 @@ from flask import Blueprint, request
 
 teams = Blueprint("teams", __name__)
 
+@teams.route('/teams', methods=['POST'])
+def add_team(json_dict):
+    connection = create_connection()
+    cursor=connection.cursor()
+    name = json_dict['name']
+    full_name = json_dict['full_name']
+    sport_id = json_dict['sport_id']
+
+    cursor.execute("INSERT INTO team (name, sport_id, full_name) VALUES (%s, %s, %s)", (name, sport_id, full_name))
+
+    connection.commit()
+    print(f"{full_name} has been added to player tabel.")
+
+    result = {'sport_id': sport_id, 'name': name, 'full_name': full_name}
+    return result
 # @team.route('/team', methods=['POST'])
 # def add_team(json_dict):
 #     connection = create_connection()
