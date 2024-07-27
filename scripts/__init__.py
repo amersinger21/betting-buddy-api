@@ -14,12 +14,12 @@ def create_app():
     from .nba_routes import nba
     from .mlb_routes import mlb
 
-    app.register_blueprint(weather, url_prefix='/')
-    app.register_blueprint(nfl, url_prefix='/')
-    app.register_blueprint(player, url_prefix='/')
-    app.register_blueprint(teams, url_prefix='/')
-    app.register_blueprint(home, url_prefix='/')
-    app.register_blueprint(nba, url_prefix='/')
-    app.register_blueprint(mlb, url_prefix='/')
+    app.register_blueprint(weather, url_prefix='/api')
+    app.register_blueprint(nfl, url_prefix='/api')
+    app.register_blueprint(player, url_prefix='/api')
+    app.register_blueprint(teams, url_prefix='/api')
+    app.register_blueprint(home, url_prefix='/api')
+    app.register_blueprint(nba, url_prefix='/api')
+    app.register_blueprint(mlb, url_prefix='/api')
 
     return app

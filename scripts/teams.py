@@ -65,11 +65,8 @@ def get_teams():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    cursor.execute('''SELECT team.id, team.name FROM player_teams
-                    JOIN    
-                team ON team.id = player_teams.team_id
-                    WHERE team.sport_id = %s
-                    GROUP BY player_teams.team_id''',
+    cursor.execute('''select * from team
+                        WHERE sport_id = %s''',
         [sport_id])
     results = cursor.fetchall()
     result_list = []

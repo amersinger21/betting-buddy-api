@@ -55,8 +55,7 @@ def get_player():
                 [first_name, last_name])
     results = list(cursor.fetchall())
     return results
-    # for result in results:
-    #     player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
+
 
 
 @player.route('/players', methods=['GET'])
