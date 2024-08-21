@@ -18,30 +18,23 @@ def add_team(json_dict):
 
     result = {'sport_id': sport_id, 'name': name, 'full_name': full_name}
     return result
-# @team.route('/team', methods=['POST'])
-# def add_team(json_dict):
-#     connection = create_connection()
-#     cursor=connection.cursor()
-#     team_name = json_dict['name']
-#     sport_id = json_dict['sport_id']
-#
-#     # CHECK IF THE PLAYER DATA FOR THAT YEAR IS ALREADY IN THE TABLE
-#     cursor.execute("SELECT name, sport_id FROM team WHERE name = %s AND sport_id = %s;",
-#         [team_name, sport_id])
-#
-#     result = cursor.fetchone()
-#
-#     if result:
-#         print(f"{team_name}'s is already in type_sports table.")
-#
-#     else:
-#         cursor.execute("INSERT INTO team (name, sport_id) VALUES (%s, %s)", (team_name, sport_id))
-#         connection.commit()
-#         print(f"{team_name} has been added to type_sports tabel.")
-#
-#     result = {'name': team_name, 'sport_id': sport_id}
-#     return result
-#
+
+@teams.route('/teams', methods=['GET'])
+def get_teams():
+    sport_id = request.args.get('sport_id', None)
+    connection = create_connection()
+    cursor = connection.cursor()
+    cursor.execute('''select * from team
+                        WHERE sport_id = %s''',
+        [sport_id])
+    results = cursor.fetchall()
+    result_list = []
+    for result in results:
+        team_dict = {'id': result[0], 'name': result[1]}
+        result_list.append(team_dict)
+    return result_list
+
+
 #
 # @team.route('/team/<team_name_sportid>')
 # def get_team(team_name):
@@ -59,18 +52,3 @@ def add_team(json_dict):
 #     player_dict = {'id': result[0], 'team_name': result[1], 'sport_id': result[2]}
 #     result_list.append(player_dict)
 #     return result_list
-
-@teams.route('/teams', methods=['GET'])
-def get_teams():
-    sport_id = request.args.get('sport_id', None)
-    connection = create_connection()
-    cursor = connection.cursor()
-    cursor.execute('''select * from team
-                        WHERE sport_id = %s''',
-        [sport_id])
-    results = cursor.fetchall()
-    result_list = []
-    for result in results:
-        team_dict = {'id': result[0], 'name': result[1]}
-        result_list.append(team_dict)
-    return result_list
