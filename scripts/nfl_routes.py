@@ -1,3 +1,5 @@
+import pandas as pd
+
 from .db import create_connection
 from flask import Blueprint, request, jsonify
 
@@ -937,10 +939,100 @@ def nfl_player_total_games():
     return output
 
 
-# # GET NFL TEAM DEFENSE STAT RANK
-# nfl.route('nfl/stat_rank', method=['GET'])
-# def nfl_stat_rank():
-#     team_id = request.args.get('id', None)
-#     connection = create_connection()
-#     cursor = connection.cursor()
-#     print(f"player_id = {team_id}")
+# GET NFL STAT RANK
+@nfl.route('nfl/stat_rank', methods=['GET'])
+def nfl_stat_rank():
+    # INITIALIZE VARIABLES
+    team_id = int(request.args.get('id', None))
+    table_name = request.args.get('table_name', None)
+    stat = request.args.get('stat', None)
+    connection = create_connection()
+    cursor = connection.cursor()
+    rank_col = stat + '_rank'
+    years = list(range(2019, 2024))
+
+    output = []
+    for year in years:
+        query = f"""SELECT id, team_id, year, {stat},RANK() 
+                    OVER (ORDER BY {stat}) as {rank_col} 
+                    FROM {table_name}
+                    WHERE year = %s"""
+        vals = [year]
+        cursor.execute(query, vals)
+
+        results = cursor.fetchall()
+
+        for result in results:
+            if result[1] == team_id:
+                item = {'team_id': result[1], 'year': result[2], stat: result[3], rank_col: result[4]}
+                output.append(item)
+
+    return jsonify(output)
+
+
+# NFL TEAM STANDINGS
+@nfl.route('/nfl/standings', methods=['POST'])
+def nfl_add_standings(json_dict):
+    year = json_dict['year']
+    team_id = json_dict['team_id']
+    wins = json_dict['wins']
+    losses = json_dict['losses']
+    ties = json_dict['ties']
+    win_loss_percentage = json_dict['win_loss_percentage']
+    points_for = json_dict['points_for']
+    points_against = json_dict['points_against']
+    point_diff = json_dict['point_diff']
+    avg_margin_of_victory = json_dict['avg_margin_of_victory']
+    strength_of_schedule = json_dict['strength_of_schedule']
+
+    values = (year, team_id, wins, losses, ties, win_loss_percentage, points_for, points_against, point_diff,
+              avg_margin_of_victory, strength_of_schedule)
+
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""INSERT INTO nfl_standings (year, team_id, wins, losses, ties, win_loss_percentage, points_for, points_against, point_diff,
+              avg_margin_of_victory, strength_of_schedule) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                   (values))
+    connection.commit()
+    print(f"Game has been added to nfl_standings table.")
+
+    result = {'year':year, 'team_id': team_id, 'wins': wins, 'losses': losses, 'ties': ties,'win_loss_percentage': win_loss_percentage,
+              'points_for': points_for, 'points_against': points_against, 'point_diff': point_diff, 'avg_margin_of_victory': avg_margin_of_victory,
+              'strength_of_schedule': strength_of_schedule}
+
+    return result
+@nfl.route('/nfl/standings', methods=['PUT'])
+def nfl_update_standings(json_dict):
+    year = json_dict['year']
+    team_id = json_dict['team_id']
+    wins = json_dict['wins']
+    losses = json_dict['losses']
+    ties = json_dict['ties']
+    win_loss_percentage = json_dict['win_loss_percentage']
+    points_for = json_dict['points_for']
+    points_against = json_dict['points_against']
+    point_diff = json_dict['point_diff']
+    avg_margin_of_victory = json_dict['avg_margin_of_victory']
+    strength_of_schedule = json_dict['strength_of_schedule']
+
+    values = (wins, losses, ties, win_loss_percentage, points_for, points_against, point_diff, avg_margin_of_victory,
+              strength_of_schedule, year, team_id)
+
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    cursor.execute("""UPDATE  nfl_standings 
+                SET wins = %s, losses = %s, ties = %s, win_loss_percentage = %s, points_for = %s,
+                 points_against = %s, point_diff = %s, avg_margin_of_victory = %s, strength_of_schedule = %s
+                WHERE nfl_standings.team_id = %s and nfl_standings.year = %s""",
+                   (values))
+
+    connection.commit()
+    print(f"Game has been added to nfl_standings table.")
+
+    result = {'year':year, 'team_id': team_id, 'wins': wins, 'losses': losses, 'ties': ties,'win_loss_percentage': win_loss_percentage,
+              'points_for': points_for, 'points_against': points_against, 'point_diff': point_diff, 'avg_margin_of_victory': avg_margin_of_victory,
+              'strength_of_schedule': strength_of_schedule}
+
+    return result
