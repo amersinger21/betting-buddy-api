@@ -26,79 +26,100 @@
 			</sl-icon-button>
 		</nav>
 		<sl-drawer label="Drawer" placement="end" class="drawer-placement-end">
-			<h2>Select a sport to search</h2>
-			<sl-card id="btn-container" class="card-basic">
-				<a href="/client/pages/football.html">
-					<button class="btn-sport">
-						<img
-							class="icon"
-							src="/client/images/rugby-ball.png"
-							alt="football icon"
-						/>
-						<p>Football</p>
-					</button>
-				</a>
-				<a href="/client/error.html">
-					<button class="btn-sport">
-						<img
-							class="icon"
-							src="/client/images/basketball-ball.png"
-							alt="football icon"
-						/>
-						<p>Basketball</p>
-					</button>
-				</a>
-				<a href="/client/football.html">
-					<button class="btn-sport">
-						<img
-							class="icon"
-							src="/client/images/baseball.png"
-							alt="football icon"
-						/>
-						<p>Baseball</p>
-					</button>
-				</a>
-				<a href="/client/football.html">
-					<button class="btn-sport">
-						<img
-							class="icon"
-							src="/client/images/hockey.png"
-							alt="football icon"
-						/>
-						<p>Hockey</p>
-					</button>
-				</a>
-				<a href="/">
-					<button class="btn-sport disabled">
-						<img
-							class="icon"
-							src="/client/images/soccer-ball.png"
-							alt="football icon"
-						/>
-						<p>Soccer</p>
-					</button>
-				</a>
+			<a href="/client/pages/football.html">
+				<button class="btn-sport">
+					<img
+						class="icon"
+						src="/client/images/rugby-ball.png"
+						alt="football icon"
+					/>
+					<p>Football</p>
+				</button>
+			</a>
+			<a href="/client/error.html">
+				<button class="btn-sport">
+					<img
+						class="icon"
+						src="/client/images/basketball-ball.png"
+						alt="football icon"
+					/>
+					<p>Basketball</p>
+				</button>
+			</a>
+			<a href="/client/football.html">
+				<button class="btn-sport">
+					<img
+						class="icon"
+						src="/client/images/baseball.png"
+						alt="football icon"
+					/>
+					<p>Baseball</p>
+				</button>
+			</a>
+			<a href="/client/football.html">
+				<button class="btn-sport">
+					<img
+						class="icon"
+						src="/client/images/hockey.png"
+						alt="football icon"
+					/>
+					<p>Hockey</p>
+				</button>
+			</a>
+			<a href="/">
+				<button class="btn-sport disabled">
+					<img
+						class="icon"
+						src="/client/images/soccer-ball.png"
+						alt="football icon"
+					/>
+					<p>Soccer</p>
+				</button>
+			</a>
 		</sl-drawer>
 		<main>
 			<h3>Select a search type</h3>
-			<sl-radio-group value="player" id="search-selector">
-				<sl-radio-button value="player" size="medium" variant="primary">Player</sl-radio-button>
-				<sl-radio-button value="team" size="medium" variant="success">Team</sl-radio-button>
-			</sl-radio-group>
-			<form id="search-player" class="search-form">
-				<sl-select placeholder="Player Name"></sl-select>
-				<sl-select placeholder="Stat"></sl-select>
-				<sl-select placeholder="Over/Under"></sl-select>
-				<sl-select placeholder="Amount"></sl-select>
-				<a href="/client/pages/football/results.html"><button type="button" >Search</button></a>
-			</form>
-			<form  id="search-team" class="search-form" style="display:none;">
-				<sl-select placeholder="Team Name"></sl-select>
-				<sl-select placeholder="Stat"></sl-select>
-				<sl-select placeholder="Over/Under"></sl-select>
-				<sl-select placeholder="Amount"></sl-select>
-				<button type="button" href="/client/pages/football/results.html">Search</button>
-			</form>
+			<div class="form-container">
+				<sl-radio-group value="player" id="search-selector">
+					<sl-radio-button
+						value="player"
+						size="medium"
+						variant="primary"
+						>Player</sl-radio-button
+					>
+					<sl-radio-button
+						value="team"
+						size="medium"
+						variant="success"
+						>Team</sl-radio-button
+					>
+				</sl-radio-group>
+				<form id="search-player" class="search-form">
+					<sl-select placeholder="Player Name"></sl-select>
+					<sl-select placeholder="Stat"></sl-select>
+					<sl-select placeholder="Over/Under"></sl-select>
+					<sl-select placeholder="Amount"></sl-select>
+					<a href="/client/pages/football/results.html"
+						><button type="button">Search</button></a
+					>
+				</form>
+				<form
+					id="search-team"
+					class="search-form"
+					style="display: none"
+				>
+					<sl-select placeholder="Team Name"></sl-select>
+					<sl-select placeholder="Stat"></sl-select>
+					<sl-select placeholder="Over/Under"></sl-select>
+					<sl-select placeholder="Amount"></sl-select>
+					<button
+						type="button"
+						href="/client/pages/football/results.html"
+					>
+						Search
+					</button>
+				</form>
+			</div>
 		</main>
 	</body>
 </html>
@@ -116,40 +137,36 @@
 	const teamSearch = document.querySelector("#search-team");
 	const searchType = document.querySelector("#search-selector");
 
-
 	searchType.addEventListener("click", () => {
 		let x = searchType.getAttribute("value");
 		console.log(x);
 
-		if (x == "player"){
-			playerSearch.style.display='block';
-			teamSearch.style.display='none';
-
-		} else if (x == 'team'){
-			playerSearch.style.display='none';
-			teamSearch.style.display='block';
+		if (x == "player") {
+			playerSearch.style.display = "block";
+			teamSearch.style.display = "none";
+		} else if (x == "team") {
+			playerSearch.style.display = "none";
+			teamSearch.style.display = "block";
 		}
-
 	});
-
 </script>
 
 <script type="module">
 	await Promise.allSettled([
-	  customElements.whenDefined('sl-drawer'),
-	  customElements.whenDefined('sl-radio-group')
+		customElements.whenDefined("sl-drawer"),
+		customElements.whenDefined("sl-radio-group"),
 	]);
-  
-	document.body.classList.add('ready');
-  </script>
+
+	document.body.classList.add("ready");
+</script>
 
 <style>
 	body {
-	  opacity: 0;
+		opacity: 0;
 	}
-  
+
 	body.ready {
-	  opacity: 1;
-	  transition: 0.25s opacity;
+		opacity: 1;
+		transition: 0.25s opacity;
 	}
-  </style>
+</style>
