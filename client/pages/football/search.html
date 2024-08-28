@@ -13,6 +13,8 @@
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"
 		></script>
+		<script src="/client/pages/football/football.js"></script>
+		<script src="/client/utils.js"></script>
 	</head>
 	<body>
 		<nav>
@@ -26,56 +28,6 @@
 			</sl-icon-button>
 		</nav>
 		<sl-drawer label="Drawer" placement="end" class="drawer-placement-end">
-			<a href="/client/pages/football.html">
-				<button class="btn-sport">
-					<img
-						class="icon"
-						src="/client/images/rugby-ball.png"
-						alt="football icon"
-					/>
-					<p>Football</p>
-				</button>
-			</a>
-			<a href="/client/error.html">
-				<button class="btn-sport">
-					<img
-						class="icon"
-						src="/client/images/basketball-ball.png"
-						alt="football icon"
-					/>
-					<p>Basketball</p>
-				</button>
-			</a>
-			<a href="/client/football.html">
-				<button class="btn-sport">
-					<img
-						class="icon"
-						src="/client/images/baseball.png"
-						alt="football icon"
-					/>
-					<p>Baseball</p>
-				</button>
-			</a>
-			<a href="/client/football.html">
-				<button class="btn-sport">
-					<img
-						class="icon"
-						src="/client/images/hockey.png"
-						alt="football icon"
-					/>
-					<p>Hockey</p>
-				</button>
-			</a>
-			<a href="/">
-				<button class="btn-sport disabled">
-					<img
-						class="icon"
-						src="/client/images/soccer-ball.png"
-						alt="football icon"
-					/>
-					<p>Soccer</p>
-				</button>
-			</a>
 		</sl-drawer>
 		<main>
 			<div class="form-container">
@@ -94,9 +46,9 @@
 						>Team</sl-radio-button
 					>
 				</sl-radio-group>
-				<form id="search-player" class="search-form hidden">
+				<form id="search-player" class="search-form active">
 					<sl-select placeholder="Player Name"></sl-select>
-					<sl-select placeholder="Stat"></sl-select>
+					<sl-select placeholder="Stat" id="playerStat"></sl-select>
 					<sl-select placeholder="Over/Under">
 						<sl-option value="over">Over</sl-option>
 						<sl-option value="under">Under</sl-option>
@@ -112,7 +64,7 @@
 						</sl-button>
 					</a>
 				</form>
-				<form id="search-team" class="search-form">
+				<form id="search-team" class="search-form hidden">
 					<sl-select placeholder="Team Name"></sl-select>
 					<sl-select placeholder="Stat"></sl-select>
 					<sl-select placeholder="Over/Under">
@@ -176,6 +128,8 @@
 	]);
 
 	document.body.classList.add("ready");
+	loadFootballStats();
+	loadPlayerNames(1);
 </script>
 
 <style>
