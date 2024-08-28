@@ -94,33 +94,38 @@
 						>Team</sl-radio-button
 					>
 				</sl-radio-group>
-				<form id="search-player" class="search-form">
+				<form id="search-player" class="search-form hidden">
 					<sl-select placeholder="Player Name"></sl-select>
 					<sl-select placeholder="Stat"></sl-select>
 					<sl-select placeholder="Over/Under">
 						<sl-option value="over">Over</sl-option>
 						<sl-option value="under">Under</sl-option>
 					</sl-select>
-					<sl-input type="number" placeholder="Amount" clearable></sl-select>
-					<a href="/client/pages/football/results.html"
-						><button type="button">Search</button></a
-					>
+					<sl-input
+						type="number"
+						placeholder="Amount"
+						clearable
+					></sl-input>
+					<a href="/client/pages/football/results.html">
+						<sl-button type="button" variant="success"
+							>Search
+						</sl-button>
+					</a>
 				</form>
-				<form
-					id="search-team"
-					class="search-form"
-					style="display: none"
-				>
+				<form id="search-team" class="search-form">
 					<sl-select placeholder="Team Name"></sl-select>
 					<sl-select placeholder="Stat"></sl-select>
 					<sl-select placeholder="Over/Under"></sl-select>
-					<sl-select placeholder="Amount"></sl-select>
-					<button
-						type="button"
-						href="/client/pages/football/results.html"
-					>
-						Search
-					</button>
+					<sl-input
+						type="number"
+						placeholder="Amount"
+						clearable
+					></sl-input>
+					<a href="/client/pages/football/results.html">
+						<sl-button type="button" variant="success"
+							>Search
+						</sl-button>
+					</a>
 				</form>
 			</div>
 		</main>
@@ -142,14 +147,19 @@
 
 	searchType.addEventListener("click", () => {
 		let x = searchType.getAttribute("value");
-		console.log(x);
+		let displayPlayer = getComputedStyle(playerSearch).display;
+		let displayTeam = getComputedStyle(teamSearch).display;
 
 		if (x == "player") {
-			playerSearch.style.display = "block";
-			teamSearch.style.display = "none";
+			playerSearch.classList.add("active");
+			playerSearch.classList.remove("hidden");
+			teamSearch.classList.add("hidden");
+			teamSearch.classList.remove("active");
 		} else if (x == "team") {
-			playerSearch.style.display = "none";
-			teamSearch.style.display = "block";
+			playerSearch.classList.add("hidden");
+			playerSearch.classList.remove("active");
+			teamSearch.classList.add("active");
+			teamSearch.classList.remove("hidden");
 		}
 	});
 </script>
@@ -158,6 +168,8 @@
 	await Promise.allSettled([
 		customElements.whenDefined("sl-drawer"),
 		customElements.whenDefined("sl-radio-group"),
+		customElements.whenDefined("sl-input"),
+		customElements.whenDefined("sl-select"),
 	]);
 
 	document.body.classList.add("ready");
