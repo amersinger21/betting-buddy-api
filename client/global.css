@@ -1,5 +1,7 @@
-body {
-}
+/* * {
+	outline: 1px solid lime;
+} */
+
 nav {
 	display: flex;
 	align-items: center;
@@ -11,19 +13,36 @@ nav {
 #logo {
 }
 
-#btn-container {
+main {
 	display: flex;
+	justify-content: center;
+	align-items: center;
 	flex-direction: column;
-	max-width: 14em;
-	outline: green;
+}
+
+a {
+	text-decoration: none;
+}
+
+#btn-container {
+	display: grid;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
 	margin: 0 auto;
+	padding: 2rem;
+	border: 3px solid black;
+	border-radius: 10px;
+	box-shadow: 5px 5px 0px black;
 }
 
 .btn-sport {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	min-width: 15rem;
 	gap: 1rem;
-	padding-inline: 1.5em;
-	margin-block: 0.5rem;
+	padding-block: 0.5em;
+	margin: 0.25rem;
+	font-size: 1.25rem;
 }
