@@ -17,9 +17,18 @@
 	<body>
 		<nav>
 			<h1 id="logo">The Betting Buddy</h1>
-			<sl-icon-button name="list" style="font-size: 2.5rem" label="menu">
+			<sl-icon-button
+				name="list"
+				style="font-size: 2.5rem"
+				label="menu"
+				id="menu-open"
+			>
 			</sl-icon-button>
 		</nav>
+		<sl-drawer label="Drawer" placement="end" class="drawer-placement-end">
+			This drawer slides in from the start.
+			<sl-button slot="footer" variant="primary">Close</sl-button>
+		</sl-drawer>
 		<main>
 			<h2>Select a sport to search</h2>
 			<sl-card id="btn-container" class="card-basic">
@@ -77,3 +86,12 @@
 		</main>
 	</body>
 </html>
+
+<script>
+	const drawer = document.querySelector(".drawer-placement-end");
+	const openButton = document.querySelector("#menu-open");
+	const closeButton = drawer.querySelector('sl-button[variant="primary"]');
+
+	openButton.addEventListener("click", () => drawer.show());
+	closeButton.addEventListener("click", () => drawer.hide());
+</script>
