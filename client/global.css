@@ -5,6 +5,8 @@
 nav {
 	display: flex;
 	align-items: center;
+	justify-content: space-between;
+	margin-inline: 0.5em;
 }
 .icon {
 	max-width: 20px;
