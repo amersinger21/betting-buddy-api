@@ -85,17 +85,19 @@
 				<sl-radio-button value="player" size="medium" variant="primary">Player</sl-radio-button>
 				<sl-radio-button value="team" size="medium" variant="success">Team</sl-radio-button>
 			</sl-radio-group>
-			<form action="POST" id="search-player" class="search-form">
+			<form id="search-player" class="search-form">
 				<sl-select placeholder="Player Name"></sl-select>
 				<sl-select placeholder="Stat"></sl-select>
 				<sl-select placeholder="Over/Under"></sl-select>
 				<sl-select placeholder="Amount"></sl-select>
+				<a href="/client/pages/football/results.html"><button type="button" >Search</button></a>
 			</form>
-			<form action="POST" id="search-team" class="search-form" style="display:none;">
+			<form  id="search-team" class="search-form" style="display:none;">
 				<sl-select placeholder="Team Name"></sl-select>
 				<sl-select placeholder="Stat"></sl-select>
 				<sl-select placeholder="Over/Under"></sl-select>
 				<sl-select placeholder="Amount"></sl-select>
+				<button type="button" href="/client/pages/football/results.html">Search</button>
 			</form>
 		</main>
 	</body>
@@ -131,3 +133,23 @@
 	});
 
 </script>
+
+<script type="module">
+	await Promise.allSettled([
+	  customElements.whenDefined('sl-drawer'),
+	  customElements.whenDefined('sl-radio-group')
+	]);
+  
+	document.body.classList.add('ready');
+  </script>
+
+<style>
+	body {
+	  opacity: 0;
+	}
+  
+	body.ready {
+	  opacity: 1;
+	  transition: 0.25s opacity;
+	}
+  </style>
