@@ -97,8 +97,11 @@
 				<form id="search-player" class="search-form">
 					<sl-select placeholder="Player Name"></sl-select>
 					<sl-select placeholder="Stat"></sl-select>
-					<sl-select placeholder="Over/Under"></sl-select>
-					<sl-select placeholder="Amount"></sl-select>
+					<sl-select placeholder="Over/Under">
+						<sl-option value="over">Over</sl-option>
+						<sl-option value="under">Under</sl-option>
+					</sl-select>
+					<sl-input type="number" placeholder="Amount" clearable></sl-select>
 					<a href="/client/pages/football/results.html"
 						><button type="button">Search</button></a
 					>

@@ -94,3 +94,9 @@ a {
 	border-radius: 2px;
 	box-shadow: 7px 7px 0px black;
 }
+
+form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
