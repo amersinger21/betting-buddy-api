@@ -1,18 +1,45 @@
-/* * {
-	outline: 1px solid lime;
-} */
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	/* background-color: rgba(244, 114, 182, 0.75); */
+	--dot-bg: rgba(244, 114, 182, 01.75);
+	--dot-color: black;
+	--dot-size: 2px;
+	--dot-space: 15px;
+	background: linear-gradient(
+				90deg,
+				var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+				transparent 1%
+			)
+			center / var(--dot-space) var(--dot-space),
+		linear-gradient(
+				var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+				transparent 1%
+			)
+			center / var(--dot-space) var(--dot-space),
+		var(--dot-color);
+}
 
 nav {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-inline: 0.5em;
-}
-.icon {
-	max-width: 20px;
+	border-bottom: 2px solid black;
+	background: white;
+	padding: 0.5em;
+	margin-bottom: 1rem;
 }
 
-#logo {
+.icon {
+	max-width: 30px;
+}
+
+sl-icon-button::part(base) {
+	color: black;
 }
 
 main {
@@ -27,6 +54,7 @@ a {
 }
 
 #btn-container {
+	background-color: #a78bfa;
 	display: grid;
 	flex-wrap: wrap;
 	align-items: center;
@@ -39,12 +67,16 @@ a {
 }
 
 .btn-sport {
+	background-color: #facc15;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	min-width: 15rem;
 	gap: 1rem;
-	padding-block: 0.5em;
-	margin: 0.25rem;
+	padding-block: 1.5em;
+	margin-block: 0.75rem;
 	font-size: 1.25rem;
+	border: 2px solid black;
+	border-radius: 2px;
+	box-shadow: 7px 7px 0px black;
 }
