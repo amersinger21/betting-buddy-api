@@ -115,6 +115,9 @@ def nfl_get_player_stats():
         item['fumbles'] = result[23]
         output.append(item)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
 
 
@@ -160,6 +163,9 @@ def nfl_get_team():
         if item not in output:
             output.append(item)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
 
 # GAME INFO ROUTES
@@ -211,6 +217,9 @@ def nfl_get_games():
                        'weather': result[9], 'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12],
                        'over_under_result': result[13]}
         result_list.append(player_dict)
+    # Enable Access-Control-Allow-Origin
+    result_list = jsonify(result_list)
+    result_list.headers.add("Access-Control-Allow-Origin", "*")
     return result_list
 
 
@@ -401,9 +410,11 @@ def nfl_get_rz_stat():
         'rz_5_rush_att': result[36], 'rz_5_rush_yards': result[37], 'rz_5_rush_td': result[38], 'rz_5_rush_percentage': result[39]}
         if item not in output:
             output.append(item)
+
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
-
-
 
 @nfl.route('/nfl/team_stats', methods=['GET'])
 def nfl_get_team_stats():
@@ -448,8 +459,10 @@ def nfl_get_team_stats():
         if item not in output:
             output.append(item)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
-
 
 
 # NFL TEAM OFFENSE ROUTES
@@ -652,6 +665,9 @@ def nfl_get_off_stats():
         if item not in output:
             output.append(item)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
 
 
@@ -917,8 +933,10 @@ def nfl_get_team_def_stats():
         if item not in output:
             output.append(item)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
     return output
-
 
 # GET PLAYERS TOTAL GAMES
 @nfl.route('nfl/player_total_games', methods=['GET'])
@@ -937,8 +955,6 @@ def nfl_player_total_games():
     result = cursor.fetchone()[0]
     output = jsonify({'total_games': result})
     return output
-
-
 # GET NFL STAT RANK
 @nfl.route('nfl/stat_rank', methods=['GET'])
 def nfl_stat_rank():
@@ -1036,3 +1052,28 @@ def nfl_update_standings(json_dict):
               'strength_of_schedule': strength_of_schedule}
 
     return result
+@nfl.route('/nfl/standings', methods=['GET'])
+def nfl_get_standings():
+    team_id = request.args.get('id', None)
+    connection = create_connection()
+    cursor = connection.cursor()
+    print(f"team_id = {team_id}")
+
+    query = f'''SELECT * FROM nfl_standings
+                WHERE team_id = %s'''
+    vals = [team_id]
+    cursor.execute(query, vals)
+
+    results = cursor.fetchall()
+
+    output = []
+    for result in results:
+        result = {'id': result[0], 'year': result[1] , 'team_id': result[2], 'wins': result[3], 'losses': result[4], 'ties': result[5],
+                  'win_loss_percentage': result[6], 'points_for': result[7], 'points_against': result[8], 'point_diff': result[9],
+                  'avg_margin_of_victory': result[10], 'strength_of_schedule': result[11]}
+        output.append(result)
+
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
+    return output

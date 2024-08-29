@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify
 
 player = Blueprint("player", __name__)
 
@@ -54,6 +54,10 @@ def get_player():
                 WHERE player.first_name = %s AND player.last_name = %s''',
                 [first_name, last_name])
     results = list(cursor.fetchall())
+
+    # Enable Access-Control-Allow-Origin
+    results = jsonify(results)
+    results.headers.add("Access-Control-Allow-Origin", "*")
     return results
 
 
@@ -80,4 +84,8 @@ def get_player_dropdown():
     for result in results:
         player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1]}
         result_list.append(player_dict)
+
+    # Enable Access-Control-Allow-Origin
+    results = jsonify(results)
+    results.headers.add("Access-Control-Allow-Origin", "*")
     return results
