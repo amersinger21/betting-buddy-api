@@ -62,7 +62,7 @@ def get_player():
 
 
 
-@player.route('/players', methods=['GET'])
+@player.route('/nfl_players', methods=['GET'])
 def get_player_dropdown():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
@@ -70,13 +70,13 @@ def get_player_dropdown():
     # return sport_id
     cursor.execute('''
                 SELECT player.id, player.first_name, player.last_name
-                    FROM player_teams
+                    FROM nfl_player_teams
                         JOIN
-                    player ON player.id = player_teams.player_id
+                    player ON player.id = nfl_player_teams.player_id
                         JOIN
-                    team ON team.id = player_teams.team_id
+                    team ON team.id = nfl_player_teams.team_id
                         WHERE team.sport_id = %s
-                        GROUP BY player_teams.player_id''',
+                        GROUP BY nfl_player_teams.player_id''',
                    [sport_id])
     results = list(cursor.fetchall())
 
