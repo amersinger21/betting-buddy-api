@@ -62,7 +62,7 @@ def get_player():
 
 
 
-@player.route('/nfl_players', methods=['GET'])
+@player.route('/players', methods=['GET'])
 def get_player_dropdown():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
