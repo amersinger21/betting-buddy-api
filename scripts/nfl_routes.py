@@ -419,7 +419,7 @@ def nfl_get_rz_stat():
 @nfl.route('/nfl/team_stats', methods=['GET'])
 def nfl_get_team_stats():
     team_id = request.args.get('id', None)
-    year = request.args.get('year', None)
+
     connection = create_connection()
     cursor = connection.cursor()
     print(f"team_id = {team_id}")
