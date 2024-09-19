@@ -8,13 +8,13 @@
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css"
 		/>
-		<link rel="stylesheet" href="/global.css" />
+		<link rel="stylesheet" href="/client/global.css" />
 		<script
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"
 		></script>
-		<script src="/pages/football/football.js"></script>
-		<script src="/utils.js"></script>
+		<script src="/client/pages/football/football.js"></script>
+		<script src="/client/utils.js"></script>
 	</head>
 	<body>
 		<nav>
@@ -58,29 +58,30 @@
 						placeholder="Amount"
 						clearable
 					></sl-input>
-					<a href="/pages/football/results.html">
+					<a href="/client/pages/football/results.html">
 						<sl-button type="button" variant="success"
 							>Search
 						</sl-button>
 					</a>
 				</form>
 				<form id="search-team" class="search-form hidden">
-					<sl-select placeholder="Team Name"></sl-select>
-					<sl-select placeholder="Stat"></sl-select>
-					<sl-select placeholder="Over/Under">
-						<sl-option value="over">Over</sl-option>
-						<sl-option value="under">Under</sl-option>
+					<sl-select name="id" placeholder="Team Name">
+						<sl-option value="4">Buffalo Bill</sl-option>
+					</sl-select>
+					<sl-select name="stat" placeholder="Stat">
+						<sl-option value="pass_yards">Passing Yards</sl-option>
+					</sl-select>
+					<sl-select name="bet" placeholder="Over/Under">
+						<sl-option value=">over">Over</sl-option>
+						<sl-option value="under" >Under</sl-option>
 					</sl-select>
 					<sl-input
 						type="number"
 						placeholder="Amount"
+						name="amount"
 						clearable
 					></sl-input>
-					<a href="/pages/football/results.html">
-						<sl-button type="button" variant="success"
-							>Search
-						</sl-button>
-					</a>
+						<sl-button type="submit" variant="success">Search</sl-button>
 				</form>
 			</div>
 		</main>
@@ -92,6 +93,7 @@
 	const drawer = document.querySelector(".drawer-placement-end");
 	const openButton = document.querySelector("#menu-open");
 	const closeButton = drawer.querySelector('sl-button[variant="primary"]');
+	const teamForm = document.querySelector("#search-team");
 
 	openButton.addEventListener("click", () => drawer.show());
 
@@ -117,6 +119,20 @@
 			teamSearch.classList.remove("hidden");
 		}
 	});
+
+	teamForm.addEventListener("submit", TeamSearch);
+	
+	function TeamSearch(event){
+		event.preventDefault();
+		
+		const formData = new FormData(teamForm);
+		const data = [...formData.entries()];
+
+		const queryString = new URLSearchParams(data).toString();
+		console.log(queryString);
+
+		window.location.replace("/client/pages/football/results.html?" + queryString);
+	}
 </script>
 
 <script type="module">
@@ -130,6 +146,7 @@
 	document.body.classList.add("ready");
 	loadFootballStats();
 	loadPlayerNames(1);
+
 </script>
 
 <style>

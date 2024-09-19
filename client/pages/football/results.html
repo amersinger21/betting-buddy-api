@@ -9,3 +9,17 @@
 		here are your football results
 	</body>
 </html>
+<script>
+	let params = new URLSearchParams(document.location.search);
+	const id = params.get("id");
+
+	async function teamResults(sportID) {
+		const response = await fetch(`http://129.80.84.210/api/nfl/team_stats?id=${sportID}`);
+
+		const json = await response.json();
+
+		console.log(json);
+	}
+
+	teamResults(id);
+</script>
