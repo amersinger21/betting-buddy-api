@@ -424,10 +424,10 @@ def nfl_get_team_stats():
     cursor = connection.cursor()
     print(f"team_id = {team_id}")
 
-    query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
-                FROM fb_off_stats
-                JOIN team ON team.id = fb_off_stats.team_id
-                JOIN fb_def_stats ON (fb_def_stats.team_id =  fb_off_stats.team_id) AND (fb_def_stats.year =  fb_off_stats.year)
+    query = f'''SELECT team.name,  nfl_team_offense.*, nfl_team_defense.*
+                FROM nfl_team_offense
+                JOIN team ON team.id = nfl_team_offense.team_id
+                JOIN nfl_team_defense ON (nfl_team_defense.team_id =  nfl_team_offense.team_id) AND (nfl_team_defense.year =  nfl_team_offense.year)
                 WHERE team.id = %s'''
     vals = [team_id]
     cursor.execute(query, vals)
