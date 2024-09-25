@@ -1,5 +1,5 @@
 from .db import create_connection
-from flask import Blueprint, request
+from flask import Blueprint, jsonify, request
 
 teams = Blueprint("teams", __name__)
 
@@ -16,9 +16,12 @@ def add_team(json_dict):
     connection.commit()
     print(f"{full_name} has been added to player tabel.")
 
-    result = {'sport_id': sport_id, 'name': name, 'full_name': full_name}
-    return result
-
+    results = {'sport_id': sport_id, 'name': name, 'full_name': full_name}
+    
+    results = jsonify(results)
+    results.headers.add("Access-Control-Allow-Origin", "*")
+    return results
+    
 @teams.route('/teams', methods=['GET'])
 def get_teams():
     sport_id = request.args.get('sport_id', None)

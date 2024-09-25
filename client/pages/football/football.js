@@ -68,6 +68,9 @@ const footbalStats = [
 		name: "Fumbles",
 	},
 ];
+
+const teamStats = [];
+
 function loadFootballStats() {
 	let playerStats = document.querySelector("#playerStat");
 

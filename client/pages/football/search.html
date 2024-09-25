@@ -47,7 +47,10 @@
 					>
 				</sl-radio-group>
 				<form id="search-player" class="search-form active">
-					<sl-select placeholder="Player Name" id="playerName"></sl-select>
+					<sl-select
+						placeholder="Player Name"
+						id="playerName"
+					></sl-select>
 					<sl-select placeholder="Stat" id="playerStat"></sl-select>
 					<sl-select placeholder="Over/Under">
 						<sl-option value="over">Over</sl-option>
@@ -65,15 +68,14 @@
 					</a>
 				</form>
 				<form id="search-team" class="search-form hidden">
-					<sl-select name="id" placeholder="Team Name">
-						<sl-option value="4">Buffalo Bill</sl-option>
+					<sl-select name="id" id="teamName" placeholder="Team Name">
 					</sl-select>
 					<sl-select name="stat" placeholder="Stat">
 						<sl-option value="pass_yards">Passing Yards</sl-option>
 					</sl-select>
 					<sl-select name="bet" placeholder="Over/Under">
 						<sl-option value=">over">Over</sl-option>
-						<sl-option value="under" >Under</sl-option>
+						<sl-option value="under">Under</sl-option>
 					</sl-select>
 					<sl-input
 						type="number"
@@ -81,7 +83,9 @@
 						name="amount"
 						clearable
 					></sl-input>
-						<sl-button type="submit" variant="success">Search</sl-button>
+					<sl-button type="submit" variant="success"
+						>Search</sl-button
+					>
 				</form>
 			</div>
 		</main>
@@ -94,6 +98,7 @@
 	const openButton = document.querySelector("#menu-open");
 	const closeButton = drawer.querySelector('sl-button[variant="primary"]');
 	const teamForm = document.querySelector("#search-team");
+	const playerForm = document.querySelector("#search-player");
 
 	openButton.addEventListener("click", () => drawer.show());
 
@@ -119,19 +124,36 @@
 			teamSearch.classList.remove("hidden");
 		}
 	});
-
+	//TEAM SEARCH LOGIC
 	teamForm.addEventListener("submit", TeamSearch);
-	
-	function TeamSearch(event){
+
+	function TeamSearch(event) {
 		event.preventDefault();
-		
+
 		const formData = new FormData(teamForm);
 		const data = [...formData.entries()];
 
 		const queryString = new URLSearchParams(data).toString();
-		console.log(queryString);
 
-		window.location.replace("/client/pages/football/results.html?" + queryString);
+		window.location.replace(
+			"/client/pages/football/teamresults.html?" + queryString
+		);
+	}
+
+	//PLAYER SEACH LOGIC
+	playerForm.addEventListener("submit", PlayerSearch);
+
+	function PlayerSearch(event) {
+		event.preventDefault();
+
+		const formData = new FormData(playerForm);
+		const data = [...formData.entries()];
+
+		const queryString = new URLSearchParams(data).toString();
+
+		window.location.replace(
+			"/client/pages/football/playerresults.html?" + queryString
+		);
 	}
 </script>
 
@@ -146,7 +168,7 @@
 	document.body.classList.add("ready");
 	loadFootballStats();
 	loadPlayerNames(1);
-
+	loadTeamNames(1);
 </script>
 
 <style>
