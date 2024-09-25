@@ -8,13 +8,13 @@
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css"
 		/>
-		<link rel="stylesheet" href="/client/global.css" />
+		<link rel="stylesheet" href="/global.css" />
 		<script
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"
 		></script>
-		<script src="/client/pages/football/football.js"></script>
-		<script src="/client/utils.js"></script>
+		<script src="/pages/football/football.js"></script>
+		<script src="/utils.js"></script>
 	</head>
 	<body>
 		<nav>
@@ -61,7 +61,7 @@
 						placeholder="Amount"
 						clearable
 					></sl-input>
-					<a href="/client/pages/football/results.html">
+					<a href="/pages/football/results.html">
 						<sl-button type="button" variant="success"
 							>Search
 						</sl-button>
@@ -136,7 +136,7 @@
 		const queryString = new URLSearchParams(data).toString();
 
 		window.location.replace(
-			"/client/pages/football/teamresults.html?" + queryString
+			"/pages/football/teamresults.html?" + queryString
 		);
 	}
 
@@ -152,7 +152,7 @@
 		const queryString = new URLSearchParams(data).toString();
 
 		window.location.replace(
-			"/client/pages/football/playerresults.html?" + queryString
+			"/pages/football/playerresults.html?" + queryString
 		);
 	}
 </script>
