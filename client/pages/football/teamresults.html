@@ -14,7 +14,9 @@
 	const id = params.get("id");
 
 	async function teamResults(sportID) {
-		const response = await fetch(`http://129.80.84.210/api/nfl/team_stats?id=${sportID}`);
+		const response = await fetch(
+			`http://129.80.84.210/api/nfl/team_stats?sport_id=${sportID}`
+		);
 
 		const json = await response.json();
 

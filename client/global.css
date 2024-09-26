@@ -74,6 +74,25 @@ a {
 	box-shadow: 5px 5px 0px black;
 }
 
+#summaryBox {
+	background-color: gray;
+	display: grid;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	margin: 0 auto;
+	padding: 2rem;
+	border: 3px solid black;
+	border-radius: 10px;
+	box-shadow: 5px 5px 0px black;
+}
+
+.statResults {
+	color: white;
+	display: flex;
+	gap: 1rem;
+}
+
 .form-container {
 	background-color: white;
 	display: flex;

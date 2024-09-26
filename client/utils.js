@@ -29,8 +29,6 @@ async function loadTeamNames(sportID) {
 
 	const json = await response.json();
 
-	console.log(json);
-
 	json.sort(function (a, b) {
 		a = a.name.toLowerCase();
 		b = b.name.toLowerCase();
@@ -42,7 +40,7 @@ async function loadTeamNames(sportID) {
 
 	for (let elements of json) {
 		let option = document.createElement("sl-option");
-		option.innerText = elements.first_name + " " + elements.last_name;
+		option.innerText = elements.name;
 		option.value = elements.id;
 		teamName.appendChild(option);
 	}
