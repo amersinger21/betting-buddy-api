@@ -135,8 +135,11 @@ def nfl_player_logs():
     json_output['occurrence_third'] = third_percentage
     json_output['third_total_games'] = third_total_games
 
-    return jsonify(json_output)
 
+    # Enable Access-Control-Allow-Origin
+    output = jsonify(json_output)
+    output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 
 @nfl.route('/nfl/player_stats', methods=['GET'])
