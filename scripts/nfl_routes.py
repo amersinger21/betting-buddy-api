@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
 
-@nfl.route('/nfl/player_logs', methods=['GET'])
+@nfl.route('nfl/player_logs', methods=['GET'])
 def nfl_player_logs():
     player_id = request.args.get('id', None)
     column_name = request.args.get('stat', None)
@@ -79,7 +79,7 @@ def nfl_player_logs():
     third_total_games = len(df_final.loc[df_final['Year'] == 2022])
 
 
-    json_output = []
+    json_output = {}
 
     # get the occurrence in the previous four games
     df_last_four = df_final.sort_values(by=['Year', 'Week'], ascending=False)
@@ -90,9 +90,7 @@ def nfl_player_logs():
         df_last_four = df_last_four.loc[df_last_four[column_name] <= value]
     last_four_bet_occurrence = len(df_last_four)
     last_four_percentage = str(round(((last_four_bet_occurrence/4) *100), 2)) + '%'
-    # json_output['occurrence_last_four'] = last_four_percentage
-    json_output.append({'occurrence_last_four': last_four_percentage})
-
+    json_output['occurrence_last_four'] = last_four_percentage
 
     # get the occurrence in the previous eight games
     df_last_eight = df_final.sort_values(by=['Year', 'Week'], ascending=False)
@@ -103,8 +101,7 @@ def nfl_player_logs():
         df_last_eight = df_last_eight.loc[df_last_eight[column_name] <= value]
     last_eight_bet_occurrence = len(df_last_eight)
     last_eight_percentage = str(round(((last_eight_bet_occurrence/8) *100), 2)) + '%'
-    json_output.append({'occurrence_last_eight': last_eight_percentage})
-    # json_output['occurrence_last_eight'] = last_eight_percentage
+    json_output['occurrence_last_eight'] = last_eight_percentage
 
     # get the bet total occurrence
     if op_val == '>':
@@ -115,9 +112,8 @@ def nfl_player_logs():
     df_total_occurrence = df_final
     total_bet_occurrence = len(df_total_occurrence)
     total_percentage = str(round(((total_bet_occurrence/total_player_games) *100), 2)) + '%'
-    json_output.append({'occurrence_total': total_percentage})
-    json_output.append({'total_player_games': total_player_games})
-    # json_output['total_player_games'] = total_player_games
+    json_output['occurrence_total'] = total_percentage
+    json_output['total_player_games'] = total_player_games
 
     # get the bet current year occurrence
     df_current_occurrence = df_final
@@ -129,23 +125,20 @@ def nfl_player_logs():
     df_prior_year = df_final.loc[df_final['Year'] == 2023]
     prior_bet_occurrence = len(df_prior_year)
     prior_percentage = str(round(((prior_bet_occurrence/prior_total_games) *100), 2)) + '%'
-    # json_output['occurrence_prior'] = prior_percentage
-    json_output.append({'occurrence_prior': prior_percentage})
-    json_output.append({'prior_total_games': prior_total_games})
-    # json_output['prior_total_games'] = prior_total_games
+    json_output['occurrence_prior'] = prior_percentage
+    json_output['prior_total_games'] = prior_total_games
 
     # get the bet third year occurrence
     df_third_year = df_final.loc[df_final['Year'] == 2022]
     third_bet_occurrence = len(df_third_year)
     third_percentage = str(round(((third_bet_occurrence/third_total_games) *100), 2)) + '%'
-    # json_output['occurrence_third'] = third_percentage
-    json_output.append({'occurrence_third': third_percentage})
-    json_output.append({'third_total_games': third_total_games})
-    # json_output['third_total_games'] = third_total_games
+    json_output['occurrence_third'] = third_percentage
+    json_output['third_total_games'] = third_total_games
 
-    print(json_output)
 
     # Enable Access-Control-Allow-Origin
+    json_output = [json_output]
+    print(json_output)
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
