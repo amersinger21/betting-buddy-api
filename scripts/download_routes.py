@@ -39,14 +39,14 @@ def download_nfl_data():
         df_final = pd.concat([df_final, df_merge])
 
     print(df_final)
-    file = '/Users/martymcflynn/Projects/betting_buddy/betting-buddy-api/docs/test.csv'
+    file = '/Users/martymcflynn/Desktop/OneDrive/betting_buddy/betting-buddy-api/docs/test.csv'
     df_final.to_csv(file)
     return f"Data has been downloaded"
 
 @docs.route('docs/nfl_players', methods = ['GET'])
 def download_nfl_players():
     # INITIALIZE VARIABLES
-    file = '/Users/martymcflynn/Projects/betting_buddy/betting-buddy-api/docs/nfl_player_table.csv'
+    file = '/Users/martymcflynn/Desktop/OneDrive/betting_buddy/betting-buddy-api/docs/nfl_player_table.csv'
     connection = create_connection()
     cursor = connection.cursor()
     query = f'''SELECT * FROM player
@@ -65,5 +65,11 @@ def download_nfl_players():
         df_final = pd.concat([df_final, df_merge])
 
     print(df_final)
+    df_final = df_final.reset_index(drop=True)
+
+    for ind, row in df_final.iterrows():
+        full_name = row['first_name'] + ' ' + row['last_name']
+        df_final.at[ind, 'full_name'] = full_name
+
     df_final.to_csv(file)
     return f"nfl_player_table.csv has been updated with the moost upto date NFL players."

@@ -5,52 +5,140 @@ from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
 
-@nfl.route('/nfl/player_stats', methods=['POST'])
-def nfl_add_player_stats(json_dict):
-    game_id = json_dict['game_id']
-    player_id = json_dict['player_id']
-    team_id = json_dict['team_id']
-    opp_id = json_dict['opp_id']
-    pass_att = json_dict['pass_att']
-    pass_comp = json_dict['pass_comp']
-    pass_yards = json_dict['pass_yards']
-    pass_td = json_dict['pass_td']
-    pass_longest = json_dict['pass_longest']
-    ints = json_dict['ints']
-    sacks = json_dict['sacks']
-    rush_att = json_dict['rush_att']
-    rush_yards = json_dict['rush_yards']
-    rush_td = json_dict['rush_td']
-    rush_longest = json_dict['rush_longest']
-    targets = json_dict['targets']
-    rec = json_dict['rec']
-    rec_yards = json_dict['rec_yards']
-    rec_td = json_dict['rec_td']
-    rec_longest = json_dict['rec_longest']
-    fumbles = json_dict['fumbles']
-
-
-    values = (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, ints,
-              sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles)
-
+@nfl.route('nfl/player_logs', methods=['GET'])
+def nfl_player_logs():
+    player_id = request.args.get('id', None)
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = float(request.args.get('value', None))
     connection = create_connection()
-    cursor=connection.cursor()
+    cursor = connection.cursor()
+    print(f"player_id = {player_id}")
+    print(f"value = {value}")
+    print(f"operator = {operator}")
 
-    cursor.execute("""INSERT INTO nfl_player_stats (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, 
-                    ints, sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles) 
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                   (values))
+    column = 'nfl_player_stats.' + column_name
+    print(f"column = {column}")
 
-    connection.commit()
-    print(f"Game has been added to games tabel.")
+    if operator == 'over':
+        op_val = '>'
+    else:
+        op_val = '<'
+
+    query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, nfl_player_stats.*
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN 
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE player.id = %s'''
+    vals = [player_id]
+    cursor.execute(query, vals)
+
+    results = list(cursor.fetchall())
+
+    df_final = pd.DataFrame()
+    for result in results:
+        item = {}
+        item['name'] = result[0]
+        item['Year'] = result[1]
+        item['Week'] = result[2]
+        item['pos'] = result[3]
+        item['id'] = result[4]
+        item['game_id'] = result[5]
+        item['player_id'] = result[6]
+        item['team_id'] = result[7]
+        item['opp_id'] = result[8]
+        item['pass_att'] = result[9]
+        item['pass_comp'] = result[10]
+        item['pass_yards'] = result[11]
+        item['pass_td'] = result[12]
+        item['pass_longest'] = result[13]
+        item['ints'] = result[14]
+        item['sacks'] = result[15]
+        item['rush_att'] = result[16]
+        item['rush_yards'] = result[17]
+        item['rush_td'] = result[18]
+        item['rush_longest'] = result[19]
+        item['targets'] = result[20]
+        item['rec'] = result[21]
+        item['rec_yards'] = result[22]
+        item['rec_td'] = result[23]
+        item['rec_longest'] = result[24]
+        item['fumbles'] = result[25]
+
+        df_merge = pd.DataFrame(item, index=[0])  # CREATE THE DATAFRAME THAT WILL BE MERGED
+        df_final = pd.concat([df_final, df_merge])
+
+    total_player_games = len(df_final)
+    current_total_games = len(df_final.loc[df_final['Year'] == 2024])
+    prior_total_games = len(df_final.loc[df_final['Year'] == 2023])
+    third_total_games = len(df_final.loc[df_final['Year'] == 2022])
 
 
-    result = {'game_id': game_id, 'player_id': player_id,'team_id': team_id, 'opp_id': opp_id, 'pass_att': pass_att,
-              'pass_comp': pass_comp, 'pass_yards': pass_yards, 'pass_td': pass_td, 'pass_longest':pass_longest, 'ints': ints,
-              'sacks': sacks, 'rush_att': rush_att, 'rush_yards': rush_yards, 'rush_td': rush_td, 'rush_longest': rush_longest,
-              'targets': targets, 'rec': rec, 'rec_yards': rec_yards, 'rec_td': rec_td, 'rec_longest': rec_longest, 'fumbles':fumbles}
+    json_output = {}
 
-    return result
+    # get the occurrence in the previous four games
+    df_last_four = df_final.sort_values(by=['Year', 'Week'], ascending=False)
+    df_last_four = df_last_four.head(4)
+    if op_val == '>':
+        df_last_four = df_last_four.loc[df_last_four[column_name] > value]
+    else:
+        df_last_four = df_last_four.loc[df_last_four[column_name] <= value]
+    last_four_bet_occurrence = len(df_last_four)
+    last_four_percentage = str(round(((last_four_bet_occurrence/4) *100), 2)) + '%'
+    json_output['occurrence_last_four'] = last_four_percentage
+
+    # get the occurrence in the previous eight games
+    df_last_eight = df_final.sort_values(by=['Year', 'Week'], ascending=False)
+    df_last_eight = df_last_eight.head(8)
+    if op_val == '>':
+        df_last_eight = df_last_eight.loc[df_last_eight[column_name] > value]
+    else:
+        df_last_eight = df_last_eight.loc[df_last_eight[column_name] <= value]
+    last_eight_bet_occurrence = len(df_last_eight)
+    last_eight_percentage = str(round(((last_eight_bet_occurrence/8) *100), 2)) + '%'
+    json_output['occurrence_last_eight'] = last_eight_percentage
+
+    # get the bet total occurrence
+    if op_val == '>':
+        df_final = df_final.loc[df_final[column_name] > value]
+    else:
+        df_final = df_final.loc[df_final[column_name] <= value]
+
+    df_total_occurrence = df_final
+    total_bet_occurrence = len(df_total_occurrence)
+    total_percentage = str(round(((total_bet_occurrence/total_player_games) *100), 2)) + '%'
+    json_output['occurrence_total'] = total_percentage
+    json_output['total_player_games'] = total_player_games
+
+    # get the bet current year occurrence
+    df_current_occurrence = df_final
+    current_bet_occurrence = len(df_current_occurrence)
+    # current_percentage = str(round(((current_bet_occurrence/current_total_games) *100), 2)) + '%'
+    # json_output['occurrence_current'] = current_percentage
+
+    # get the bet prior year occurrence
+    df_prior_year = df_final.loc[df_final['Year'] == 2023]
+    prior_bet_occurrence = len(df_prior_year)
+    prior_percentage = str(round(((prior_bet_occurrence/prior_total_games) *100), 2)) + '%'
+    json_output['occurrence_prior'] = prior_percentage
+    json_output['prior_total_games'] = prior_total_games
+
+    # get the bet third year occurrence
+    df_third_year = df_final.loc[df_final['Year'] == 2022]
+    third_bet_occurrence = len(df_third_year)
+    third_percentage = str(round(((third_bet_occurrence/third_total_games) *100), 2)) + '%'
+    json_output['occurrence_third'] = third_percentage
+    json_output['third_total_games'] = third_total_games
+
+    return jsonify(json_output)
+
+
+
 @nfl.route('/nfl/player_stats', methods=['GET'])
 def nfl_get_player_stats():
     player_id = request.args.get('id', None)
@@ -120,53 +208,54 @@ def nfl_get_player_stats():
     output.headers.add("Access-Control-Allow-Origin", "*")
     return output
 
+@nfl.route('/nfl/player_stats', methods=['POST'])
+def nfl_add_player_stats(json_dict):
+    game_id = json_dict['game_id']
+    player_id = json_dict['player_id']
+    team_id = json_dict['team_id']
+    opp_id = json_dict['opp_id']
+    pass_att = json_dict['pass_att']
+    pass_comp = json_dict['pass_comp']
+    pass_yards = json_dict['pass_yards']
+    pass_td = json_dict['pass_td']
+    pass_longest = json_dict['pass_longest']
+    ints = json_dict['ints']
+    sacks = json_dict['sacks']
+    rush_att = json_dict['rush_att']
+    rush_yards = json_dict['rush_yards']
+    rush_td = json_dict['rush_td']
+    rush_longest = json_dict['rush_longest']
+    targets = json_dict['targets']
+    rec = json_dict['rec']
+    rec_yards = json_dict['rec_yards']
+    rec_td = json_dict['rec_td']
+    rec_longest = json_dict['rec_longest']
+    fumbles = json_dict['fumbles']
 
-@nfl.route('/nfl/team', methods=['GET'])
-def nfl_get_team():
-    team_id = request.args.get('id', None)
+
+    values = (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, ints,
+              sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles)
+
     connection = create_connection()
-    cursor = connection.cursor()
-    print(f"team_id = {team_id}")
+    cursor=connection.cursor()
 
-    query = f'''SELECT team.name,  fb_off_stats.*, fb_def_stats.*
-                FROM fb_off_stats
-                JOIN team ON team.id = fb_off_stats.team_id 
-                JOIN fb_def_stats ON (fb_def_stats.team_id =  fb_off_stats.team_id) AND (fb_def_stats.year =  fb_off_stats.year)
-                WHERE team.id = %s'''
-    vals = [team_id]
-    cursor.execute(query, vals)
+    cursor.execute("""INSERT INTO nfl_player_stats (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, 
+                    ints, sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                   (values))
 
-    results = list(cursor.fetchall())
-    output = []
-    for result in results:
-        item = {'name': result[0], 'id': result[1], 'team_id': result[2], 'year': result[3], 'games': result[4], 'off_dvoa': result[5],
-                'off_epa': result[6], 'dropback_epa': result[7], 'dropback_sr': result[8], 'rush_epa': result[9], 'rush_sr': result[10],
-                'pass_att': result[11], 'pass_comp': result[12], 'pass_yards': result[13], 'pass_td': result[14], 'int_thrown': result[15],
-                'pass_yard_att': result[16], 'pass_yards_per_game': result[17], 'sacks_taken': result[18], 'rush_att': result[19],
-                'rush_yards': result[20], 'rush_td': result[21], 'rush_yards_per_att': result[22], 'rush_yards_per_game': result[23],
-                'fumbles_lost': result[24], 'points_scored': result[25], 'points_scored_per_game': result[26], 'off_rz_plays': result[27],
-                'off_rz_td': result[28], 'total_drives': result[29], 'total_plays': result[30],  'scoring_percentage': result[31],
-                'to_percentage': result[32], 'avg_drive_play': result[33], 'avg_drive_points': result[34], 'avg_drive_yards': result[35], 'def_id': result[36],
-                'def_dvoa': result[40], 'def_epa': result[41], 'def_dropback_epa': result[42], 'def_dropback_sr': result[43], 'def_rush_epa': result[44],
-                'def_rush_sr': result[45], 'pass_comp_allowed': result[46], 'pass_att_faced': result[47], 'pass_yards_allowed': result[48],
-                'pass_td_allowed': result[49], 'allowed_pyards_per_att': result[50], 'allowed_pyards_per_game': result[51], 'qb_hits': result[52],
-                'qb_sacks': result[53], 'ints': result[54], 'rush_att_faced': result[55], 'rush_yards_allowed': result[56], 'rush_td_allowed': result[57],
-                'allowed_ryards_per_att': result[58], 'allowed_ryards_per_game': result[59], 'rec_allowed': result[60], 'rec_td_allowed': result[61],
-                'points_allowed': result[62], 'points_per_game_allowed': result[63], 'rz_att_faced': result[64], 'rz_td_allowed': result[65],
-                'rz_td_allowed_percentage': result[66], 'drives_faced': result[67], 'plays_faced': result[68], 'score_against_percentage': result[69],
-                'def_to_percentage': result[70], 'plays_faced_per_drive': result[71], 'yards_allowed_per_drive': result[72], 'points_allowed_per_drive': result[73],
-                'TE_targets': result[74], 'TE_rec': result[75], 'TE_yards': result[76], 'TE_td': result[77], 'WR_targets': result[78],
-                'WR_rec': result[79], 'WR_yards': result[80], 'WR_td': result[81], 'RB_targets': result[82], 'RB_rec': result[83],
-                'RB_rec_yards': result[84], 'RB_rec_td': result[85], 'RB_att': result[86], 'RB_rush_yards': result[87], 'RB_rush_td': result[88],
-                'QB_completions': result[89], 'QB_att': result[90], 'QB_yards': result[91], 'QB_rush_att': result[92], 'QB_rush_yards': result[93],
-                'QB_rush_td': result[94]}
-        if item not in output:
-            output.append(item)
+    connection.commit()
+    print(f"Game has been added to games tabel.")
 
-    # Enable Access-Control-Allow-Origin
-    output = jsonify(output)
-    output.headers.add("Access-Control-Allow-Origin", "*")
-    return output
+
+    result = {'game_id': game_id, 'player_id': player_id,'team_id': team_id, 'opp_id': opp_id, 'pass_att': pass_att,
+              'pass_comp': pass_comp, 'pass_yards': pass_yards, 'pass_td': pass_td, 'pass_longest':pass_longest, 'ints': ints,
+              'sacks': sacks, 'rush_att': rush_att, 'rush_yards': rush_yards, 'rush_td': rush_td, 'rush_longest': rush_longest,
+              'targets': targets, 'rec': rec, 'rec_yards': rec_yards, 'rec_td': rec_td, 'rec_longest': rec_longest, 'fumbles':fumbles}
+
+    return result
+
+
 
 # GAME INFO ROUTES
 @nfl.route('/nfl/games', methods=['POST'])

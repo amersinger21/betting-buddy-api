@@ -10,7 +10,7 @@ scrap_1.py
 
 /scripts/api_testing.py
 
-
+/scripts/download_routes.py
 
 run_nfl_data_update.py
 run_mlb_data_upload.py
