@@ -1,4 +1,4 @@
-const footbalStats = [
+const footballStats = [
 	{
 		value: "pass_att",
 		name: "Passing Attempts",
@@ -74,7 +74,7 @@ const teamStats = [];
 function loadFootballStats() {
 	let playerStats = document.querySelector("#playerStat");
 
-	for (let elements of footbalStats) {
+	for (let elements of footballStats) {
 		let option = document.createElement("sl-option");
 		option.innerText = elements.name;
 		option.value = elements.value;
