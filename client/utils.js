@@ -6,8 +6,8 @@ async function loadPlayerNames(sportID) {
 	const json = await response.json();
 
 	json.sort(function (a, b) {
-		a = a.last_name.toLowerCase();
-		b = b.last_name.toLowerCase();
+		a = a.last_name.toLowerCase() + " " + a.first_name.toLowerCase();
+		b = b.last_name.toLowerCase() + " " + b.first_name.toLowerCase();
 
 		return a < b ? -1 : a > b ? 1 : 0;
 	});
