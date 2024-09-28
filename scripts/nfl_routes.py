@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
 
-@nfl.route('nfl/player_logs', methods=['GET'])
+@nfl.route('/nfl/player_logs', methods=['GET'])
 def nfl_player_logs():
     player_id = request.args.get('id', None)
     column_name = request.args.get('stat', None)
