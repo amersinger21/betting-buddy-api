@@ -137,8 +137,8 @@ def nfl_player_logs():
 
 
     # Enable Access-Control-Allow-Origin
-    output = jsonify(json_output)
-    output.headers.add("Access-Control-Allow-Origin", "*")
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
 
