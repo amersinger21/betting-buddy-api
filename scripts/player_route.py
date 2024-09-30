@@ -26,32 +26,6 @@ def add_player(json_dict):
     return result
 
 
-
-@player.route('/player', methods=['PUT'])
-def update_player(json_dict):
-    connection = create_connection()
-    cursor=connection.cursor()
-    last_name = json_dict['last_name']
-    first_name = json_dict['first_name']
-    position = json_dict['position']
-    id = json_dict['id']
-
-    player_name = first_name + ' ' + last_name
-    values = (last_name, first_name, position, id)
-
-    cursor.execute("""UPDATE player 
-                   SET last_name = %s, first_name = %s, position = %s
-                   WHERE player.id = %s""", (values))
-    connection.commit()
-
-    print(f"{player_name} has been added to player tabel.")
-
-    result = {'last_name': last_name, 'first_name': first_name, 'position': position}
-    return result
-
-
-
-
 @player.route('/player', methods=['GET'])
 def get_player():
     first_name = request.args.get('first_name', None)
@@ -85,9 +59,9 @@ def get_player_dropdown():
                     player ON player.id = nfl_player_teams.player_id
                         JOIN
                     team ON team.id = nfl_player_teams.team_id
-                        WHERE team.sport_id = %s
+                        WHERE team.sport_id = %s and player.currently_playing = %s
                         GROUP BY nfl_player_teams.player_id''',
-                   [sport_id])
+                   [sport_id,'Y'])
     results = list(cursor.fetchall())
 
     result_list = []
