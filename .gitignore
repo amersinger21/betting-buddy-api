@@ -4,6 +4,9 @@ archive
 docs
 variables
 
+/scripts/nfl_upload_files.py
+/scripts/download_routes.py
+
 .env
 scrap.py
 scrap_1.py

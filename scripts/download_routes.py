@@ -43,20 +43,24 @@ def download_nfl_data():
     df_final.to_csv(file)
     return f"Data has been downloaded"
 
+
+
+from variables.nfl_variables import nfl_player_db_file
 @docs.route('docs/nfl_players', methods = ['GET'])
 def download_nfl_players():
     # INITIALIZE VARIABLES
-    file = '/Users/martymcflynn/Desktop/OneDrive/betting_buddy/betting-buddy-api/docs/nfl_player_table.csv'
+    file = nfl_player_db_file
     connection = create_connection()
     cursor = connection.cursor()
     query = f'''SELECT * FROM player
                 WHERE position = 'QB' OR position = 'RB' OR position = 'WR' OR position = 'FB' OR position = 'TE'
                 ORDER BY id;'''
 
+    # run query and get results as a list
     cursor.execute(query)
-
     results = cursor.fetchall()
 
+    # initialize the final dataframe
     df_final = pd.DataFrame()
     for result in results:
         item = {'id': result[0], 'last_name': result[1], 'first_name': result[2], 'position': result[3]}
@@ -64,12 +68,16 @@ def download_nfl_players():
         df_merge = pd.DataFrame(item, index=[0])  # CREATE THE DATAFRAME THAT WILL BE MERGED
         df_final = pd.concat([df_final, df_merge])
 
-    print(df_final)
+    # reset the index of the final dataframe
     df_final = df_final.reset_index(drop=True)
 
+    # add column full_name to final dataframe
     for ind, row in df_final.iterrows():
         full_name = row['first_name'] + ' ' + row['last_name']
         df_final.at[ind, 'full_name'] = full_name
 
     df_final.to_csv(file)
     return f"nfl_player_table.csv has been updated with the moost upto date NFL players."
+
+
+
