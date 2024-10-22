@@ -1,5 +1,3 @@
-import pandas as pd
-
 from .db import create_connection
 from flask import Blueprint, request, jsonify
 
@@ -51,7 +49,8 @@ def get_player_dropdown():
     sport_id = request.args.get('sport_id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    # return sport_id
+
+    # execute the query getting the nfl players
     cursor.execute('''
                 SELECT player.id, player.first_name, player.last_name
                     FROM nfl_player_teams
@@ -73,5 +72,30 @@ def get_player_dropdown():
     result_list = jsonify(result_list)
     result_list.headers.add("Access-Control-Allow-Origin", "*")
     return result_list
+
+
+@player.route('/players', methods=['PUT'])
+def update_player_status(json_dict):
+    # initialize variables
+    id = json_dict['id']
+    last_name = json_dict['last_name']
+    first_name = json_dict['first_name']
+    currently_playing = json_dict['currently_playing']
+
+    # connect to the database
+    connection = create_connection()
+    cursor=connection.cursor()
+
+    values = (currently_playing, id, last_name, first_name)
+    # execute sql query inserting into table
+    cursor.execute('''UPDATE player
+            SET currently_playing = %s
+            WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
+
+    connection.commit()
+
+    print(f"{first_name} {last_name} has had set to actively playing.")
+    pass
+
 
 

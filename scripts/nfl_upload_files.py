@@ -197,7 +197,7 @@ def nfl_update_team_off_stats(json_dict):
     connection = create_connection()
     cursor = connection.cursor()
 
-    cursor.execute("""UPDATE nfl_redzone_stats
+    cursor.execute("""UPDATE nfl_team_offense
                     SET games = %s, dvoa = %s, epa_per_play = %s, success_rate = %s, dropback_epa = %s, dropback_sr = %s, 
     rush_epa = %s, rush_sr = %s, pass_comp = %s, pass_att = %s, pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, 
     pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s, passer_rating = %s, sacks = %s, 
@@ -651,7 +651,7 @@ def nfl_update_standings(json_dict):
     strength_of_schedule = json_dict['strength_of_schedule']
 
     values = (wins, losses, ties, win_loss_percentage, points_for, points_against, point_diff, avg_margin_of_victory,
-              strength_of_schedule, year, team_id)
+              strength_of_schedule, team_id, year)
 
     connection = create_connection()
     cursor = connection.cursor()
@@ -687,21 +687,60 @@ def nfl_add_game(json_dict):
     vegas_line = json_dict['vegas_line']
     vegas_line_result = json_dict['vegas_line_result']
     over_under = json_dict['over_under']
+    total_points = json_dict['total_points']
     over_under_result = json_dict['over_under_result']
 
     values = (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
-              vegas_line_result, over_under, over_under_result)
+              vegas_line_result, over_under, total_points, over_under_result)
 
     connection = create_connection()
     cursor=connection.cursor()
 
     cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
-              vegas_line_result, over_under, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+              vegas_line_result, over_under, total_points, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
                    (values))
     connection.commit()
 
     result = { 'week': week, 'year': year, 'home_team': home_id, 'home_score': home_score, 'away_team': away_id, 'away_score': away_score,
                'winner': winner, 'margin_of_victory': margin_of_victory, 'weather_id': weather_id, 'vegas_line': vegas_line,
-               'vegas_line_result': vegas_line_result,'over_under': over_under, 'over_under_result': over_under_result}
+               'vegas_line_result': vegas_line_result,'over_under': over_under, 'total_points': total_points, 'over_under_result': over_under_result}
+
+    return result
+
+@nfl.route('/nfl/games', methods=['PUT'])
+def nfl_update_game_info(json_dict):
+    id = json_dict['id']
+    week = json_dict['week']
+    year = json_dict['year']
+    home_id = json_dict['home_id']
+    home_score = json_dict['home_score']
+    away_id = json_dict['away_id']
+    away_score = json_dict['away_score']
+    winner = json_dict['winner']
+    margin_of_victory = json_dict['margin_of_victory']
+    weather_id = json_dict['weather_id']
+    vegas_line = json_dict['vegas_line']
+    vegas_line_result = json_dict['vegas_line_result']
+    over_under = json_dict['over_under']
+    total_points = json_dict['total_points']
+    over_under_result = json_dict['over_under_result']
+
+    values = (week, year, home_score, away_score, winner, margin_of_victory, weather_id, vegas_line,
+              vegas_line_result, over_under, total_points, over_under_result, id, home_id, away_id)
+
+    connection = create_connection()
+    cursor=connection.cursor()
+
+    cursor.execute('''UPDATE nfl_games 
+            SET week = %s, year = %s, home_score = %s, away_score = %s, winner = %s, margin_of_victory = %s, weather_id = %s, vegas_line = %s,
+            vegas_line_result = %s, over_under = %s, total_points = %s, over_under_result = %s
+            WHERE nfl_games.id = %s AND nfl_games.home_id = %s AND nfl_games.away_id = %s''', (values))
+    connection.commit()
+
+    print(f"Game info table has been updated..")
+
+    result = {'week': week, 'year': year, 'home_team': home_id, 'home_score': home_score, 'away_team': away_id, 'away_score': away_score,
+               'winner': winner, 'margin_of_victory': margin_of_victory, 'weather_id': weather_id, 'vegas_line': vegas_line,
+               'vegas_line_result': vegas_line_result,'over_under': over_under, 'total_points': total_points, 'over_under_result': over_under_result}
 
     return result

@@ -3,6 +3,8 @@ import pandas as pd
 from .db import create_connection
 from flask import Blueprint, request, jsonify
 
+from variables.nfl_variables import nfl_current_season, nfl_current_season_table
+
 docs = Blueprint("docs", __name__)
 
 @docs.route('docs/nfl_data', methods = ['GET'])
@@ -52,21 +54,25 @@ def download_nfl_players():
     file = nfl_player_db_file
     connection = create_connection()
     cursor = connection.cursor()
-    query = f'''SELECT * FROM player
-                WHERE position = 'QB' OR position = 'RB' OR position = 'WR' OR position = 'FB' OR position = 'TE'
-                ORDER BY id;'''
 
-    # run query and get results as a list
-    cursor.execute(query)
+    cursor.execute('''SELECT * FROM player
+            WHERE position = 'QB' OR position = 'RB' OR position = 'WR' OR position = 'FB' OR position = 'TE'
+            ORDER BY id
+            ''')
+
     results = cursor.fetchall()
 
+    print(results)
     # initialize the final dataframe
-    df_final = pd.DataFrame()
+    df_final = pd.DataFrame(columns=['id', 'last_name', 'first_name', 'position', 'current_team', 'currently_playing'])
+    index_val = 0
     for result in results:
-        item = {'id': result[0], 'last_name': result[1], 'first_name': result[2], 'position': result[3]}
-
-        df_merge = pd.DataFrame(item, index=[0])  # CREATE THE DATAFRAME THAT WILL BE MERGED
+        item = {'id': result[0], 'last_name': result[1], 'first_name': result[2], 'position': result[3], 'current_team': result[5],
+                'currently_playing': result[6]}
+        print(item)
+        df_merge = pd.DataFrame(item, index=[index_val])  # CREATE THE DATAFRAME THAT WILL BE MERGED
         df_final = pd.concat([df_final, df_merge])
+        index_val += 1
 
     # reset the index of the final dataframe
     df_final = df_final.reset_index(drop=True)
@@ -79,5 +85,43 @@ def download_nfl_players():
     df_final.to_csv(file)
     return f"nfl_player_table.csv has been updated with the moost upto date NFL players."
 
+
+@docs.route('docs/nfl_schedule', methods=['GET'])
+def download_nfl_current_schedule():
+    # INITIALIZE VARIABLES
+    file = nfl_current_season_table
+    connection = create_connection()
+    cursor = connection.cursor()
+
+
+    query = '''SELECT * FROM nfl_games
+                    WHERE year = %s'''
+    vals = [nfl_current_season]
+
+    # run query and get results as a list
+    cursor.execute(query, vals)
+    results = cursor.fetchall()
+
+    # initialize the final dataframe
+    df_final = pd.DataFrame(columns=['id', 'week', 'year', 'home_id', 'home_score', 'away_id', 'away_score',
+                                     'winner', 'margin_of_victory', 'weather_id', 'vegas_line', 'vegas_line_result',
+                                     'over_under', 'total_points', 'over_under_result'])
+
+    index_val = 0
+    for result in results:
+        item = {'id': result[0], 'week': result[1], 'year': result[2], 'home_id': result[3], 'home_score': result[4],
+         'away_id': result[5], 'away_score': result[6], 'winner': result[7], 'margin_of_victory': result[8], 'weather_id': result[9],
+         'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12], 'total_points': result[13],
+         'over_under_result': result[14]}
+
+        df_merge = pd.DataFrame(item, index=[index_val])  # CREATE THE DATAFRAME THAT WILL BE MERGED
+        df_final = pd.concat([df_final, df_merge])
+        index_val += 1
+
+    # reset the index of the final dataframe
+    df_final = df_final.reset_index(drop=True)
+
+    df_final.to_csv(file)
+    return f"nfl_current_season_schedule.csv has been updated with the most upto date NFL games."
 
 
