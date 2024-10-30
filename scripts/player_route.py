@@ -70,6 +70,7 @@ def get_player_dropdown():
 
     # Enable Access-Control-Allow-Origin
     result_list = jsonify(result_list)
+    print(result_list)
     result_list.headers.add("Access-Control-Allow-Origin", "*")
     return result_list
 
