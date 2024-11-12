@@ -2,15 +2,12 @@ import pandas as pd
 import numpy as np
 import statistics
 
-from variables.nfl_variables import nfl_past_week
-
 from .db import create_connection
 from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
-
 pd.set_option('display.max_columns', 100)
-# pd.options.mode.chained_assignment = None
+
 
 @nfl.route('nfl/player_logs', methods=['GET'])
 def nfl_player_logs():
@@ -46,9 +43,6 @@ def nfl_player_logs():
     df_columns = ['name', 'Year', 'Week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', limit_stat, column_name]
     cursor.execute(query)
     results = list(cursor.fetchall())
-    # results = [list(elem) for elem in results]
-    # for result in results:
-    #     print(type(result))
 
     df_all_games = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
     df_all_games.reset_index(inplace=True)
@@ -86,7 +80,6 @@ def nfl_player_logs():
     year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
     total_game_dict = {2022: third_total_games, 2023: prior_total_games, 2024: current_total_games}
 
-
     df_last_four = df_player_game_logs.sort_values(by=['Year', 'Week'], ascending=False).head(4)  # sort values by most recent games
     if operator == 'over':
         df_last_four_occur = df_last_four.loc[df_last_four[column_name] > value]
@@ -97,7 +90,7 @@ def nfl_player_logs():
     json_output.append({'occurrence_count_last_four':last_four_bet_occurrence})
     json_output.append({'occurrence_percentage_last_four': last_four_percentage})
     json_output.append({'last_four_game_logs': df_last_four.to_json()})
-    #
+
     # get the occurrence in the previous eight games
     df_last_eight = df_player_game_logs.sort_values(by=['Year', 'Week'], ascending=False).head(8)# sort values by most recent games
     if operator == 'over':
@@ -109,13 +102,13 @@ def nfl_player_logs():
     json_output.append({'occurrence_count_last_eight':last_eight_bet_occurrence})
     json_output.append({'occurrence_percentage_last_eight': last_eight_percentage})
     json_output.append({'last_eight_game_logs': df_last_eight.to_json()})
-    #
+
     # determine what df_final will be for the total/current/prior/third dataframes
     if operator == 'over':
         df_game_log_bet = df_player_game_logs.loc[df_player_game_logs[column_name] > value]
     else:
         df_game_log_bet = df_player_game_logs.loc[df_player_game_logs[column_name] <= value]
-    # #
+
     # Get total bet frequency data
     df_total_occurrence = df_game_log_bet
     total_bet_occurrence = len(df_total_occurrence)
@@ -123,7 +116,6 @@ def nfl_player_logs():
     json_output.append({'career_bet_occurrence':total_bet_occurrence})
     json_output.append({'career_bet_occurrence_percentage': total_percentage})
     json_output.append({'career_total_games': total_player_games})
-    print(json_output)
 
     # Get yearly bet frequency data
     for year in rank_years:
@@ -138,7 +130,7 @@ def nfl_player_logs():
         # Get total game logs each year
         df_total_game_logs = df_player_game_logs.loc[df_player_game_logs['Year'] == year]
         json_output.append({f"game_logs_{year_name_dict[year]}": df_total_game_logs.to_json()})
-    #
+
     # Get the time between bet occurrences
     for year in rank_years:
         week_between_list = []
@@ -283,11 +275,34 @@ def nfl_player_logs():
             json_output.append({f"player_percentage_x_coordinates_{year_name_dict[year]}": week_list})
             json_output.append({f"player_percentage_y_coordinates_{year_name_dict[year]}": value_list})
 
+    # Red zone stats
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    rz_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.*
+                FROM nfl_redzone_stats
+                JOIN player ON player.id = nfl_redzone_stats.player_id'''
+
+    # rz_vals = [player_id]
+    cursor.execute(rz_query)
+
+    rz_cols = ['name', 'id', 'player_id', 'year', 'rz_20_pass_att', 'rz_20_pass_comp',  'rz_20_pass_comp_percentage',
+               'rz_20_pass_yard', 'rz_20_pass_td', 'rz_20_pass_int', 'rz_10_pass_att', 'rz_10_pass_comp', 'rz_10_comp_percentage',
+               'rz_10_pass_yard', 'rz_10_pass_td', 'rz_10_pass_int', 'rz_20_targets', 'rz_20_receptions', 'rz_20_rec_yards',
+               'rz_20_catch_percentage', 'rz_20_rec_td', 'rz_20_target_percentage', 'rz_10_targets', 'rz_10_receptions',
+               'rz_10_rec_yards', 'rz_10_catch_percentage', 'rz_10_rec_td', 'rz_10_target_percentage', 'rz_20_rush_att',
+               'rz_20_rush_yards', 'rz_20_rush_td', 'rz_20_rush_percentage', 'rz_10_rush_att', 'rz_10_rush_yards', 'rz_10_rush_td',
+               'rz_10_rush_percentage', 'rz_5_rush_att', 'rz_5_rush_yards', 'rz_5_rush_td', 'rz_5_rush_percentage']
+    rz_results = list(cursor.fetchall())
+    df_red_zone = pd.DataFrame(rz_results, columns=rz_cols).reset_index(drop=True)
+    print(df_red_zone)
+
+
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
-    print(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
+
 
 @nfl.route('/nfl/team_stats', methods=['GET'])
 def nfl_team_stats():
@@ -489,24 +504,19 @@ def nfl_team_stats():
     cursor.execute(standings_query, vals)
 
     standing_results = list(cursor.fetchall())
-    df_standings_hold = pd.DataFrame()
-    for result in standing_results:
-        item = {'id': result[0], 'year': result[1], 'team_id': result[2], 'wins': result[3], 'losses': result[4], 'ties': result[5],
-        'win_loss_percentage': result[6], 'points_for': result[7], 'points_against': result[8], 'point_diff': result[9],
-        'avg_margin_of_victory': result[10], 'strength_of_schedule': result[11]}
-
-        df_merge = pd.DataFrame(item, index=[0])  # CREATE THE DATAFRAME THAT WILL BE MERGED
-        df_standings_hold = pd.concat([df_standings_hold, df_merge])
+    standing_cols = ['id', 'year', 'team_id', 'wins', 'losses', 'ties', 'win_loss_percentage', 'points_for', 'points_against',
+                     'point_diff', 'avg_margin_of_victory', 'strength_of_schedule']
+    df_standings_hold = pd.DataFrame(standing_results, columns=standing_cols).reset_index(drop=True)
 
     for year in rank_years:
         df_standings = df_standings_hold.loc[df_standings_hold['year'] == year]
         record = f"{df_standings['wins'].values.tolist()[0]}-{df_standings['losses'].values.tolist()[0]}-{df_standings['ties'].values.tolist()[0]}"
         json_output.append({f"team_record_{year_name_dict[year]}": record})
-        # json_output[f"team_record_{year_name_dict[year]}"] = record
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
+
 
 @nfl.route('/nfl/opponent_stats', methods=['GET'])
 def nfl_opponent_information():
@@ -669,7 +679,6 @@ def nfl_opponent_information():
     cursor.execute(opp_game_log_query, vals)
     game_log_results = list(cursor.fetchall())
 
-    # df_game_logs = pd.DataFrame()
     game_log_cols = ['name', 'Year', 'Week', 'pos', 'opponent_name', 'id', 'game_id', 'player_id', 'team_id', 'opp_id',
                 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'ints', 'sacks', 'rush_att',
                 'rush_yards', 'rush_td', 'rush_longest', 'targets', 'rec', 'rec_yards', 'rec_td', 'rec_longest', 'fumbles']
@@ -746,32 +755,6 @@ def nfl_opponent_information():
     return json_output
 
 
-
-
-@nfl.route('/nfl/games', methods=['GET'])
-def nfl_get_games():
-    id = request.args.get('id', None)
-    connection = create_connection()
-    cursor = connection.cursor()
-    cursor.execute('''SELECT * FROM nfl_games
-                    WHERE home_id = %s OR away_id = %s ''',
-                   [id, id])
-    results = list(cursor.fetchall())
-    result_list = []
-    for result in results:
-        player_dict = {'id': result[0], 'week': result[1], 'year': result[2], 'home_id': result[3], 'home_score': result[4],
-                       'away_team_id': result[5], 'away_score': result[6], 'winner': result[7], 'margin_of_victory': result[8],
-                       'weather': result[9], 'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12],
-                       'over_under_result': result[13]}
-        result_list.append(player_dict)
-
-    # Enable Access-Control-Allow-Origin
-    result_list = jsonify(result_list)
-    result_list.headers.add("Access-Control-Allow-Origin", "*")
-    return result_list
-
-
-
 @nfl.route('/nfl/rz_stat', methods=['GET'])
 def nfl_get_rz_stat():
     player_id = request.args.get('player_id', None)
@@ -812,32 +795,24 @@ def nfl_get_rz_stat():
     return output
 
 
-
-@nfl.route('/nfl/standings', methods=['GET'])
-def nfl_get_standings():
-    team_id = request.args.get('id', None)
+@nfl.route('/nfl/games', methods=['GET'])
+def nfl_get_games():
+    id = request.args.get('id', None)
     connection = create_connection()
     cursor = connection.cursor()
-    print(f"team_id = {team_id}")
-
-    query = f'''SELECT * FROM nfl_standings
-                WHERE team_id = %s'''
-    vals = [team_id]
-    cursor.execute(query, vals)
-
-    results = cursor.fetchall()
-
-    output = []
+    cursor.execute('''SELECT * FROM nfl_games
+                    WHERE home_id = %s OR away_id = %s ''',
+                   [id, id])
+    results = list(cursor.fetchall())
+    result_list = []
     for result in results:
-        result = {'id': result[0], 'year': result[1] , 'team_id': result[2], 'wins': result[3], 'losses': result[4], 'ties': result[5],
-                  'win_loss_percentage': result[6], 'points_for': result[7], 'points_against': result[8], 'point_diff': result[9],
-                  'avg_margin_of_victory': result[10], 'strength_of_schedule': result[11]}
-        output.append(result)
+        player_dict = {'id': result[0], 'week': result[1], 'year': result[2], 'home_id': result[3], 'home_score': result[4],
+                       'away_team_id': result[5], 'away_score': result[6], 'winner': result[7], 'margin_of_victory': result[8],
+                       'weather': result[9], 'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12],
+                       'over_under_result': result[13]}
+        result_list.append(player_dict)
 
     # Enable Access-Control-Allow-Origin
-    output = jsonify(output)
-    output.headers.add("Access-Control-Allow-Origin", "*")
-    return output
-
-
-
+    result_list = jsonify(result_list)
+    result_list.headers.add("Access-Control-Allow-Origin", "*")
+    return result_list
