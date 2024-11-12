@@ -74,7 +74,7 @@ a {
 	box-shadow: 5px 5px 0px black;
 }
 
-#summaryBox {
+.infoBox {
 	background-color: gray;
 	display: grid;
 	flex-wrap: wrap;
