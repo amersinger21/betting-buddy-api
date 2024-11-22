@@ -10,17 +10,18 @@ def add_player(json_dict):
     cursor=connection.cursor()
     last_name = json_dict['last_name']
     first_name = json_dict['first_name']
+    sport_id = json_dict['sport_id']
     position = json_dict['position']
     current_team = json_dict['current_team']
     currently_playing =json_dict['currently_playing']
 
 
     # execute sql query inserting into table
-    cursor.execute("INSERT INTO player (last_name, first_name, position, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s)", (last_name, first_name, position, current_team, currently_playing))
+    cursor.execute("INSERT INTO player (last_name, first_name, sport_id, position, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s, %s)", (last_name, first_name, sport_id, position, current_team, currently_playing))
     connection.commit()
     print(f"{first_name} {last_name} has been added to player tabel.")
 
-    result = {'last_name': last_name, 'first_name': first_name, 'position': position, 'current_team': current_team, 'current_playing': currently_playing}
+    result = {'last_name': last_name, 'first_name': first_name, 'sport_id': sport_id, 'position': position, 'current_team': current_team, 'current_playing': currently_playing}
     return result
 
 
