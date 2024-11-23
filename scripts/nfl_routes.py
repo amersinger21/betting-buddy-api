@@ -173,9 +173,19 @@ def nfl_player_logs():
         json_output.append({f"x_coordinates_{year_name_dict[year]}": df_graph['Week'].values.tolist()})
         json_output.append({f"y_coordinates_{year_name_dict[year]}": df_graph[column_name].values.tolist()})
 
+        # Run query to get nfl games
+        connection = create_connection()
+        cursor = connection.cursor()
+        games_query = f'''SELECT * from nfl_games'''
+        cursor.execute(games_query)
+        results = list(cursor.fetchall())
+        game_table_cols = ['id', 'week', 'year', 'home_id', 'home_score', 'away_id', 'away_score', 'winner', 'margin_of_victory',
+                      'weather_id', 'vegas_line', 'vegas_line_result', 'over_under', 'total_points', 'over_under_result']
+
+        df_games_table = pd.DataFrame(results, columns=game_table_cols).reset_index(drop=True)
         for week in weeks:
-            df_nfl_games = pd.read_csv('/Users/martymcflynn/Desktop/OneDrive/betting_buddy/betting-buddy-api/docs/nfl_games.csv')
-            df_week_game = df_nfl_games.loc[(df_nfl_games['year'] == year) & (df_nfl_games['week'] == week)]
+            df_game_copy = df_games_table
+            df_week_game = df_game_copy.loc[(df_game_copy['year'] == year) & (df_game_copy['week'] == week)]
             number_of_teams_playing = len(df_week_game) * 2
 
             df_week_total = df_all_games.reset_index(drop=True)
