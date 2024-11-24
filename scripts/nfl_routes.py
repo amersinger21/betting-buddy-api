@@ -23,7 +23,8 @@ def nfl_player_logs():
                        'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets',}
     limit_stat = limit_stat_dict[column_name]
     print(limit_stat)
-    json_output = []
+    # json_output = []
+    json_output = {}
     cols_to_select = f"game_id, player_id, team_id, opp_id, {limit_stat}, {column_name}"
 
     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
@@ -87,9 +88,9 @@ def nfl_player_logs():
         df_last_four_occur = df_last_four.loc[df_last_four[column_name] <= value]
     last_four_bet_occurrence = len(df_last_four_occur)
     last_four_percentage = str(round(((last_four_bet_occurrence/4) *100))) + '%'
-    json_output.append({'occurrence_count_last_four':last_four_bet_occurrence})
-    json_output.append({'occurrence_percentage_last_four': last_four_percentage})
-    json_output.append({'last_four_game_logs': df_last_four.to_json()})
+    json_output.update({'occurrence_count_last_four':last_four_bet_occurrence})
+    json_output.update({'occurrence_percentage_last_four': last_four_percentage})
+    json_output.update({'last_four_game_logs': df_last_four.to_json()})
 
     # get the occurrence in the previous eight games
     df_last_eight = df_player_game_logs.sort_values(by=['Year', 'Week'], ascending=False).head(8)# sort values by most recent games
@@ -99,9 +100,9 @@ def nfl_player_logs():
         df_last_eight_occur = df_last_eight.loc[df_last_eight[column_name] <= value]
     last_eight_bet_occurrence = len(df_last_eight_occur)
     last_eight_percentage = str(round(((last_eight_bet_occurrence/8) *100))) + '%'
-    json_output.append({'occurrence_count_last_eight':last_eight_bet_occurrence})
-    json_output.append({'occurrence_percentage_last_eight': last_eight_percentage})
-    json_output.append({'last_eight_game_logs': df_last_eight.to_json()})
+    json_output.update({'occurrence_count_last_eight':last_eight_bet_occurrence})
+    json_output.update({'occurrence_percentage_last_eight': last_eight_percentage})
+    json_output.update({'last_eight_game_logs': df_last_eight.to_json()})
 
     # determine what df_final will be for the total/current/prior/third dataframes
     if operator == 'over':
@@ -113,23 +114,23 @@ def nfl_player_logs():
     df_total_occurrence = df_game_log_bet
     total_bet_occurrence = len(df_total_occurrence)
     total_percentage = str(round(((total_bet_occurrence/total_player_games) *100))) + '%'
-    json_output.append({'career_bet_occurrence':total_bet_occurrence})
-    json_output.append({'career_bet_occurrence_percentage': total_percentage})
-    json_output.append({'career_total_games': total_player_games})
+    json_output.update({'career_bet_occurrence':total_bet_occurrence})
+    json_output.update({'career_bet_occurrence_percentage': total_percentage})
+    json_output.update({'career_total_games': total_player_games})
 
     # Get yearly bet frequency data
     for year in rank_years:
         df_bet_occurrence = df_game_log_bet.loc[df_game_log_bet['Year'] == year]
         bet_occurrence_count = len(df_bet_occurrence)
         bet_percentage = str(round(((bet_occurrence_count/total_game_dict[year]) *100), 2)) + '%'
-        json_output.append({f"bet_occurrences_{year_name_dict[year]}": bet_occurrence_count})
-        json_output.append({f"bet_occurrence_percentage_{year_name_dict[year]}": bet_percentage})
-        json_output.append({f"total_games_{year_name_dict[year]}": total_game_dict[year]})
-        json_output.append({f"bet_occurrence_logs_{year_name_dict[year]}": df_bet_occurrence.to_json()})
+        json_output.update({f"bet_occurrences_{year_name_dict[year]}": bet_occurrence_count})
+        json_output.update({f"bet_occurrence_percentage_{year_name_dict[year]}": bet_percentage})
+        json_output.update({f"total_games_{year_name_dict[year]}": total_game_dict[year]})
+        json_output.update({f"bet_occurrence_logs_{year_name_dict[year]}": df_bet_occurrence.to_json()})
 
         # Get total game logs each year
         df_total_game_logs = df_player_game_logs.loc[df_player_game_logs['Year'] == year]
-        json_output.append({f"game_logs_{year_name_dict[year]}": df_total_game_logs.to_json()})
+        json_output.update({f"game_logs_{year_name_dict[year]}": df_total_game_logs.to_json()})
 
     # Get the time between bet occurrences
     for year in rank_years:
@@ -160,7 +161,7 @@ def nfl_player_logs():
         if games_btw_last_game_and_last_hit != 0:
             week_between_list.append(games_btw_last_game_and_last_hit)
 
-        json_output.append({f"avg_time_between_occurrence_{year_name_dict[year]}": statistics.mean(week_between_list)})
+        json_output.update({f"avg_time_between_occurrence_{year_name_dict[year]}": statistics.mean(week_between_list)})
 
     # Get coordinates for graphs
     for year in rank_years:
@@ -170,8 +171,8 @@ def nfl_player_logs():
         weeks = df_graph['Week'].values.tolist()
 
         # Get X and Y coordinates:
-        json_output.append({f"x_coordinates_{year_name_dict[year]}": df_graph['Week'].values.tolist()})
-        json_output.append({f"y_coordinates_{year_name_dict[year]}": df_graph[column_name].values.tolist()})
+        json_output.update({f"x_coordinates_{year_name_dict[year]}": df_graph['Week'].values.tolist()})
+        json_output.update({f"y_coordinates_{year_name_dict[year]}": df_graph[column_name].values.tolist()})
 
         # Run query to get nfl games
         connection = create_connection()
@@ -195,7 +196,7 @@ def nfl_player_logs():
             stat_weekly_league_avg_dict[week] = weekly_avg
 
         # Get league average for each week as X2 coordinates
-        json_output.append({f"weekly_league_avg_stat_{year_name_dict[year]}": list(stat_weekly_league_avg_dict.values())})
+        json_output.update({f"weekly_league_avg_stat_{year_name_dict[year]}": list(stat_weekly_league_avg_dict.values())})
     #
     # Get position list variable based on player position
     if player_position == 'QB':
@@ -243,10 +244,10 @@ def nfl_player_logs():
 
                 if year == 'all':
                     # json_output[f"{position.lower()}_avg_weekly_{stat}_total"] = weekly_stat_avg
-                    json_output.append({f"{position.lower()}_avg_weekly_{stat}_total": weekly_stat_avg})
+                    json_output.update({f"{position.lower()}_avg_weekly_{stat}_total": weekly_stat_avg})
                 else:
                     # json_output[f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}"] = weekly_stat_avg
-                    json_output.append({f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}": weekly_stat_avg})
+                    json_output.update({f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}": weekly_stat_avg})
     #
     if player_position != 'QB':
         # Get the players stat as a percentage of the average
@@ -282,8 +283,8 @@ def nfl_player_logs():
                 value_list.append(percentage_of_team_total)
 
             # Get X and Y coordinates:
-            json_output.append({f"player_percentage_x_coordinates_{year_name_dict[year]}": week_list})
-            json_output.append({f"player_percentage_y_coordinates_{year_name_dict[year]}": value_list})
+            json_output.update({f"player_percentage_x_coordinates_{year_name_dict[year]}": week_list})
+            json_output.update({f"player_percentage_y_coordinates_{year_name_dict[year]}": value_list})
 
     # Red zone stats
     connection = create_connection()
@@ -805,24 +806,24 @@ def nfl_get_rz_stat():
     return output
 
 
-@nfl.route('/nfl/games', methods=['GET'])
-def nfl_get_games():
-    id = request.args.get('id', None)
-    connection = create_connection()
-    cursor = connection.cursor()
-    cursor.execute('''SELECT * FROM nfl_games
-                    WHERE home_id = %s OR away_id = %s ''',
-                   [id, id])
-    results = list(cursor.fetchall())
-    result_list = []
-    for result in results:
-        player_dict = {'id': result[0], 'week': result[1], 'year': result[2], 'home_id': result[3], 'home_score': result[4],
-                       'away_team_id': result[5], 'away_score': result[6], 'winner': result[7], 'margin_of_victory': result[8],
-                       'weather': result[9], 'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12],
-                       'over_under_result': result[13]}
-        result_list.append(player_dict)
-
-    # Enable Access-Control-Allow-Origin
-    result_list = jsonify(result_list)
-    result_list.headers.add("Access-Control-Allow-Origin", "*")
-    return result_list
+# @nfl.route('/nfl/games', methods=['GET'])
+# def nfl_get_games():
+#     id = request.args.get('id', None)
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#     cursor.execute('''SELECT * FROM nfl_games
+#                     WHERE home_id = %s OR away_id = %s ''',
+#                    [id, id])
+#     results = list(cursor.fetchall())
+#     result_list = []
+#     for result in results:
+#         player_dict = {'id': result[0], 'week': result[1], 'year': result[2], 'home_id': result[3], 'home_score': result[4],
+#                        'away_team_id': result[5], 'away_score': result[6], 'winner': result[7], 'margin_of_victory': result[8],
+#                        'weather': result[9], 'vegas_line': result[10], 'vegas_line_result': result[11], 'over_under': result[12],
+#                        'over_under_result': result[13]}
+#         result_list.append(player_dict)
+#
+#     # Enable Access-Control-Allow-Origin
+#     result_list = jsonify(result_list)
+#     result_list.headers.add("Access-Control-Allow-Origin", "*")
+#     return result_list
