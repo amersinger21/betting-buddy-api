@@ -47,16 +47,16 @@
 				<div id="betSummary">
 					<div class="flex column statLabel">
 						<div class="dataPair flex">
-							<p id="currentYearOccurance">Bet Occurance (Current): </p>
-							<p id="currentYearOccuranceData" class="bold"></p>
+							<p id="currentYearOccurence">Bet Occurance (Current): </p>
+							<p id="currentYearOccurenceData" class="bold"></p>
 						</div>
 						<div class="dataPair flex">
-							<p id="priorYearOccurance">Occurance (Prior):</p>
-							<p id="priorYearOccuranceData" class="bold"></p>
+							<p id="priorYearOccurence">Occurance (Prior):</p>
+							<p id="priorYearOccurenceData" class="bold"></p>
 						</div>
 					<div class=" flex dataPair">
-						<p id="priorTwoYearOccurance">Bet Occurance (2 Prior): </p>
-						<p id="priorTwoYearOccuranceData" class="bold"></p>
+						<p id="priorTwoYearOccurence">Bet Occurance (2 Prior): </p>
+						<p id="priorTwoYearOccurenceData" class="bold"></p>
 					</div>
 				</div>
 					
@@ -95,11 +95,13 @@
 	const value = params.get("value");
 	
 	//summary box elements
-	const betOccuranceCurrent = document.getElementById("currentYearOccuranceData");
-	const betOccurancePrior = document.getElementById("priorYearOccuranceData");
-	const betOccuranceTwoPrior = document.getElementById("priorTwoYearOccuranceData");
+	const betOccurenceCurrent = document.getElementById("currentYearOccurenceData");
+	const betOccurencePrior = document.getElementById("priorYearOccurenceData");
+	const betOccurenceTwoPrior = document.getElementById("priorTwoYearOccurenceData");
+
 	const searchedBet = document.getElementById("searchedBet");
 	const playerName = document.getElementById("playerName");
+	
 
 	//request data
 	async function playerResults(sportID) {
@@ -111,11 +113,10 @@
 		console.log(data);
 
 		playerName.innerText = "PLAYER NAME";
-		searchedBet.innerText = stat + " " + operator +" "+ value ;
-		betOccuranceCurrent.innerText = data.bet_occurrences_current;
-		betOccurancePrior.innerText = data.bet_occurrences_prior;
-		betOccuranceTwoPrior.innerText = data.bet_occurrences_third;
-
+		searchedBet.innerText = stat + " " + operator +" "+ value;
+		betOccurenceCurrent.innerText = data.bet_occurrences_current;
+		betOccurencePrior.innerText = data.bet_occurrences_prior;
+		betOccurenceTwoPrior.innerText = data.bet_occurrences_third;
 
 	}
 
