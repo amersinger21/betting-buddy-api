@@ -8,7 +8,7 @@
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/themes/light.css"
 		/>
-		<link rel="stylesheet" href="/global.css" />
+		<link rel="stylesheet" href="/client/global.css" />
 		<script
 			type="module"
 			src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.16.0/cdn/shoelace-autoloader.js"
@@ -16,7 +16,9 @@
 	</head>
 	<body>
 		<nav>
-			<h1 id="logo">The Betting Buddy</h1>
+			<a href="/client/index.html"
+				><h1 id="logo">The Betting Buddy</h1></a
+			>
 			<sl-icon-button
 				name="list"
 				style="font-size: 2.5rem"
@@ -29,11 +31,11 @@
 		<main>
 			<div id="btn-container" class="card-basic">
 				<h2>Select a sport to search</h2>
-				<a href="/pages/football/search.html">
+				<a href="/client/pages/football/search.html">
 					<button class="btn-sport">
 						<img
 							class="icon"
-							src="/images/american-football.png"
+							src="/client/images/american-football.png"
 							alt="football icon"
 						/>
 						<p>Football</p>
@@ -43,7 +45,7 @@
 					<button class="btn-sport">
 						<img
 							class="icon"
-							src="/images/basketball-ball.png"
+							src="/client/images/basketball-ball.png"
 							alt="football icon"
 						/>
 						<p>Basketball</p>
@@ -53,7 +55,7 @@
 					<button class="btn-sport">
 						<img
 							class="icon"
-							src="/images/baseball.png"
+							src="/client/images/baseball.png"
 							alt="football icon"
 						/>
 						<p>Baseball</p>
@@ -63,7 +65,7 @@
 					<button class="btn-sport">
 						<img
 							class="icon"
-							src="/images/hockey.png"
+							src="/client/images/hockey.png"
 							alt="football icon"
 						/>
 						<p>Hockey</p>
@@ -73,7 +75,7 @@
 					<button class="btn-sport disabled">
 						<img
 							class="icon"
-							src="/images/soccer.png"
+							src="/client/images/soccer.png"
 							alt="football icon"
 						/>
 						<p>Soccer</p>

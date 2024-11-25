@@ -61,6 +61,10 @@ a {
 	text-decoration: none;
 }
 
+#logo {
+	color: black;
+}
+
 #btn-container {
 	background-color: #a78bfa;
 	display: grid;
@@ -76,10 +80,11 @@ a {
 
 .infoBox {
 	background-color: gray;
-	display: grid;
-	flex-wrap: wrap;
+	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+	gap: 0.5rem;
 	margin: 0 auto;
 	padding: 2rem;
 	border: 3px solid black;
@@ -120,6 +125,33 @@ a {
 	border: 2px solid black;
 	border-radius: 2px;
 	box-shadow: 7px 7px 0px black;
+}
+
+.flex {
+	display: flex;
+	justify-content: center;
+	align-items: end;
+}
+
+.column {
+	flex-direction: column;
+}
+
+#betSummary {
+	display: flex;
+	gap: 2.5em;
+}
+
+.statLabel {
+	font-size: 0.75rem;
+}
+
+.dataPair {
+	gap: 0.25rem;
+}
+
+.bold {
+	font-weight: bold;
 }
 
 sl-button::part(base) {
