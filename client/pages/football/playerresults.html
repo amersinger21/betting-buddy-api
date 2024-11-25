@@ -59,15 +59,24 @@
 						<p id="priorTwoYearOccurenceData" class="bold"></p>
 					</div>
 				</div>
-					
 					<div class="flex column statLabel">
-					<p id="currentYearPercent">Bet % (Current): </p>
-					<p id="priorYearPercent">Bet % (Prior):</p>
-					<p id="priorTwoYearPercent">Bet % (2 Prior): </p>	
+						<div class="dataPair flex">
+							<p id="currentYearPercent">Bet % (Current): </p>
+							<p id="currentYearPercentData" class="bold"></p>
+						</div>
+						<div class="dataPair flex">
+							<p id="priorYearPercent">Bet % (Prior):</p>
+							<p id="priorYearPercentData" class="bold"></p>
+						</div>
+						<div class=" flex dataPair">
+							<p id="priorTwoYearPercent">Bet % (2 Prior): </p>	
+							<p id="priorTwoYearPercentData" class="bold"></p>
+						</div>
 					</div>
-					
 				</div>
-				<sl-button type="button" varient=""></sl-button>
+				<br>
+				<!-- need to link to next match up stats section when available  -->
+				<sl-button type="button" varient="">NEXT MATCHUP: <span id="nextMatchUpAbbreviation"></span></sl-button>
 			</div>
 			<br>
 			<div id="teamInfoBox" class="infoBox">
@@ -98,11 +107,13 @@
 	const betOccurenceCurrent = document.getElementById("currentYearOccurenceData");
 	const betOccurencePrior = document.getElementById("priorYearOccurenceData");
 	const betOccurenceTwoPrior = document.getElementById("priorTwoYearOccurenceData");
+	const currentYearPercent = document.getElementById("currentYearPercentData");
+	const priorYearPercent = document.getElementById("priorYearPercentData");
+	const priorTwoYearPercent = document.getElementById("priorTwoYearPercentData");
 
 	const searchedBet = document.getElementById("searchedBet");
 	const playerName = document.getElementById("playerName");
 	
-
 	//request data
 	async function playerResults(sportID) {
 		const response = await fetch(
@@ -117,7 +128,10 @@
 		betOccurenceCurrent.innerText = data.bet_occurrences_current;
 		betOccurencePrior.innerText = data.bet_occurrences_prior;
 		betOccurenceTwoPrior.innerText = data.bet_occurrences_third;
-
+		currentYearPercent.innerText = data.bet_occurrence_percentage_current;
+		priorYearPercent.innerText = data.bet_occurrence_percentage_prior;
+		priorTwoYearPercent.innerText = data.bet_occurrence_percentage_third;
+		
 	}
 
 	playerResults(id);
