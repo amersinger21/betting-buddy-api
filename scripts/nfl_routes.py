@@ -144,8 +144,14 @@ def nfl_player_logs():
         # Get the weeks that players bet would have hit.
         df_between_games = df_game_log_bet.loc[df_game_log_bet['Year'] == year]
         weeks_bet_hit_list = list(df_between_games.index)
-        first_game_hit = weeks_bet_hit_list[0]
-        last_game_hit = weeks_bet_hit_list[-1]
+        try:
+            first_game_hit = weeks_bet_hit_list[0]
+        except IndexError:
+            first_game_hit = 0
+        try:
+            last_game_hit = weeks_bet_hit_list[-1]
+        except IndexError:
+            last_game_hit = 0
 
         games_btw_first_game_and_first_hit = first_game_hit - first_game_played
         games_btw_last_game_and_last_hit = last_game_played - last_game_hit
