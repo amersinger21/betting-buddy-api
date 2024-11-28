@@ -144,8 +144,14 @@ def nfl_player_logs():
         # Get the weeks that players bet would have hit.
         df_between_games = df_game_log_bet.loc[df_game_log_bet['Year'] == year]
         weeks_bet_hit_list = list(df_between_games.index)
-        first_game_hit = weeks_bet_hit_list[0]
-        last_game_hit = weeks_bet_hit_list[-1]
+        try:
+            first_game_hit = weeks_bet_hit_list[0]
+        except IndexError:
+            first_game_hit = 0
+        try:
+            last_game_hit = weeks_bet_hit_list[-1]
+        except IndexError:
+            last_game_hit = 0
 
         games_btw_first_game_and_first_hit = first_game_hit - first_game_played
         games_btw_last_game_and_last_hit = last_game_played - last_game_hit
@@ -324,7 +330,7 @@ def nfl_team_stats():
     year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
     loop_years = list(range(2019, 2025))
     rank_years = list(range(2022, 2025))
-    json_output = []
+    json_output = {}
 
     query = f'''SELECT * FROM nfl_team_offense'''
     cursor.execute(query)
@@ -381,14 +387,10 @@ def nfl_team_stats():
 
         # get red zone data third year
         df_red_zone_third = df_red_zone.loc[df_red_zone['year'] == year]
-        json_output.append({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
-        # json_output[f"rz_td_{year_name_dict[year]}"] = df_red_zone_third['rz_td'].values.tolist()[0]
-        json_output.append({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
-        # json_output[f"rz_td_rank_{year_name_dict[year]}"] = df_red_zone_third['rz_td rank'].values.tolist()[0]
-        json_output.append({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
-        # json_output[f"rz_percentage_{year_name_dict[year]}"] = df_red_zone_third['rz_percentage'].values.tolist()[0]
-        json_output.append({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
-        # json_output[f"rz_percentage_rank_{year_name_dict[year]}"] = df_red_zone_third['rz_percentage rank'].values.tolist()[0]
+        json_output.update({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
+        json_output.update({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
+        json_output.update({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
+        json_output.update({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
 
         # PASSING DATA
         df_passing = df_ranked[['team_id', 'year', 'games', 'pass_comp', 'pass_comp rank', 'pass_yards', 'pass_yards rank',
@@ -398,37 +400,25 @@ def nfl_team_stats():
 
         # get passing data third year
         df_passing_third = df_passing.loc[df_passing['year'] == year]
-        json_output.append({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
-        # json_output[f"pass_comp_{year_name_dict[year]}"] = df_passing_third['pass_comp'].values.tolist()[0]
-        json_output.append(
+        json_output.update({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
+        json_output.update(
             {f"pass_comp_rank_{year_name_dict[year]}": df_passing_third['pass_comp rank'].values.tolist()[0]})
-        # json_output[f"pass_comp_rank_{year_name_dict[year]}"] = df_passing_third['pass_comp rank'].values.tolist()[0]
-        json_output.append({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
-        # json_output[f"pass_yards_{year_name_dict[year]}"] = df_passing_third['pass_yards'].values.tolist()[0]
-        json_output.append({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
-        # json_output[f"pass_yards_rank_{year_name_dict[year]}"] = df_passing_third['pass_yards rank'].values.tolist()[0]
-        json_output.append({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
-        # json_output[f"pass_td_{year_name_dict[year]}"] = df_passing_third['pass_td'].values.tolist()[0]
-        json_output.append({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
-        # json_output[f"pass_td_rank_{year_name_dict[year]}"] = df_passing_third['pass_td rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
+        json_output.update({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
+        json_output.update({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
+        json_output.update({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
+        json_output.update(
             {f"yards_per_att_{year_name_dict[year]}": df_passing_third['yards_per_att'].values.tolist()[0]})
-        # json_output[f"yards_per_att_{year_name_dict[year]}"] = df_passing_third['yards_per_att'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"yards_per_att_rank_{year_name_dict[year]}": df_passing_third['yards_per_att rank'].values.tolist()[0]})
-        # json_output[f"yards_per_att_rank_{year_name_dict[year]}"] = df_passing_third['yards_per_att rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"pass_yards_per_comp_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp'].values.tolist()[0]})
-        # json_output[f"pass_yards_per_comp_{year_name_dict[year]}"] = df_passing_third['pass_yards_per_comp'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"pass_yards_per_comp_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]})
-        # json_output[f"pass_yards_per_comp_rank_{year_name_dict[year]}"] = df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"pass_yards_per_game_{year_name_dict[year]}": df_passing_third['pass_yards_per_game'].values.tolist()[0]})
-        # json_output[f"pass_yards_per_game_{year_name_dict[year]}"] = df_passing_third['pass_yards_per_game'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"pass_yards_per_game_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_game rank'].values.tolist()[0]})
-        # json_output[f"pass_yards_per_game_rank_{year_name_dict[year]}"] = df_passing_third['pass_yards_per_game rank'].values.tolist()[0]
 
         # RUSHING DATA
         df_rushing = df_ranked[['team_id', 'year', 'games', 'rush_att', 'rush_att rank', 'rush_yards', 'rush_yards rank',
@@ -438,36 +428,26 @@ def nfl_team_stats():
 
         # get rushing data third year
         df_rushing_third = df_rushing.loc[df_rushing['year'] == year]
-        json_output.append(
+        json_output.update(
             {f"rush_att_{year_name_dict[year]}": df_rushing_third['rush_att'].values.tolist()[0]})
-        # json_output[f"rush_att_{year_name_dict[year]}"] = df_rushing_third['rush_att'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {"rush_att_rank_{year_name_dict[year]}": df_rushing_third['rush_att rank'].values.tolist()[0]})
-        # json_output[f"rush_att_rank_{year_name_dict[year]}"] = df_rushing_third['rush_att rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_{year_name_dict[year]}": df_rushing_third['rush_yards'].values.tolist()[0]})
-        # json_output[f"rush_yards_{year_name_dict[year]}"] = df_rushing_third['rush_yards'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_rank_{year_name_dict[year]}": df_rushing_third['rush_yards rank'].values.tolist()[0]})
-        # json_output[f"rush_yards_rank_{year_name_dict[year]}"] = df_rushing_third['rush_yards rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_td_{year_name_dict[year]}": df_rushing_third['rush_td'].values.tolist()[0]})
-        # json_output[f"rush_td_{year_name_dict[year]}"] = df_rushing_third['rush_td'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_td_rank_{year_name_dict[year]}": df_rushing_third['rush_td rank'].values.tolist()[0]})
-        # json_output[f"rush_td_rank_{year_name_dict[year]}"] = df_rushing_third['rush_td rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att'].values.tolist()[0]})
-        # json_output[f"rush_yards_per_att_{year_name_dict[year]}"] = df_rushing_third['rush_yards_per_att'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]})
-        # json_output[f"rush_yards_per_att_{year_name_dict[year]}"] = df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_per_game_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game'].values.tolist()[0]})
-        # json_output[f"rush_yards_per_game_{year_name_dict[year]}"] = df_rushing_third['rush_yards_per_game'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"rush_yards_per_game_rank_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]})
-        # json_output[f"rush_yards_per_game_rank_{year_name_dict[year]}"] = df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]
 
         # DRIVE DATA
         df_drive = df_ranked[['team_id', 'year', 'games', 'points_per_game', 'points_per_game rank', 'total_points',
@@ -477,36 +457,26 @@ def nfl_team_stats():
 
         # get drive data third year
         df_drive_third = df_drive.loc[df_drive['year'] == year]
-        json_output.append(
+        json_output.update(
             {f"points_per_game_{year_name_dict[year]}": df_drive_third['points_per_game'].values.tolist()[0]})
-        # json_output[f"points_per_game_{year_name_dict[year]}"] = df_drive_third['points_per_game'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"points_per_game_rank_{year_name_dict[year]}": df_drive_third['points_per_game rank'].values.tolist()[0]})
-        # json_output[f"points_per_game_rank_{year_name_dict[year]}"] = df_drive_third['points_per_game rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"total_points_{year_name_dict[year]}": df_drive_third['total_points'].values.tolist()[0]})
-        # json_output[f"total_points_{year_name_dict[year]}"] = df_drive_third['total_points'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"total_points_rank_{year_name_dict[year]}": df_drive_third['total_points rank'].values.tolist()[0]})
-        # json_output[f"total_points_rank_{year_name_dict[year]}"] = df_drive_third['total_points rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"plays_per_drive_{year_name_dict[year]}":  df_drive_third['plays_per_drive'].values.tolist()[0]})
-        # json_output[f"plays_per_drive_{year_name_dict[year]}"] = df_drive_third['plays_per_drive'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"plays_per_drive_rank_{year_name_dict[year]}": df_drive_third['plays_per_drive rank'].values.tolist()[0]})
-        # json_output[f"plays_per_drive_rank_{year_name_dict[year]}"] = df_drive_third['plays_per_drive rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive'].values.tolist()[0]})
-        # json_output[f"yards_per_drive_att_{year_name_dict[year]}"] = df_drive_third['yards_per_drive'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive rank'].values.tolist()[0]})
-        # json_output[f"yards_per_drive_att_{year_name_dict[year]}"] = df_drive_third['yards_per_drive rank'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"points_per_drive_{year_name_dict[year]}": df_drive_third['points_per_drive'].values.tolist()[0]})
-        # json_output[f"points_per_drive_{year_name_dict[year]}"] = df_drive_third['points_per_drive'].values.tolist()[0]
-        json_output.append(
+        json_output.update(
             {f"points_per_drive_rank_{year_name_dict[year]}": df_drive_third['points_per_drive rank'].values.tolist()[0]})
-        # json_output[f"points_per_drive_rank_{year_name_dict[year]}"] = df_drive_third['points_per_drive rank'].values.tolist()[0]
 
     # Get teams standings over the past three years - current/prior/third
     standings_query = f'''select * from nfl_standings
@@ -522,7 +492,7 @@ def nfl_team_stats():
     for year in rank_years:
         df_standings = df_standings_hold.loc[df_standings_hold['year'] == year]
         record = f"{df_standings['wins'].values.tolist()[0]}-{df_standings['losses'].values.tolist()[0]}-{df_standings['ties'].values.tolist()[0]}"
-        json_output.append({f"team_record_{year_name_dict[year]}": record})
+        json_output.update({f"team_record_{year_name_dict[year]}": record})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -543,7 +513,7 @@ def nfl_opponent_information():
     loop_years = list(range(2019, 2025))
     rank_years = list(range(2022, 2025))
 
-    json_output = []
+    json_output = {}
 
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         limit_stat = 'rush_att'
@@ -612,10 +582,10 @@ def nfl_opponent_information():
         df_red_zone = df_red_zone.loc[df_red_zone['team_id'] == int(team_id)]
 
         df_red_zone_third = df_red_zone.loc[df_red_zone['year'] == year]
-        json_output.append({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
-        json_output.append({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
-        json_output.append({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
-        json_output.append({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
+        json_output.update({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
+        json_output.update({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
+        json_output.update({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
+        json_output.update({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
 
         # PASSING DATA
         df_passing = df_ranked[['team_id', 'year', 'games', 'pass_comp', 'pass_comp rank', 'pass_yards', 'pass_yards rank',
@@ -624,18 +594,18 @@ def nfl_opponent_information():
         df_passing = df_passing.loc[df_passing['team_id'] == int(team_id)]
 
         df_passing_third = df_passing.loc[df_passing['year'] == year]
-        json_output.append({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
-        json_output.append({f"pass_comp_rank_{year_name_dict[year]}": df_passing_third['pass_comp rank'].values.tolist()[0]})
-        json_output.append({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
-        json_output.append({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
-        json_output.append({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
-        json_output.append({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
-        json_output.append({f"yards_per_att_{year_name_dict[year]}": df_passing_third['yards_per_att'].values.tolist()[0]})
-        json_output.append({f"yards_per_att_rank_{year_name_dict[year]}": df_passing_third['yards_per_att rank'].values.tolist()[0]})
-        json_output.append({f"pass_yards_per_comp_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp'].values.tolist()[0]})
-        json_output.append({f"pass_yards_per_comp_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]})
-        json_output.append({f"pass_yards_per_game_{year_name_dict[year]}": df_passing_third['pass_yards_per_game'].values.tolist()[0]})
-        json_output.append({f"pass_yards_per_game_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_game rank'].values.tolist()[0]})
+        json_output.update({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
+        json_output.update({f"pass_comp_rank_{year_name_dict[year]}": df_passing_third['pass_comp rank'].values.tolist()[0]})
+        json_output.update({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
+        json_output.update({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
+        json_output.update({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
+        json_output.update({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
+        json_output.update({f"yards_per_att_{year_name_dict[year]}": df_passing_third['yards_per_att'].values.tolist()[0]})
+        json_output.update({f"yards_per_att_rank_{year_name_dict[year]}": df_passing_third['yards_per_att rank'].values.tolist()[0]})
+        json_output.update({f"pass_yards_per_comp_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp'].values.tolist()[0]})
+        json_output.update({f"pass_yards_per_comp_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]})
+        json_output.update({f"pass_yards_per_game_{year_name_dict[year]}": df_passing_third['pass_yards_per_game'].values.tolist()[0]})
+        json_output.update({f"pass_yards_per_game_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_game rank'].values.tolist()[0]})
 
         # RUSHING DATA
         df_rushing = df_ranked[['team_id', 'year', 'games', 'rush_att', 'rush_att rank', 'rush_yards', 'rush_yards rank',
@@ -644,16 +614,16 @@ def nfl_opponent_information():
         df_rushing = df_rushing.loc[df_rushing['team_id'] == int(team_id)]
 
         df_rushing_third = df_rushing.loc[df_rushing['year'] == year]
-        json_output.append({f"rush_att_{year_name_dict[year]}": df_rushing_third['rush_att'].values.tolist()[0]})
-        json_output.append({f"rush_att_rank_{year_name_dict[year]}": df_rushing_third['rush_att rank'].values.tolist()[0]})
-        json_output.append({f"rush_yards_{year_name_dict[year]}": df_rushing_third['rush_yards'].values.tolist()[0]})
-        json_output.append({f"rush_yards_rank_{year_name_dict[year]}": df_rushing_third['rush_yards rank'].values.tolist()[0]})
-        json_output.append({f"rush_td_{year_name_dict[year]}": df_rushing_third['rush_td'].values.tolist()[0]})
-        json_output.append({f"rush_td_rank_{year_name_dict[year]}": df_rushing_third['rush_td rank'].values.tolist()[0]})
-        json_output.append({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att'].values.tolist()[0]})
-        json_output.append({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]})
-        json_output.append({f"rush_yards_per_game_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game'].values.tolist()[0]})
-        json_output.append({f"rush_yards_per_game_rank_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]})
+        json_output.update({f"rush_att_{year_name_dict[year]}": df_rushing_third['rush_att'].values.tolist()[0]})
+        json_output.update({f"rush_att_rank_{year_name_dict[year]}": df_rushing_third['rush_att rank'].values.tolist()[0]})
+        json_output.update({f"rush_yards_{year_name_dict[year]}": df_rushing_third['rush_yards'].values.tolist()[0]})
+        json_output.update({f"rush_yards_rank_{year_name_dict[year]}": df_rushing_third['rush_yards rank'].values.tolist()[0]})
+        json_output.update({f"rush_td_{year_name_dict[year]}": df_rushing_third['rush_td'].values.tolist()[0]})
+        json_output.update({f"rush_td_rank_{year_name_dict[year]}": df_rushing_third['rush_td rank'].values.tolist()[0]})
+        json_output.update({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att'].values.tolist()[0]})
+        json_output.update({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]})
+        json_output.update({f"rush_yards_per_game_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game'].values.tolist()[0]})
+        json_output.update({f"rush_yards_per_game_rank_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]})
 
         # DRIVE DATA
         df_drive = df_ranked[['team_id', 'year', 'games', 'points_per_game', 'points_per_game rank', 'total_points',
@@ -662,16 +632,16 @@ def nfl_opponent_information():
         df_drive = df_drive.loc[df_drive['team_id'] == int(team_id)]
 
         df_drive_third = df_drive.loc[df_drive['year'] == year]
-        json_output.append({f"points_per_game_{year_name_dict[year]}": df_drive_third['points_per_game'].values.tolist()[0]})
-        json_output.append({f"points_per_game_rank_{year_name_dict[year]}": df_drive_third['points_per_game rank'].values.tolist()[0]})
-        json_output.append({f"total_points_{year_name_dict[year]}": df_drive_third['total_points'].values.tolist()[0]})
-        json_output.append({f"total_points_rank_{year_name_dict[year]}": df_drive_third['total_points rank'].values.tolist()[0]})
-        json_output.append({f"plays_per_drive_{year_name_dict[year]}": df_drive_third['plays_per_drive'].values.tolist()[0]})
-        json_output.append({f"plays_per_drive_rank_{year_name_dict[year]}": df_drive_third['plays_per_drive rank'].values.tolist()[0]})
-        json_output.append({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive'].values.tolist()[0]})
-        json_output.append({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive rank'].values.tolist()[0]})
-        json_output.append({f"points_per_drive_{year_name_dict[year]}": df_drive_third['points_per_drive'].values.tolist()[0]})
-        json_output.append({f"points_per_drive_rank_{year_name_dict[year]}": df_drive_third['points_per_drive rank'].values.tolist()[0]})
+        json_output.update({f"points_per_game_{year_name_dict[year]}": df_drive_third['points_per_game'].values.tolist()[0]})
+        json_output.update({f"points_per_game_rank_{year_name_dict[year]}": df_drive_third['points_per_game rank'].values.tolist()[0]})
+        json_output.update({f"total_points_{year_name_dict[year]}": df_drive_third['total_points'].values.tolist()[0]})
+        json_output.update({f"total_points_rank_{year_name_dict[year]}": df_drive_third['total_points rank'].values.tolist()[0]})
+        json_output.update({f"plays_per_drive_{year_name_dict[year]}": df_drive_third['plays_per_drive'].values.tolist()[0]})
+        json_output.update({f"plays_per_drive_rank_{year_name_dict[year]}": df_drive_third['plays_per_drive rank'].values.tolist()[0]})
+        json_output.update({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive'].values.tolist()[0]})
+        json_output.update({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive rank'].values.tolist()[0]})
+        json_output.update({f"points_per_drive_{year_name_dict[year]}": df_drive_third['points_per_drive'].values.tolist()[0]})
+        json_output.update({f"points_per_drive_rank_{year_name_dict[year]}": df_drive_third['points_per_drive rank'].values.tolist()[0]})
 
     # Get game logs where team was the opponent vs position
     opp_game_log_query = f'''SELECT
@@ -710,8 +680,8 @@ def nfl_opponent_information():
         df_bet = df_bet[
             ['name', 'Year', 'Week', 'pos', 'opponent_name', limit_stat, column_name]].reset_index(drop=True)
 
-        json_output.append({f"opp_allowed_bet_{year_name_dict[year]}": round(((bet_allowed_current / total_pos_faced_current) * 100), 1)})
-        json_output.append({f"opp_allowed_bet_log_{year_name_dict[year]}": df_bet.to_json()})
+        json_output.update({f"opp_allowed_bet_{year_name_dict[year]}": round(((bet_allowed_current / total_pos_faced_current) * 100), 1)})
+        json_output.update({f"opp_allowed_bet_log_{year_name_dict[year]}": df_bet.to_json()})
 
     # Get the game logs where the opponent played against the player
     log_vs_player_query = f'''SELECT
@@ -737,29 +707,29 @@ def nfl_opponent_information():
     df_vs_player = pd.DataFrame(player_log_results, columns=log_vs_player_cols).reset_index(drop=True)
 
     df_vs_player = df_vs_player.reset_index(drop=True)
-    json_output.append({f"player_game_logs_vs_opponent": df_vs_player.to_json()})
+    json_output.update({f"player_game_logs_vs_opponent": df_vs_player.to_json()})
 
     # Get total touchdowns allowed to RB, TE, and WR
     for year in rank_years:
         df_rb = df_game_logs.loc[(df_game_logs['pos'] == 'RB') & (df_game_logs['Year'] ==  year)]
         rb_rush_td_total = df_rb['rush_td'].sum()
         rb_rec_td_total = df_rb['rec_td'].sum()
-        json_output.append({f"rb_rush_td_total_{year_name_dict[year]}": int(rb_rush_td_total)})
-        json_output.append({f"rb_rec_td_total_{year_name_dict[year]}": int(rb_rec_td_total)})
+        json_output.update({f"rb_rush_td_total_{year_name_dict[year]}": int(rb_rush_td_total)})
+        json_output.update({f"rb_rec_td_total_{year_name_dict[year]}": int(rb_rec_td_total)})
 
         df_wr = df_game_logs.loc[(df_game_logs['pos'] == 'WR') & (df_game_logs['Year'] ==  year)]
         wr_rush_td_total = df_wr['rush_td'].sum()
         wr_rec_td_total = df_wr['rec_td'].sum()
-        json_output.append({f"wr_rush_td_total_{year_name_dict[year]}": int(wr_rush_td_total)})
-        json_output.append({f"wr_rec_td_total_{year_name_dict[year]}": int(wr_rec_td_total)})
+        json_output.update({f"wr_rush_td_total_{year_name_dict[year]}": int(wr_rush_td_total)})
+        json_output.update({f"wr_rec_td_total_{year_name_dict[year]}": int(wr_rec_td_total)})
 
         df_qb = df_game_logs.loc[(df_game_logs['pos'] == 'QB') & (df_game_logs['Year'] ==  year)]
         qb_rush_td_total = df_qb['rush_td'].sum()
-        json_output.append({f"qb_rush_td_total_{year_name_dict[year]}": int(qb_rush_td_total)})
+        json_output.update({f"qb_rush_td_total_{year_name_dict[year]}": int(qb_rush_td_total)})
 
         df_te = df_game_logs.loc[(df_game_logs['pos'] == 'QB') & (df_game_logs['Year'] ==  year)]
         te_rec_td_total = df_te['rush_td'].sum()
-        json_output.append({f"te_rec_td_total_{year_name_dict[year]}": int(te_rec_td_total)})
+        json_output.update({f"te_rec_td_total_{year_name_dict[year]}": int(te_rec_td_total)})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
