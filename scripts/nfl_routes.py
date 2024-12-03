@@ -19,11 +19,10 @@ def nfl_player_logs():
     rank_years = list(range(2022, 2025))
 
     limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 'pass_att', 'pass_comp': 'pass_att',
-                       'rush_att': 'rush_att', 'rush_yards': 'rush_att', 'rush_td': 'rush_att',
-                       'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets',}
+                       'pass_longest': 'pass_att',
+                       'rush_att': 'rush_att', 'rush_yards': 'rush_att', 'rush_td': 'rush_att', 'rush_longest': 'rush_att',
+                       'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets', 'rec_longest': 'targets',}
     limit_stat = limit_stat_dict[column_name]
-    print(limit_stat)
-    # json_output = []
     json_output = {}
     cols_to_select = f"game_id, player_id, team_id, opp_id, {limit_stat}, {column_name}"
 
@@ -68,7 +67,6 @@ def nfl_player_logs():
     for year in loop_years:
         df_merge = df_player_game_logs_index_needed.loc[df_player_game_logs_index_needed['Year'] == year]
         df_merge.index = np.arange(1, len(df_merge) + 1)
-
         df_player_game_logs = pd.concat([df_player_game_logs, df_merge])
 
     # Create total player game counts
@@ -229,17 +227,17 @@ def nfl_player_logs():
         for position in position_list:
             stats_with_player = df_player_games.loc[df_player_games['pos'] == position]
             loop_stats = [limit_stat, column_name]
-    #
+
             # Get game stats for each game
             for game in games_with_player_ids:
                 game_stat_dict = {}
-    #
+
                 for stat in loop_stats:
                     pos_game = stats_with_player.loc[stats_with_player['game_id'] == game]
                     pos_stat = sum(pos_game[stat].values.tolist())
                     game_stat_dict[stat] = pos_stat
                 game_dict[game] = game_stat_dict
-    #
+
             # Get weekly average for each stat
             played_games = len(game_dict)
             for stat in loop_stats:
@@ -249,12 +247,10 @@ def nfl_player_logs():
                 weekly_stat_avg = round(sum(stat_list)/played_games, 2)
 
                 if year == 'all':
-                    # json_output[f"{position.lower()}_avg_weekly_{stat}_total"] = weekly_stat_avg
                     json_output.update({f"{position.lower()}_avg_weekly_{stat}_total": weekly_stat_avg})
                 else:
-                    # json_output[f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}"] = weekly_stat_avg
                     json_output.update({f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}": weekly_stat_avg})
-    #
+
     if player_position != 'QB':
         # Get the players stat as a percentage of the average
         for year in rank_years:
@@ -312,6 +308,7 @@ def nfl_player_logs():
                'rz_10_rush_percentage', 'rz_5_rush_att', 'rz_5_rush_yards', 'rz_5_rush_td', 'rz_5_rush_percentage']
     rz_results = list(cursor.fetchall())
     df_red_zone = pd.DataFrame(rz_results, columns=rz_cols).reset_index(drop=True)
+
     print(df_red_zone)
 
 

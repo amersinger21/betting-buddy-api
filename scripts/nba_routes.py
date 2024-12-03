@@ -205,7 +205,6 @@ def nba_get_team_standings():
     return output
 
 
-
 @nba.route('/nba/player_stats', methods=['GET'])
 def nba_get_player_data():
     player_id = request.args.get('id', None)

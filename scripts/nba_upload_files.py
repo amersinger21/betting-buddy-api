@@ -74,15 +74,16 @@ def nba_add_game(json_dict):
     connection.commit()
     print(f"Game has been added to games tabel.")
 def nba_update_game(json_dict):
-    values = (json_dict['year'], json_dict['date'], json_dict['day_of_the_week'], json_dict['start_time'], json_dict['away_team_id'],
-              json_dict['away_score'], json_dict['home_team_id'], json_dict['home_score'], json_dict['margin_of_victory'])
+    values = (json_dict['away_score'], json_dict['home_score'], json_dict['margin_of_victory'], json_dict['year'],
+              json_dict['date'], json_dict['day_of_the_week'], json_dict['start_time'], json_dict['away_team_id'],
+              json_dict['home_team_id'])
 
     connection = create_connection()
     cursor = connection.cursor()
 
-    cursor.execute('''UPDATE nfl_games 
-             SET year = %s, date = %s, day_of_the_week = %s, start_time = %s, away_team_id = %s, away_score = %s, home_team_id = %s, 
-             home_score = %s, margin_of_victory = %s''', (values))
+    cursor.execute('''UPDATE nba_games 
+             SET away_score = %s, home_score = %s, margin_of_victory = %s
+             WHERE year = %s AND date = %s AND day_of_the_week = %s AND start_time = %s AND away_team_id = %s AND home_team_id = %s''', (values))
     connection.commit()
 
     return "nba_games table has been updated."
