@@ -1,28 +1,34 @@
 from .db import create_connection
 from flask import Blueprint, request, jsonify
+import pandas as pd
 
 player = Blueprint("player", __name__)
 
+
 @player.route('/player', methods=['POST'])
-def add_player(json_dict):
-    # initialize variables
-    connection = create_connection()
-    cursor=connection.cursor()
-    last_name = json_dict['last_name']
-    first_name = json_dict['first_name']
-    sport_id = json_dict['sport_id']
-    position = json_dict['position']
-    current_team = json_dict['current_team']
-    currently_playing =json_dict['currently_playing']
+def add_player():
+    file = request.files['player_template']
 
+    # Read CSV data
+    df = pd.read_csv(file)
+    print(df)
 
-    # execute sql query inserting into table
-    cursor.execute("INSERT INTO player (last_name, first_name, sport_id, position, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s, %s)", (last_name, first_name, sport_id, position, current_team, currently_playing))
-    connection.commit()
-    print(f"{first_name} {last_name} has been added to player tabel.")
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
 
-    result = {'last_name': last_name, 'first_name': first_name, 'sport_id': sport_id, 'position': position, 'current_team': current_team, 'current_playing': currently_playing}
-    return result
+        values = [row['last_name'], row['first_name'], row['sport_id'], row['position'], row['image'], row['current_team'],
+                  row['currently_playing']]
+
+        # execute sql query inserting into table
+        cursor.execute(
+            "INSERT INTO player (last_name, first_name, sport_id, position, image, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (values))
+
+        connection.commit()
+        print(f"{row['first_name']} {row['last_name']} has been added to player tabel.")
+
+    return f"Player table has been updated"
 
 
 @player.route('/player', methods=['GET'])
@@ -93,7 +99,6 @@ def update_player_status(json_dict):
     cursor.execute('''UPDATE player
             SET currently_playing = %s
             WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
-
     connection.commit()
 
     print(f"{first_name} {last_name} has had set to actively playing.")

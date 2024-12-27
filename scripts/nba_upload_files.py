@@ -266,3 +266,4 @@ def nba_add_player_data(json_dict):
     connection.commit()
 
     return f"{json_dict['player_id']} on {json_dict['date']} has been added to nba_player_stats table."
+

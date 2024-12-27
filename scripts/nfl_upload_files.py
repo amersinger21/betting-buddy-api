@@ -1,3 +1,7 @@
+import pandas as pd
+
+import csv
+
 from .db import create_connection
 from flask import Blueprint, request, jsonify
 
@@ -671,42 +675,79 @@ def nfl_update_standings(json_dict):
 
 
 # GAME INFO ROUTES
-@nfl.route('/nfl/games', methods=['POST'])
-def nfl_add_game(json_dict):
-    week = json_dict['week']
-    year = json_dict['year']
-    home_id = json_dict['home_id']
-    home_score = json_dict['home_score']
-    away_id = json_dict['away_id']
-    away_score = json_dict['away_score']
-    winner = json_dict['winner']
-    margin_of_victory = json_dict['margin_of_victory']
-    weather_id = json_dict['weather_id']
-    vegas_line = json_dict['vegas_line']
-    vegas_line_result = json_dict['vegas_line_result']
-    over_under = json_dict['over_under']
-    total_points = json_dict['total_points']
-    over_under_result = json_dict['over_under_result']
+# @nfl.route('/nfl/games', methods=['POST'])
+# def nfl_add_game(json_dict):
+#     #
+#     file = str(request.files['file_name'])
+#     # Read CSV data
+#     csv_reader = csv.reader(file)
+#     df = pd.read_csv(csv_reader, index_col=0)
+#
+#
+#     week = json_dict['week']
+#     year = json_dict['year']
+#     home_id = json_dict['home_id']
+#     home_score = json_dict['home_score']
+#     away_id = json_dict['away_id']
+#     away_score = json_dict['away_score']
+#     winner = json_dict['winner']
+#     margin_of_victory = json_dict['margin_of_victory']
+#     weather_id = json_dict['weather_id']
+#     vegas_line = json_dict['vegas_line']
+#     vegas_line_result = json_dict['vegas_line_result']
+#     over_under = json_dict['over_under']
+#     total_points = json_dict['total_points']
+#     over_under_result = json_dict['over_under_result']
+#
+#     values = (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
+#               vegas_line_result, over_under, total_points, over_under_result)
+#
+#     connection = create_connection()
+#     cursor=connection.cursor()
+#
+#     cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
+#               vegas_line_result, over_under, total_points, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+#                    (values))
+#     connection.commit()
+#
+#     result = { 'week': week, 'year': year, 'home_team': home_id, 'home_score': home_score, 'away_team': away_id, 'away_score': away_score,
+#                'winner': winner, 'margin_of_victory': margin_of_victory, 'weather_id': weather_id, 'vegas_line': vegas_line,
+#                'vegas_line_result': vegas_line_result,'over_under': over_under, 'total_points': total_points, 'over_under_result': over_under_result}
+#
+#     return result
 
-    values = (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
-              vegas_line_result, over_under, total_points, over_under_result)
+@nfl.route('/nfl/upload', methods=['POST'])
+def test_route():
+    file = str(request.files['file_name'])
 
-    connection = create_connection()
-    cursor=connection.cursor()
+    # Read CSV data
+    csv_reader = csv.reader(file)
+    df = pd.read_csv(csv_reader, index_col=0)
+    # print(content)
 
-    cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id, vegas_line,
-              vegas_line_result, over_under, total_points, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                   (values))
-    connection.commit()
-
-    result = { 'week': week, 'year': year, 'home_team': home_id, 'home_score': home_score, 'away_team': away_id, 'away_score': away_score,
-               'winner': winner, 'margin_of_victory': margin_of_victory, 'weather_id': weather_id, 'vegas_line': vegas_line,
-               'vegas_line_result': vegas_line_result,'over_under': over_under, 'total_points': total_points, 'over_under_result': over_under_result}
-
-    return result
-
+    print(df)
+    # df = pd.read_csv(content, index_col=0)
+    return {}
+    # df = pd.read_csv(f, index_col=0)
+    # print(df)
+    # file = request.args.get('file', None)
+    # # if 'file' not in request.files:
+    # #     return jsonify({'error': 'No file part'}), 400
+    # #
+    # # file = request.files['file']
+    # df = pd.read_csv(file, index_col=0)
+    # print(df)
+    # return []
 # @nfl.route('/nfl/games', methods=['PUT'])
 # def nfl_update_game_info(json_dict):
+#     file = str(request.files['file_name'])
+#
+#     # Read CSV data
+#     csv_reader = csv.reader(file)
+#     df = pd.read_csv(csv_reader, index_col=0)
+#     # print(content)
+#
+#     print(df)
 #     id = json_dict['id']
 #     week = json_dict['week']
 #     year = json_dict['year']

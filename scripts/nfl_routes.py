@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import statistics
+import csv
 
 from .db import create_connection
 from flask import Blueprint, request, jsonify
@@ -773,6 +774,97 @@ def nfl_get_rz_stat():
     return output
 
 
+@nfl.route('/nfl/upload', methods=['POST'])
+def test_route():
+    # if 'file' not in request.files:
+    #     return jsonify({'error': 'No file part'}), 400
+
+    # file = request.files.get('file')
+    file = request.files['file']
+    df = pd.read_csv(file)
+    print(df)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'column1': row['column1'], 'column2': row['column2'], 'column3': row['column3'], 'column4': row['column4']}
+        print(json_dict)
+
+        values_raw = list(json_dict.values())
+        values = []
+        for item in values_raw:
+            print(type(item))
+            values.append(int(item))
+
+        cursor.execute('''INSERT INTO test_table (column1, column2, column3, column4) VALUES (%s, %s, %s, %s)''', (values))
+
+        connection.commit()
+
+    return {}
+
+
+@nfl.route('/nfl/update_games', methods=['POST'])
+def nfl_update_game_info():
+    file = request.files['nfl_game_info']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+    print(df)
+
+    week = 0
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        week = int(row['week'])
+        json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_score': int(row['home_score']), 'away_score': int(row['away_score']),
+            'winner': int(row['winner']), 'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']),
+            'vegas_line': row['vegas_line'], 'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']),
+            'total_points': int(row['total_points']), 'over_under_result': row['over_under_result'], 'id': int(row['id']),
+            'home_id': int(row['home_id']), 'away_id': int(row['away_id'])
+        }
+
+        values = list(json_dict.values())
+        print(values)
+
+        cursor.execute('''UPDATE nfl_games
+                SET week = %s, year = %s, home_score = %s, away_score = %s, winner = %s, margin_of_victory = %s, weather_id = %s, vegas_line = %s,
+                vegas_line_result = %s, over_under = %s, total_points = %s, over_under_result = %s
+                WHERE nfl_games.id = %s AND nfl_games.home_id = %s AND nfl_games.away_id = %s''', (values))
+        connection.commit()
+
+    return f"nfl_games table updated with Week {week}"
+
+
+@nfl.route('/nfl/add_games', methods=['POST'])
+def nfl_add_game_info():
+    file = request.files['nfl_game_info']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+    print(df)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_id': int(row['home_id']), 'home_score': int(row['home_score']),
+            'away_id ': int(row['away_id']), 'away_score': int(row['away_score']), 'winner': int(row['winner']),
+            'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']), 'vegas_line': row['vegas_line'],
+            'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']), 'total_points': int(row['total_points']),
+            'over_under_result': row['over_under_result']}
+
+        values = list(json_dict.values())
+        print(values)
+
+        cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id,
+        vegas_line, vegas_line_result, over_under, total_points, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (values))
+        connection.commit()
+
+    return f"nfl_games has been updated with the most recent game data."
+
+
 # @nfl.route('/nfl/games', methods=['GET'])
 # def nfl_get_games():
 #     id = request.args.get('id', None)
@@ -794,3 +886,5 @@ def nfl_get_rz_stat():
 #     result_list = jsonify(result_list)
 #     result_list.headers.add("Access-Control-Allow-Origin", "*")
 #     return result_list
+
+
