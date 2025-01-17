@@ -716,18 +716,7 @@ def nfl_update_standings(json_dict):
 #
 #     return result
 
-@nfl.route('/nfl/upload', methods=['POST'])
-def test_route():
-    file = str(request.files['file_name'])
 
-    # Read CSV data
-    csv_reader = csv.reader(file)
-    df = pd.read_csv(csv_reader, index_col=0)
-    # print(content)
-
-    print(df)
-    # df = pd.read_csv(content, index_col=0)
-    return {}
     # df = pd.read_csv(f, index_col=0)
     # print(df)
     # file = request.args.get('file', None)

@@ -734,83 +734,12 @@ def nfl_opponent_information():
     return json_output
 
 
-@nfl.route('/nfl/rz_stat', methods=['GET'])
-def nfl_get_rz_stat():
-    player_id = request.args.get('player_id', None)
-    year = request.args.get('year', None)
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.*
-                FROM nfl_redzone_stats
-                JOIN player ON player.id = nfl_redzone_stats.player_id
-                WHERE nfl_redzone_stats.player_id = %s AND nfl_redzone_stats.year = %s'''
-
-    vals = [player_id, year]
-    cursor.execute(query, vals)
-
-    results = list(cursor.fetchall())
-
-    output = []
-    for result in results:
-        item = {'name': result[0], 'id': result[1], 'player_id': result[2], 'year': result[3],
-        'rz_20_pass_att': result[4], 'rz_20_pass_comp': result[5],  'rz_20_pass_comp_percentage': result[6], 'rz_20_pass_yard': result[7],
-                'rz_20_pass_td': result[8], 'rz_20_pass_int': result[9],
-        'rz_10_pass_att': result[10], 'rz_10_pass_comp': result[11], 'rz_10_comp_percentage': result[12], 'rz_10_pass_yard': result[13],
-                'rz_10_pass_td': result[14], 'rz_10_pass_int': result[15],
-        'rz_20_targets': result[16], 'rz_20_receptions': result[17], 'rz_20_rec_yards': result[18], 'rz_20_catch_percentage': result[19],
-                'rz_20_rec_td': result[20], 'rz_20_target_percentage': result[21],
-        'rz_10_targets': result[22], 'rz_10_receptions': result[23], 'rz_10_rec_yards': result[24], 'rz_10_catch_percentage': result[25],
-              'rz_10_rec_td': result[26], 'rz_10_target_percentage': result[27],
-        'rz_20_rush_att': result[28], 'rz_20_rush_yards': result[29], 'rz_20_rush_td': result[30], 'rz_20_rush_percentage': result[31],
-        'rz_10_rush_att': result[32], 'rz_10_rush_yards': result[33], 'rz_10_rush_td': result[34], 'rz_10_rush_percentage': result[35],
-        'rz_5_rush_att': result[36], 'rz_5_rush_yards': result[37], 'rz_5_rush_td': result[38], 'rz_5_rush_percentage': result[39]}
-        if item not in output:
-            output.append(item)
-
-    # Enable Access-Control-Allow-Origin
-    output = jsonify(output)
-    output.headers.add("Access-Control-Allow-Origin", "*")
-    return output
-
-
-@nfl.route('/nfl/upload', methods=['POST'])
-def test_route():
-    # if 'file' not in request.files:
-    #     return jsonify({'error': 'No file part'}), 400
-
-    # file = request.files.get('file')
-    file = request.files['file']
-    df = pd.read_csv(file)
-    print(df)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        json_dict = {'column1': row['column1'], 'column2': row['column2'], 'column3': row['column3'], 'column4': row['column4']}
-        print(json_dict)
-
-        values_raw = list(json_dict.values())
-        values = []
-        for item in values_raw:
-            print(type(item))
-            values.append(int(item))
-
-        cursor.execute('''INSERT INTO test_table (column1, column2, column3, column4) VALUES (%s, %s, %s, %s)''', (values))
-
-        connection.commit()
-
-    return {}
-
-
 @nfl.route('/nfl/update_games', methods=['POST'])
 def nfl_update_game_info():
     file = request.files['nfl_game_info']
 
     # Read CSV data
     df = pd.read_csv(file)
-    print(df)
 
     week = 0
     for ind, row in df.iterrows():
@@ -822,11 +751,9 @@ def nfl_update_game_info():
             'winner': int(row['winner']), 'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']),
             'vegas_line': row['vegas_line'], 'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']),
             'total_points': int(row['total_points']), 'over_under_result': row['over_under_result'], 'id': int(row['id']),
-            'home_id': int(row['home_id']), 'away_id': int(row['away_id'])
-        }
+            'home_id': int(row['home_id']), 'away_id': int(row['away_id'])}
 
         values = list(json_dict.values())
-        print(values)
 
         cursor.execute('''UPDATE nfl_games
                 SET week = %s, year = %s, home_score = %s, away_score = %s, winner = %s, margin_of_victory = %s, weather_id = %s, vegas_line = %s,
@@ -843,7 +770,6 @@ def nfl_add_game_info():
 
     # Read CSV data
     df = pd.read_csv(file)
-    print(df)
 
     for ind, row in df.iterrows():
         connection = create_connection()
@@ -887,4 +813,43 @@ def nfl_add_game_info():
 #     result_list.headers.add("Access-Control-Allow-Origin", "*")
 #     return result_list
 
+
+# @nfl.route('/nfl/rz_stat', methods=['GET'])
+# def nfl_get_rz_stat():
+#     player_id = request.args.get('player_id', None)
+#     year = request.args.get('year', None)
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.*
+#                 FROM nfl_redzone_stats
+#                 JOIN player ON player.id = nfl_redzone_stats.player_id
+#                 WHERE nfl_redzone_stats.player_id = %s AND nfl_redzone_stats.year = %s'''
+#
+#     vals = [player_id, year]
+#     cursor.execute(query, vals)
+#
+#     results = list(cursor.fetchall())
+#
+#     output = []
+#     for result in results:
+#         item = {'name': result[0], 'id': result[1], 'player_id': result[2], 'year': result[3],
+#         'rz_20_pass_att': result[4], 'rz_20_pass_comp': result[5],  'rz_20_pass_comp_percentage': result[6], 'rz_20_pass_yard': result[7],
+#                 'rz_20_pass_td': result[8], 'rz_20_pass_int': result[9],
+#         'rz_10_pass_att': result[10], 'rz_10_pass_comp': result[11], 'rz_10_comp_percentage': result[12], 'rz_10_pass_yard': result[13],
+#                 'rz_10_pass_td': result[14], 'rz_10_pass_int': result[15],
+#         'rz_20_targets': result[16], 'rz_20_receptions': result[17], 'rz_20_rec_yards': result[18], 'rz_20_catch_percentage': result[19],
+#                 'rz_20_rec_td': result[20], 'rz_20_target_percentage': result[21],
+#         'rz_10_targets': result[22], 'rz_10_receptions': result[23], 'rz_10_rec_yards': result[24], 'rz_10_catch_percentage': result[25],
+#               'rz_10_rec_td': result[26], 'rz_10_target_percentage': result[27],
+#         'rz_20_rush_att': result[28], 'rz_20_rush_yards': result[29], 'rz_20_rush_td': result[30], 'rz_20_rush_percentage': result[31],
+#         'rz_10_rush_att': result[32], 'rz_10_rush_yards': result[33], 'rz_10_rush_td': result[34], 'rz_10_rush_percentage': result[35],
+#         'rz_5_rush_att': result[36], 'rz_5_rush_yards': result[37], 'rz_5_rush_td': result[38], 'rz_5_rush_percentage': result[39]}
+#         if item not in output:
+#             output.append(item)
+#
+#     # Enable Access-Control-Allow-Origin
+#     output = jsonify(output)
+#     output.headers.add("Access-Control-Allow-Origin", "*")
+#     return output
 
