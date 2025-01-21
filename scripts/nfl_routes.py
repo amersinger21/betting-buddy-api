@@ -4,6 +4,7 @@ import statistics
 import csv
 
 from .db import create_connection
+import flask
 from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
@@ -733,39 +734,8 @@ def nfl_opponent_information():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
-
-@nfl.route('/nfl/update_games', methods=['POST'])
-def nfl_update_game_info():
-    file = request.files['nfl_game_info']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    week = 0
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        week = int(row['week'])
-        json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_score': int(row['home_score']), 'away_score': int(row['away_score']),
-            'winner': int(row['winner']), 'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']),
-            'vegas_line': row['vegas_line'], 'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']),
-            'total_points': int(row['total_points']), 'over_under_result': row['over_under_result'], 'id': int(row['id']),
-            'home_id': int(row['home_id']), 'away_id': int(row['away_id'])}
-
-        values = list(json_dict.values())
-
-        cursor.execute('''UPDATE nfl_games
-                SET week = %s, year = %s, home_score = %s, away_score = %s, winner = %s, margin_of_victory = %s, weather_id = %s, vegas_line = %s,
-                vegas_line_result = %s, over_under = %s, total_points = %s, over_under_result = %s
-                WHERE nfl_games.id = %s AND nfl_games.home_id = %s AND nfl_games.away_id = %s''', (values))
-        connection.commit()
-
-    return f"nfl_games table updated with Week {week}"
-
-
-@nfl.route('/nfl/add_games', methods=['POST'])
-def nfl_add_game_info():
+@nfl.route('/nfl/add_games', methods=['POST', 'PUT'])
+def nfl_game_info():
     file = request.files['nfl_game_info']
 
     # Read CSV data
@@ -775,20 +745,153 @@ def nfl_add_game_info():
         connection = create_connection()
         cursor = connection.cursor()
 
-        json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_id': int(row['home_id']), 'home_score': int(row['home_score']),
-            'away_id ': int(row['away_id']), 'away_score': int(row['away_score']), 'winner': int(row['winner']),
-            'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']), 'vegas_line': row['vegas_line'],
-            'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']), 'total_points': int(row['total_points']),
-            'over_under_result': row['over_under_result']}
+        # Add Games:
+        if flask.request.method == 'POST':
+            json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_id': int(row['home_id']), 'home_score': int(row['home_score']),
+                'away_id ': int(row['away_id']), 'away_score': int(row['away_score']), 'winner': int(row['winner']),
+                'margin_of_victory': int(row['margin_of_victory']), 'weather_id': int(row['weather_id']), 'vegas_line': row['vegas_line'],
+                'vegas_line_result': row['vegas_line_result'], 'over_under': float(row['over_under']), 'total_points': int(row['total_points']),
+                'over_under_result': row['over_under_result']}
+            values = list(json_dict.values())
+            print(values)
 
-        values = list(json_dict.values())
-        print(values)
+            cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, 
+            margin_of_victory, weather_id, vegas_line, vegas_line_result, over_under, total_points, over_under_result) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (values))
 
-        cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, weather_id,
-        vegas_line, vegas_line_result, over_under, total_points, over_under_result) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (values))
+        # Update Game Info:
+        elif flask.request.method == 'PUT':
+            json_dict = {'week': int(row['week']), 'year': int(row['year']), 'home_score': int(row['home_score']),
+                     'away_score': int(row['away_score']), 'winner': int(row['winner']), 'margin_of_victory': int(row['margin_of_victory']),
+                     'weather_id': int(row['weather_id']), 'vegas_line': row['vegas_line'], 'vegas_line_result': row['vegas_line_result'],
+                     'over_under': float(row['over_under']), 'total_points': int(row['total_points']),
+                     'over_under_result': row['over_under_result'], 'id': int(row['id']), 'home_id': int(row['home_id']),
+                     'away_id': int(row['away_id'])}
+            values = list(json_dict.values())
+
+            cursor.execute('''UPDATE nfl_games
+                    SET week = %s, year = %s, home_score = %s, away_score = %s, winner = %s, margin_of_victory = %s, weather_id = %s, vegas_line = %s,
+                    vegas_line_result = %s, over_under = %s, total_points = %s, over_under_result = %s
+                    WHERE nfl_games.id = %s AND nfl_games.home_id = %s AND nfl_games.away_id = %s''', (values))
+
         connection.commit()
 
     return f"nfl_games has been updated with the most recent game data."
+
+@nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
+def nfl_team_defense():
+    file = request.files['nfl_team_defense']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'], 'year': row['year'], 'games': row['games'],
+
+                     'dvoa': row['dvoa'], 'epa_per_play': row['epa_per_play'], 'success_rate': row['success_rate'],
+                     'dropback_epa': row['dropback_epa'], 'dropback_sr': row['dropback_sr'], 'rush_epa': row['rush_epa'],
+                     'rush_sr': row['rush_sr'],
+
+                     'pass_comp': row['pass_comp'], 'pass_att': row['pass_att'], 'pass_comp_percentage': row['pass_comp_percentage'],
+                     'pass_yards': row['pass_yards'], 'pass_td': row['pass_td'], 'pass_td_percentage': row['pass_td_percentage'],
+                     'yards_per_att': row['yards_per_att'],  'pass_yards_per_comp': row['pass_yards_per_comp'],
+                     'pass_yards_per_game': row['pass_yards_per_game'], 'passer_rating': row['passer_rating'],
+                     'qb_hits': row['qb_hits'], 'sacks': row['sacks'], 'ints': row['ints'], 'int_percentage': row['int_percentage'],
+                     'pass_deflections': row['pass_deflections'],
+
+                     'rush_att': row['rush_att'], 'rush_yards': row['rush_yards'], 'rush_td': row['rush_td'],
+                     'rush_yards_per_att': row['rush_yards_per_att'], 'rush_yards_per_game': row['rush_yards_per_game'],
+
+                     'points_per_game': row['points_per_game'], 'total_points': row['total_points'], 'drives': row['drives'],
+                     'plays': row['plays'], 'scoring_percentage': row['scoring_percentage'], 'to_percentage': row['to_percentage'],
+                     'plays_per_drive': row['plays_per_drive'], 'yards_per_drive': row['yards_per_drive'],
+                     'points_per_drive': row['points_per_drive'],
+
+                     'third_down_att': row['third_down_att'], 'third_down_conv': row['third_down_conv'],
+                     'third_down_conv_rate': row['third_down_conv_rate'], 'fourth_down_att': row['fourth_down_att'],
+                     'fourth_down_conv': row['fourth_down_conv'], 'fourth_down_conv_rate': row['fourth_down_conv_rate'],
+
+                     'rz_att': row['rz_att'], 'rz_td': row['rz_td'], 'rz_percentage': row['rz_percentage'],
+
+                     'qb_rush_att': row['qb_rush_att'], 'qb_rush_yards': row['qb_rush_yards'], 'qb_rush_td': row['qb_rush_td'],
+                     'rb_att': row['rb_att'], 'rb_yards': row['rb_yards'], 'rb_td': row['rb_td'], 'rb_targets': row['rb_targets'],
+                     'rb_rec': row['rb_rec'], 'rb_rec_yards': row['rb_rec_yards'], 'rb_rec_td': row['rb_rec_td'],
+                     'wr_targets': row['wr_targets'], 'wr_rec': row['wr_rec'], 'wr_yards': row['wr_yards'], 'wr_td': row['wr_td'],
+                     'te_targets': row['te_targets'], 'te_rec': row['te_rec'], 'te_yards': row['te_yards'], 'te_td': row['te_td']}
+            values = list(json_dict.values())
+
+            cursor.execute('''INSERT INTO nfl_team_defense (team_id, year, games, dvoa, epa_per_play, success_rate, dropback_epa, 
+            dropback_sr, rush_epa, rush_sr, pass_comp, pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage,
+            yards_per_att, pass_yards_per_comp, pass_yards_per_game, passer_rating, qb_hits, sacks, ints, int_percentage, 
+            pass_deflections, rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, points_per_game, total_points, 
+            drives, plays, scoring_percentage, to_percentage, plays_per_drive, yards_per_drive, points_per_drive, third_down_att,
+            third_down_conv, third_down_conv_rate, fourth_down_att, fourth_down_conv, fourth_down_conv_rate, rz_att, rz_td, 
+            rz_percentage, qb_rush_att, qb_rush_yards, qb_rush_td, rb_att, rb_yards, rb_td, rb_targets, rb_rec, rb_rec_yards,
+            rb_rec_td, wr_targets, wr_rec, wr_yards, wr_td, te_targets, te_rec, te_yards, te_td) VALUES (%s, %s, %s, %s, %s, %s, 
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+            %s, %s, %s, %s)''', (values))
+
+        # Update data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+
+                         'dvoa': row['dvoa'], 'epa_per_play': row['epa_per_play'], 'success_rate': row['success_rate'],
+                         'dropback_epa': row['dropback_epa'], 'dropback_sr': row['dropback_sr'], 'rush_epa': row['rush_epa'],
+                         'rush_sr': row['rush_sr'],
+
+                         'pass_comp': row['pass_comp'], 'pass_att': row['pass_att'], 'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'], 'pass_td': row['pass_td'], 'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'], 'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'], 'passer_rating': row['passer_rating'],
+                         'qb_hits': row['qb_hits'], 'sacks': row['sacks'], 'ints': row['ints'], 'int_percentage': row['int_percentage'],
+                         'pass_deflections': row['pass_deflections'],
+
+                         'rush_att': row['rush_att'], 'rush_yards': row['rush_yards'], 'rush_td': row['rush_td'],
+                         'rush_yards_per_att': row['rush_yards_per_att'], 'rush_yards_per_game': row['rush_yards_per_game'],
+
+                         'points_per_game': row['points_per_game'], 'total_points': row['total_points'], 'drives': row['drives'],
+                         'plays': row['plays'], 'scoring_percentage': row['scoring_percentage'], 'to_percentage': row['to_percentage'],
+                         'plays_per_drive': row['plays_per_drive'], 'yards_per_drive': row['yards_per_drive'],
+                         'points_per_drive': row['points_per_drive'],
+
+                         'third_down_att': row['third_down_att'], 'third_down_conv': row['third_down_conv'],
+                         'third_down_conv_rate': row['third_down_conv_rate'], 'fourth_down_att': row['fourth_down_att'],
+                         'fourth_down_conv': row['fourth_down_conv'], 'fourth_down_conv_rate': row['fourth_down_conv_rate'],
+
+                         'rz_att': row['rz_att'], 'rz_td': row['rz_td'], 'rz_percentage': row['rz_percentage'],
+
+                         'qb_rush_att': row['qb_rush_att'], 'qb_rush_yards': row['qb_rush_yards'], 'qb_rush_td': row['qb_rush_td'],
+                         'rb_att': row['rb_att'], 'rb_yards': row['rb_yards'], 'rb_td': row['rb_td'],'rb_targets': row['rb_targets'],
+                         'rb_rec': row['rb_rec'], 'rb_rec_yards': row['rb_rec_yards'], 'rb_rec_td': row['rb_rec_td'],
+                         'wr_targets': row['wr_targets'], 'wr_rec': row['wr_rec'], 'wr_yards': row['wr_yards'], 'wr_td': row['wr_td'],
+                         'te_targets': row['te_targets'], 'te_rec': row['te_rec'], 'te_yards': row['te_yards'], 'te_td': row['te_td'],
+
+                         'team_id': row['team_id'], 'year': row['year']}
+            values = list(json_dict.values())
+            print(values)
+
+            cursor.execute("""UPDATE nfl_team_defense
+                SET games = %s, dvoa = %s, epa_per_play = %s, success_rate = %s, dropback_epa = %s, dropback_sr = %s, rush_epa = %s, 
+                rush_sr = %s, pass_comp = %s, pass_att = %s, pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, 
+                pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s, passer_rating = %s, 
+                qb_hits = %s, sacks = %s, ints = %s, int_percentage = %s, pass_deflections = %s, rush_att = %s, rush_yards = %s,
+                rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, points_per_game = %s, total_points = %s, drives = %s, 
+                plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, yards_per_drive = %s, points_per_drive = %s,
+                third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, fourth_down_att = %s, fourth_down_conv = %s,
+                fourth_down_conv_rate = %s, rz_att = %s, rz_td = %s, rz_percentage = %s, qb_rush_att = %s, qb_rush_yards = %s,
+                qb_rush_td = %s, rb_att = %s, rb_yards = %s, rb_td = %s, rb_targets = %s, rb_rec = %s, rb_rec_yards = %s,
+                rb_rec_td = %s, wr_targets = %s, wr_rec = %s, wr_yards = %s, wr_td = %s, te_targets = %s, te_rec = %s, te_yards = %s, te_td = %s
+                WHERE nfl_team_defense.team_id = %s AND nfl_team_defense.year = %s""", (values))
+
+        connection.commit()
+
+    return f"nfl_team_defense has been updated with the most recent years data."
 
 
 # @nfl.route('/nfl/games', methods=['GET'])
