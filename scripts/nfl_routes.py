@@ -319,7 +319,6 @@ def nfl_player_logs():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
-
 @nfl.route('/nfl/team_stats', methods=['GET'])
 def nfl_team_stats():
     team_id = request.args.get('team_id', None)
@@ -496,7 +495,6 @@ def nfl_team_stats():
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
-
 
 @nfl.route('/nfl/opponent_stats', methods=['GET'])
 def nfl_opponent_information():
@@ -735,6 +733,8 @@ def nfl_opponent_information():
     return json_output
 
 
+
+
 # UPLOAD/ADD ROUTES
 @nfl.route('/nfl/games', methods=['POST', 'PUT'])
 def nfl_game_info():
@@ -779,7 +779,6 @@ def nfl_game_info():
         connection.commit()
 
     return f"nfl_games has been updated with the most recent game data."
-
 
 @nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
 def nfl_team_defense():
@@ -895,7 +894,6 @@ def nfl_team_defense():
         connection.commit()
 
     return f"nfl_team_defense has been updated with the most recent years data."
-
 
 @nfl.route('/nfl/team_offense', methods=['POST', 'PUT'])
 def nfl_team_offense():
@@ -1033,7 +1031,6 @@ def nfl_team_offense():
 
     return f"nfl_team_offense has been updated with the most recent years data."
 
-
 @nfl.route('/nfl/standings', methods=['POST', 'PUT'])
 def nfl_standings():
     file = request.files['nfl_standings']
@@ -1087,7 +1084,6 @@ def nfl_standings():
         connection.commit()
 
     return f"nfl_team_offense has been updated with the most recent years data."
-
 
 @nfl.route('/nfl/red_zone', methods=['POST', 'PUT'])
 def nfl_red_zone():
@@ -1207,3 +1203,4 @@ def nfl_red_zone():
         connection.commit()
 
     return f"nfl_redzone_stats has been updated with the most recent years data."
+

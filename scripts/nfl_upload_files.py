@@ -56,158 +56,158 @@ def nfl_add_player_stats(json_dict):
 
 
 # RED ZONE STATS:
-@nfl.route('/nfl/rz_stat', methods=['POST'])
-def nfl_add_rz_stat(json_dict):
-    player_id = json_dict['player_id']
-    year = json_dict['year']
-    rz_20_pass_att = json_dict['rz_20_pass_att']
-    rz_20_pass_comp = json_dict['rz_20_pass_comp']
-    rz_20_comp_percentage = json_dict['rz_20_comp_percentage']
-    rz_20_pass_yards = json_dict['rz_20_pass_yards']
-    rz_20_pass_td = json_dict['rz_20_pass_td']
-    rz_20_pass_int = json_dict['rz_20_pass_int']
-    rz_10_pass_att = json_dict['rz_10_pass_att']
-    rz_10_pass_comp = json_dict['rz_10_pass_comp']
-    rz_10_comp_percentage = json_dict['rz_10_comp_percentage']
-    rz_10_pass_yards = json_dict['rz_10_pass_yards']
-    rz_10_pass_td = json_dict['rz_10_pass_td']
-    rz_10_pass_int = json_dict['rz_10_pass_int']
-    rz_20_targets = json_dict['rz_20_targets']
-    rz_20_receptions = json_dict['rz_20_receptions']
-    rz_20_rec_yards = json_dict['rz_20_rec_yards']
-    rz_20_catch_percentage = json_dict['rz_20_catch_percentage']
-    rz_20_rec_td = json_dict['rz_20_rec_td']
-    rz_20_target_percentage = json_dict['rz_20_target_percentage']
-    rz_10_targets = json_dict['rz_10_targets']
-    rz_10_receptions = json_dict['rz_10_receptions']
-    rz_10_rec_yards = json_dict['rz_10_rec_yards']
-    rz_10_catch_percentage = json_dict['rz_10_catch_percentage']
-    rz_10_rec_td = json_dict['rz_10_rec_td']
-    rz_10_target_percentage = json_dict['rz_10_target_percentage']
-    rz_20_rush_att = json_dict['rz_20_rush_att']
-    rz_20_rush_yards = json_dict['rz_20_rush_yards']
-    rz_20_rush_td = json_dict['rz_20_rush_td']
-    rz_20_rush_percentage = json_dict['rz_20_rush_percentage']
-    rz_10_rush_att = json_dict['rz_10_rush_att']
-    rz_10_rush_yards = json_dict['rz_10_rush_yards']
-    rz_10_rush_td = json_dict['rz_10_rush_td']
-    rz_10_rush_percentage = json_dict['rz_10_rush_percentage']
-    rz_5_rush_att = json_dict['rz_5_rush_att']
-    rz_5_rush_yards = json_dict['rz_5_rush_yards']
-    rz_5_rush_td = json_dict['rz_5_rush_td']
-    rz_5_rush_percentage = json_dict['rz_5_rush_percentage']
-
-    values = (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
-              rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
-              rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
-              rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
-              rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
-              rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage)
-
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""INSERT INTO nfl_redzone_stats (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
-              rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
-              rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
-              rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
-              rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
-              rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                   (values))
-    connection.commit()
-    print(f"Game has been added to games table.")
-
-
-    result = {'player_id':player_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_comp': rz_20_pass_comp,  'rz_20_pass_comp_percentage': rz_20_comp_percentage,
-              'rz_20_pass_yard': rz_20_pass_yards, 'rz_20_pass_td': rz_20_pass_td, 'rz_20_pass_int': rz_20_pass_int,
-              'rz_10_pass_att': rz_10_pass_att, 'rz_10_pass_comp': rz_10_pass_comp, 'rz_10_comp_percentage': rz_10_comp_percentage,
-              'rz_10_pass_yard': rz_10_pass_yards, 'rz_10_pass_td': rz_10_pass_td, 'rz_10_pass_int': rz_10_pass_int,
-              'rz_20_targets': rz_20_targets, 'rz_20_receptions': rz_20_receptions,
-              'rz_20_rec_yards': rz_20_rec_yards, 'rz_20_catch_percentage': rz_20_catch_percentage, 'rz_20_rec_td': rz_20_rec_td, 'rz_20_target_percentage': rz_20_target_percentage,
-              'rz_10_targets': rz_10_targets, 'rz_10_receptions': rz_10_targets, 'rz_10_rec_yards': rz_10_rec_yards, 'rz_10_catch_percentage': rz_10_catch_percentage,
-              'rz_10_rec_td': rz_10_rec_td, 'rz_10_target_percentage': rz_10_target_percentage, 'rz_20_rush_att': rz_10_target_percentage, 'rz_20_rush_td': rz_20_rush_td,
-              'rz_20_rush_yards': rz_20_rush_yards, 'rz_20_rush_percentage': rz_20_rush_percentage, 'rz_10_rush_att': rz_10_rush_att,
-              'rz_10_rush_td': rz_10_rush_td, 'rz_10_rush_yards': rz_10_rush_yards, 'rz_10_rush_percentage': rz_10_rush_percentage,
-              'rz_5_rush_att': rz_5_rush_att, 'rz_5_rush_td': rz_5_rush_att, 'rz_5_rush_yards': rz_5_rush_yards, 'rz_5_rush_percentage': rz_5_rush_percentage}
-
-    return result
-@nfl.route('/nfl/rz_stat', methods=['PUT'])
-def nfl_update_rz_stat(json_dict):
-    player_id = json_dict['player_id']
-    year = json_dict['year']
-    rz_20_pass_att = json_dict['rz_20_pass_att']
-    rz_20_pass_comp = json_dict['rz_20_pass_comp']
-    rz_20_comp_percentage = json_dict['rz_20_comp_percentage']
-    rz_20_pass_yards = json_dict['rz_20_pass_yards']
-    rz_20_pass_td = json_dict['rz_20_pass_td']
-    rz_20_pass_int = json_dict['rz_20_pass_int']
-    rz_10_pass_att = json_dict['rz_10_pass_att']
-    rz_10_pass_comp = json_dict['rz_10_pass_comp']
-    rz_10_comp_percentage = json_dict['rz_10_comp_percentage']
-    rz_10_pass_yards = json_dict['rz_10_pass_yards']
-    rz_10_pass_td = json_dict['rz_10_pass_td']
-    rz_10_pass_int = json_dict['rz_10_pass_int']
-    rz_20_targets = json_dict['rz_20_targets']
-    rz_20_receptions = json_dict['rz_20_receptions']
-    rz_20_rec_yards = json_dict['rz_20_rec_yards']
-    rz_20_catch_percentage = json_dict['rz_20_catch_percentage']
-    rz_20_rec_td = json_dict['rz_20_rec_td']
-    rz_20_target_percentage = json_dict['rz_20_target_percentage']
-    rz_10_targets = json_dict['rz_10_targets']
-    rz_10_receptions = json_dict['rz_10_receptions']
-    rz_10_rec_yards = json_dict['rz_10_rec_yards']
-    rz_10_catch_percentage = json_dict['rz_10_catch_percentage']
-    rz_10_rec_td = json_dict['rz_10_rec_td']
-    rz_10_target_percentage = json_dict['rz_10_target_percentage']
-    rz_20_rush_att = json_dict['rz_20_rush_att']
-    rz_20_rush_yards = json_dict['rz_20_rush_yards']
-    rz_20_rush_td = json_dict['rz_20_rush_td']
-    rz_20_rush_percentage = json_dict['rz_20_rush_percentage']
-    rz_10_rush_att = json_dict['rz_10_rush_att']
-    rz_10_rush_yards = json_dict['rz_10_rush_yards']
-    rz_10_rush_td = json_dict['rz_10_rush_td']
-    rz_10_rush_percentage = json_dict['rz_10_rush_percentage']
-    rz_5_rush_att = json_dict['rz_5_rush_att']
-    rz_5_rush_yards = json_dict['rz_5_rush_yards']
-    rz_5_rush_td = json_dict['rz_5_rush_td']
-    rz_5_rush_percentage = json_dict['rz_5_rush_percentage']
-
-    values = (rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
-              rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
-              rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
-              rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
-              rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
-              rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage, player_id, year)
-
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("""UPDATE nfl_redzone_stats 
-            SET rz_20_pass_att = %s, rz_20_pass_comp = %s, rz_20_comp_percentage = %s, rz_20_pass_yards = %s, rz_20_pass_td = %s, rz_20_pass_int = %s,
-                rz_10_pass_att = %s, rz_10_pass_comp = %s, rz_10_comp_percentage = %s, rz_10_pass_yards = %s, rz_10_pass_td = %s, 
-                rz_10_pass_int = %s, rz_20_targets = %s, rz_20_receptions = %s, rz_20_rec_yards = %s, rz_20_catch_percentage = %s, 
-                rz_20_rec_td = %s, rz_20_target_percentage = %s, rz_10_targets = %s, rz_10_receptions = %s, rz_10_rec_yards = %s, 
-                rz_10_catch_percentage = %s, rz_10_rec_td = %s, rz_10_target_percentage = %s, rz_20_rush_att = %s, rz_20_rush_td = %s,
-                rz_20_rush_yards = %s, rz_20_rush_percentage = %s, rz_10_rush_att = %s, rz_10_rush_td = %s, rz_10_rush_yards = %s, 
-                rz_10_rush_percentage = %s, rz_5_rush_att = %s, rz_5_rush_td = %s, rz_5_rush_yards = %s, rz_5_rush_percentage = %s 
-            WHERE nfl_redzone_stats.player_id = %s AND nfl_redzone_stats.year = %s""",
-                   (values))
-    connection.commit()
-    print(f"Game has been added to games table.")
-
-
-    result = {'player_id':player_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_comp': rz_20_pass_comp,  'rz_20_pass_comp_percentage': rz_20_comp_percentage,
-              'rz_20_pass_yard': rz_20_pass_yards, 'rz_20_pass_td': rz_20_pass_td, 'rz_20_pass_int': rz_20_pass_int,
-              'rz_10_pass_att': rz_10_pass_att, 'rz_10_pass_comp': rz_10_pass_comp, 'rz_10_pass_yard': rz_10_pass_yards, 'rz_10_pass_td': rz_10_pass_td, 'rz_10_pass_int': rz_10_pass_int,
-              'rz_10_comp_percentage': rz_10_comp_percentage, 'rz_20_targets': rz_20_targets, 'rz_20_receptions': rz_20_receptions,
-              'rz_20_rec_yards': rz_20_rec_yards, 'rz_20_catch_percentage': rz_20_catch_percentage, 'rz_20_rec_td': rz_20_rec_td, 'rz_20_target_percentage': rz_20_target_percentage,
-              'rz_10_targets': rz_10_targets, 'rz_10_receptions': rz_10_targets, 'rz_10_rec_yards': rz_10_rec_yards, 'rz_10_catch_percentage': rz_10_catch_percentage,
-              'rz_10_rec_td': rz_10_rec_td, 'rz_10_target_percentage': rz_10_target_percentage, 'rz_20_rush_att': rz_10_target_percentage, 'rz_20_rush_td': rz_20_rush_td,
-              'rz_20_rush_yards': rz_20_rush_yards, 'rz_20_rush_percentage': rz_20_rush_percentage, 'rz_10_rush_att': rz_10_rush_att,
-              'rz_10_rush_td': rz_10_rush_td, 'rz_10_rush_yards': rz_10_rush_yards, 'rz_10_rush_percentage': rz_10_rush_percentage,
-              'rz_5_rush_att': rz_5_rush_att, 'rz_5_rush_td': rz_5_rush_att, 'rz_5_rush_yards': rz_5_rush_yards, 'rz_5_rush_percentage': rz_5_rush_percentage}
-
-    return result
+# @nfl.route('/nfl/rz_stat', methods=['POST'])
+# def nfl_add_rz_stat(json_dict):
+#     player_id = json_dict['player_id']
+#     year = json_dict['year']
+#     rz_20_pass_att = json_dict['rz_20_pass_att']
+#     rz_20_pass_comp = json_dict['rz_20_pass_comp']
+#     rz_20_comp_percentage = json_dict['rz_20_comp_percentage']
+#     rz_20_pass_yards = json_dict['rz_20_pass_yards']
+#     rz_20_pass_td = json_dict['rz_20_pass_td']
+#     rz_20_pass_int = json_dict['rz_20_pass_int']
+#     rz_10_pass_att = json_dict['rz_10_pass_att']
+#     rz_10_pass_comp = json_dict['rz_10_pass_comp']
+#     rz_10_comp_percentage = json_dict['rz_10_comp_percentage']
+#     rz_10_pass_yards = json_dict['rz_10_pass_yards']
+#     rz_10_pass_td = json_dict['rz_10_pass_td']
+#     rz_10_pass_int = json_dict['rz_10_pass_int']
+#     rz_20_targets = json_dict['rz_20_targets']
+#     rz_20_receptions = json_dict['rz_20_receptions']
+#     rz_20_rec_yards = json_dict['rz_20_rec_yards']
+#     rz_20_catch_percentage = json_dict['rz_20_catch_percentage']
+#     rz_20_rec_td = json_dict['rz_20_rec_td']
+#     rz_20_target_percentage = json_dict['rz_20_target_percentage']
+#     rz_10_targets = json_dict['rz_10_targets']
+#     rz_10_receptions = json_dict['rz_10_receptions']
+#     rz_10_rec_yards = json_dict['rz_10_rec_yards']
+#     rz_10_catch_percentage = json_dict['rz_10_catch_percentage']
+#     rz_10_rec_td = json_dict['rz_10_rec_td']
+#     rz_10_target_percentage = json_dict['rz_10_target_percentage']
+#     rz_20_rush_att = json_dict['rz_20_rush_att']
+#     rz_20_rush_yards = json_dict['rz_20_rush_yards']
+#     rz_20_rush_td = json_dict['rz_20_rush_td']
+#     rz_20_rush_percentage = json_dict['rz_20_rush_percentage']
+#     rz_10_rush_att = json_dict['rz_10_rush_att']
+#     rz_10_rush_yards = json_dict['rz_10_rush_yards']
+#     rz_10_rush_td = json_dict['rz_10_rush_td']
+#     rz_10_rush_percentage = json_dict['rz_10_rush_percentage']
+#     rz_5_rush_att = json_dict['rz_5_rush_att']
+#     rz_5_rush_yards = json_dict['rz_5_rush_yards']
+#     rz_5_rush_td = json_dict['rz_5_rush_td']
+#     rz_5_rush_percentage = json_dict['rz_5_rush_percentage']
+#
+#     values = (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
+#               rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
+#               rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
+#               rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
+#               rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
+#               rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage)
+#
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     cursor.execute("""INSERT INTO nfl_redzone_stats (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
+#               rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
+#               rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
+#               rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
+#               rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
+#               rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+#                    (values))
+#     connection.commit()
+#     print(f"Game has been added to games table.")
+#
+#
+#     result = {'player_id':player_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_comp': rz_20_pass_comp,  'rz_20_pass_comp_percentage': rz_20_comp_percentage,
+#               'rz_20_pass_yard': rz_20_pass_yards, 'rz_20_pass_td': rz_20_pass_td, 'rz_20_pass_int': rz_20_pass_int,
+#               'rz_10_pass_att': rz_10_pass_att, 'rz_10_pass_comp': rz_10_pass_comp, 'rz_10_comp_percentage': rz_10_comp_percentage,
+#               'rz_10_pass_yard': rz_10_pass_yards, 'rz_10_pass_td': rz_10_pass_td, 'rz_10_pass_int': rz_10_pass_int,
+#               'rz_20_targets': rz_20_targets, 'rz_20_receptions': rz_20_receptions,
+#               'rz_20_rec_yards': rz_20_rec_yards, 'rz_20_catch_percentage': rz_20_catch_percentage, 'rz_20_rec_td': rz_20_rec_td, 'rz_20_target_percentage': rz_20_target_percentage,
+#               'rz_10_targets': rz_10_targets, 'rz_10_receptions': rz_10_targets, 'rz_10_rec_yards': rz_10_rec_yards, 'rz_10_catch_percentage': rz_10_catch_percentage,
+#               'rz_10_rec_td': rz_10_rec_td, 'rz_10_target_percentage': rz_10_target_percentage, 'rz_20_rush_att': rz_10_target_percentage, 'rz_20_rush_td': rz_20_rush_td,
+#               'rz_20_rush_yards': rz_20_rush_yards, 'rz_20_rush_percentage': rz_20_rush_percentage, 'rz_10_rush_att': rz_10_rush_att,
+#               'rz_10_rush_td': rz_10_rush_td, 'rz_10_rush_yards': rz_10_rush_yards, 'rz_10_rush_percentage': rz_10_rush_percentage,
+#               'rz_5_rush_att': rz_5_rush_att, 'rz_5_rush_td': rz_5_rush_att, 'rz_5_rush_yards': rz_5_rush_yards, 'rz_5_rush_percentage': rz_5_rush_percentage}
+#
+#     return result
+# @nfl.route('/nfl/rz_stat', methods=['PUT'])
+# def nfl_update_rz_stat(json_dict):
+#     player_id = json_dict['player_id']
+#     year = json_dict['year']
+#     rz_20_pass_att = json_dict['rz_20_pass_att']
+#     rz_20_pass_comp = json_dict['rz_20_pass_comp']
+#     rz_20_comp_percentage = json_dict['rz_20_comp_percentage']
+#     rz_20_pass_yards = json_dict['rz_20_pass_yards']
+#     rz_20_pass_td = json_dict['rz_20_pass_td']
+#     rz_20_pass_int = json_dict['rz_20_pass_int']
+#     rz_10_pass_att = json_dict['rz_10_pass_att']
+#     rz_10_pass_comp = json_dict['rz_10_pass_comp']
+#     rz_10_comp_percentage = json_dict['rz_10_comp_percentage']
+#     rz_10_pass_yards = json_dict['rz_10_pass_yards']
+#     rz_10_pass_td = json_dict['rz_10_pass_td']
+#     rz_10_pass_int = json_dict['rz_10_pass_int']
+#     rz_20_targets = json_dict['rz_20_targets']
+#     rz_20_receptions = json_dict['rz_20_receptions']
+#     rz_20_rec_yards = json_dict['rz_20_rec_yards']
+#     rz_20_catch_percentage = json_dict['rz_20_catch_percentage']
+#     rz_20_rec_td = json_dict['rz_20_rec_td']
+#     rz_20_target_percentage = json_dict['rz_20_target_percentage']
+#     rz_10_targets = json_dict['rz_10_targets']
+#     rz_10_receptions = json_dict['rz_10_receptions']
+#     rz_10_rec_yards = json_dict['rz_10_rec_yards']
+#     rz_10_catch_percentage = json_dict['rz_10_catch_percentage']
+#     rz_10_rec_td = json_dict['rz_10_rec_td']
+#     rz_10_target_percentage = json_dict['rz_10_target_percentage']
+#     rz_20_rush_att = json_dict['rz_20_rush_att']
+#     rz_20_rush_yards = json_dict['rz_20_rush_yards']
+#     rz_20_rush_td = json_dict['rz_20_rush_td']
+#     rz_20_rush_percentage = json_dict['rz_20_rush_percentage']
+#     rz_10_rush_att = json_dict['rz_10_rush_att']
+#     rz_10_rush_yards = json_dict['rz_10_rush_yards']
+#     rz_10_rush_td = json_dict['rz_10_rush_td']
+#     rz_10_rush_percentage = json_dict['rz_10_rush_percentage']
+#     rz_5_rush_att = json_dict['rz_5_rush_att']
+#     rz_5_rush_yards = json_dict['rz_5_rush_yards']
+#     rz_5_rush_td = json_dict['rz_5_rush_td']
+#     rz_5_rush_percentage = json_dict['rz_5_rush_percentage']
+#
+#     values = (rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage, rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int,
+#               rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions,
+#               rz_20_rec_yards, rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions,
+#               rz_10_rec_yards, rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards,
+#               rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage,
+#               rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage, player_id, year)
+#
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     cursor.execute("""UPDATE nfl_redzone_stats
+#             SET rz_20_pass_att = %s, rz_20_pass_comp = %s, rz_20_comp_percentage = %s, rz_20_pass_yards = %s, rz_20_pass_td = %s, rz_20_pass_int = %s,
+#                 rz_10_pass_att = %s, rz_10_pass_comp = %s, rz_10_comp_percentage = %s, rz_10_pass_yards = %s, rz_10_pass_td = %s,
+#                 rz_10_pass_int = %s, rz_20_targets = %s, rz_20_receptions = %s, rz_20_rec_yards = %s, rz_20_catch_percentage = %s,
+#                 rz_20_rec_td = %s, rz_20_target_percentage = %s, rz_10_targets = %s, rz_10_receptions = %s, rz_10_rec_yards = %s,
+#                 rz_10_catch_percentage = %s, rz_10_rec_td = %s, rz_10_target_percentage = %s, rz_20_rush_att = %s, rz_20_rush_td = %s,
+#                 rz_20_rush_yards = %s, rz_20_rush_percentage = %s, rz_10_rush_att = %s, rz_10_rush_td = %s, rz_10_rush_yards = %s,
+#                 rz_10_rush_percentage = %s, rz_5_rush_att = %s, rz_5_rush_td = %s, rz_5_rush_yards = %s, rz_5_rush_percentage = %s
+#             WHERE nfl_redzone_stats.player_id = %s AND nfl_redzone_stats.year = %s""",
+#                    (values))
+#     connection.commit()
+#     print(f"Game has been added to games table.")
+#
+#
+#     result = {'player_id':player_id, 'year': year, 'rz_20_pass_att': rz_20_pass_att, 'rz_20_pass_comp': rz_20_pass_comp,  'rz_20_pass_comp_percentage': rz_20_comp_percentage,
+#               'rz_20_pass_yard': rz_20_pass_yards, 'rz_20_pass_td': rz_20_pass_td, 'rz_20_pass_int': rz_20_pass_int,
+#               'rz_10_pass_att': rz_10_pass_att, 'rz_10_pass_comp': rz_10_pass_comp, 'rz_10_pass_yard': rz_10_pass_yards, 'rz_10_pass_td': rz_10_pass_td, 'rz_10_pass_int': rz_10_pass_int,
+#               'rz_10_comp_percentage': rz_10_comp_percentage, 'rz_20_targets': rz_20_targets, 'rz_20_receptions': rz_20_receptions,
+#               'rz_20_rec_yards': rz_20_rec_yards, 'rz_20_catch_percentage': rz_20_catch_percentage, 'rz_20_rec_td': rz_20_rec_td, 'rz_20_target_percentage': rz_20_target_percentage,
+#               'rz_10_targets': rz_10_targets, 'rz_10_receptions': rz_10_targets, 'rz_10_rec_yards': rz_10_rec_yards, 'rz_10_catch_percentage': rz_10_catch_percentage,
+#               'rz_10_rec_td': rz_10_rec_td, 'rz_10_target_percentage': rz_10_target_percentage, 'rz_20_rush_att': rz_10_target_percentage, 'rz_20_rush_td': rz_20_rush_td,
+#               'rz_20_rush_yards': rz_20_rush_yards, 'rz_20_rush_percentage': rz_20_rush_percentage, 'rz_10_rush_att': rz_10_rush_att,
+#               'rz_10_rush_td': rz_10_rush_td, 'rz_10_rush_yards': rz_10_rush_yards, 'rz_10_rush_percentage': rz_10_rush_percentage,
+#               'rz_5_rush_att': rz_5_rush_att, 'rz_5_rush_td': rz_5_rush_att, 'rz_5_rush_yards': rz_5_rush_yards, 'rz_5_rush_percentage': rz_5_rush_percentage}
+#
+#     return result
 
 # NFL TEAM OFFENSE ROUTES
 # @nfl.route('/nfl/team_offense', methods=['POST'])
