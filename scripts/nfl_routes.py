@@ -81,6 +81,7 @@ def nfl_player_logs():
     year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
     total_game_dict = {2022: third_total_games, 2023: prior_total_games, 2024: current_total_games}
 
+    # get the occurrence in the previous eight games
     df_last_four = df_player_game_logs.sort_values(by=['Year', 'Week'], ascending=False).head(4)  # sort values by most recent games
     if operator == 'over':
         df_last_four_occur = df_last_four.loc[df_last_four[column_name] > value]
