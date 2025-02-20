@@ -61,8 +61,7 @@ def get_player_dropdown():
     cursor.execute('''
                 SELECT player.id, player.first_name, player.last_name
                     FROM nfl_player_teams
-                    WHERE player.sport_id = %s and player.currently_playing = %s
-                    GROUP BY nfl_player_teams.player_id''',
+                    WHERE player.sport_id = %s and player.currently_playing = %s''',
                    [sport_id,'Y'])
     results = list(cursor.fetchall())
 
