@@ -1206,4 +1206,48 @@ def nfl_red_zone():
 
     return f"nfl_redzone_stats has been updated with the most recent years data."
 
+@nfl.route('/nfl/player_stats', methods=['POST'])
+def nfl_player_stats():
+    file = request.files['nfl_game_log']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'game_id': row['year'],
+                     'player_id': row['team_id'],
+                     'team_id': row['wins'],
+                     'opp_id': row['losses'],
+                     'pass_att': row['ties'],
+                     'pass_comp': row['win_loss_percentage'],
+                     'pass_yards': row['points_for'],
+                     'pass_td': row['points_against'],
+                     'pass_longest': row['point_diff'],
+                     'ints': row['avg_margin_of_victory'],
+                     'sacks': row['strength_of_schedule'],
+                     'rush_att': row['ties'],
+                     'rush_yards': row['win_loss_percentage'],
+                     'rush_td': row['points_for'],
+                     'rush_longest': row['points_against'],
+                     'targets': row['point_diff'],
+                     'rec': row['avg_margin_of_victory'],
+                     'rec_yards': row['strength_of_schedule'],
+                     'rec_td': row['ties'],
+                     'rec_longest': row['win_loss_percentage'],
+                     'fumbles': row['points_for']}
+        values = list(json_dict.values())
+
+        cursor.execute("""INSERT INTO nfl_player_stats (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, 
+                        ints, sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                       (values))
+
+        connection.commit()
+        print(f"game_stats have been added to nfl_player_stats tabel.")
+
+
+    return f"nfl_player_stats has been u[dated ."
 
