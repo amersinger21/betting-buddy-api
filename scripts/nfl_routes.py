@@ -736,6 +736,7 @@ def nfl_opponent_information():
 
 
 
+
 # UPLOAD/ADD ROUTES
 @nfl.route('/nfl/games', methods=['POST', 'PUT'])
 def nfl_game_info():
@@ -1204,4 +1205,5 @@ def nfl_red_zone():
         connection.commit()
 
     return f"nfl_redzone_stats has been updated with the most recent years data."
+
 
