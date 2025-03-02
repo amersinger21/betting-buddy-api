@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import statistics
-import csv
 
 from .db import create_connection
 import flask
@@ -48,29 +47,35 @@ def nfl_player_logs():
 
     df_all_games = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
     df_all_games.reset_index(inplace=True)
-
+    print(df_all_games)
+    print('-------------------------------------------------')
     # Get player position, teams they played for, weeks for each year they played.
-    df_player_game_logs_index_needed = df_all_games[df_all_games['player_id'] == int(player_id)]
-    player_position = df_player_game_logs_index_needed.head(1)['pos'].values.tolist()[0]
+    df_logs_index_needed = df_all_games[df_all_games['player_id'] == int(player_id)]
+    print(df_logs_index_needed)
+    player_position = df_logs_index_needed.head(1)['pos'].values.tolist()[0]
+    print('-------------------------------------------------')
+    print(player_position)
 
-    get_teams = df_player_game_logs_index_needed.loc[df_player_game_logs_index_needed['Year'] >= 2022]
-    raw_player_teams = get_teams['team_id'].values.tolist()
     player_teams = []
+    get_teams = df_logs_index_needed.loc[df_logs_index_needed['Year'] >= 2022]
+    raw_player_teams = get_teams['team_id'].values.tolist()
     for team in raw_player_teams:
         if team not in player_teams: player_teams.append(team)
 
+    # Get the weeks player appeared in each year
     week_dict = {}
     for year in rank_years:
-        get_weeks = df_player_game_logs_index_needed.loc[df_player_game_logs_index_needed['Year'] == year]['Week'].values.tolist()
+        get_weeks = df_logs_index_needed.loc[df_logs_index_needed['Year'] == year]['Week'].values.tolist()
         week_dict[year] = get_weeks
+
 
     # Update the index column
     df_player_game_logs = pd.DataFrame()
     for year in loop_years:
-        df_merge = df_player_game_logs_index_needed.loc[df_player_game_logs_index_needed['Year'] == year]
+        df_merge = df_logs_index_needed.loc[df_logs_index_needed['Year'] == year]
         df_merge.index = np.arange(1, len(df_merge) + 1)
         df_player_game_logs = pd.concat([df_player_game_logs, df_merge])
-
+    # print(df_player_game_logs)
     # Create total player game counts
     total_player_games = len(df_player_game_logs)
     current_total_games = len(df_player_game_logs.loc[df_player_game_logs['Year'] == 2024])
@@ -255,21 +260,23 @@ def nfl_player_logs():
                     json_output.update({f"{position.lower()}_avg_weekly_{stat}_{year_name_dict[year]}": weekly_stat_avg})
 
     if player_position != 'QB':
-        # Get the players stat as a percentage of the average
+        # Get the players stat as a percentage of the teams stat total
         for year in rank_years:
             # x and y coordinates
             week_list = []
             value_list = []
 
             # need to loop through games
-            df_player_games = df_all_games.loc[df_all_games['player_id'] == int(player_id)]
-            games_with_player_ids = df_player_games.loc[df_player_games['Year'] == year]['game_id'].values.tolist()
-            df_game_logs_with_player = df_all_games.loc[
-                (df_all_games['game_id'].isin(games_with_player_ids)) & (df_all_games['team_id'].isin(player_teams))]
+            df_game_logs_with_player = df_all_games.loc[df_all_games['player_id'] == int(player_id)]
+            df_game_logs_with_player = df_game_logs_with_player.loc[df_player_games['Year'] == year]['game_id'].values.tolist()
+            df_game_logs_with_player = df_game_logs_with_player.loc[
+                (df_game_logs_with_player['game_id'].isin(games_with_player_ids)) &
+                (df_game_logs_with_player['team_id'].isin(player_teams))]
 
             test_pos = 'WR'
             df_team_pos = df_game_logs_with_player.loc[df_game_logs_with_player['pos'] == test_pos]
 
+            # get values for X and Y coordinates.
             for game_id in games_with_player_ids:
                 df_weekly_team_total = df_team_pos
                 df_weekly_team_total = df_weekly_team_total.loc[df_weekly_team_total['game_id'] == game_id]
@@ -287,7 +294,7 @@ def nfl_player_logs():
                 week_list.append(raw_week)
                 value_list.append(percentage_of_team_total)
 
-            # Get X and Y coordinates:
+            # add X and Y coordinates to output dict:
             json_output.update({f"player_percentage_x_coordinates_{year_name_dict[year]}": week_list})
             json_output.update({f"player_percentage_y_coordinates_{year_name_dict[year]}": value_list})
 
@@ -732,8 +739,6 @@ def nfl_opponent_information():
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
-
-
 
 
 
@@ -1217,27 +1222,27 @@ def nfl_player_stats():
         connection = create_connection()
         cursor = connection.cursor()
 
-        json_dict = {'game_id': row['year'],
-                     'player_id': row['team_id'],
-                     'team_id': row['wins'],
-                     'opp_id': row['losses'],
-                     'pass_att': row['ties'],
-                     'pass_comp': row['win_loss_percentage'],
-                     'pass_yards': row['points_for'],
-                     'pass_td': row['points_against'],
-                     'pass_longest': row['point_diff'],
-                     'ints': row['avg_margin_of_victory'],
-                     'sacks': row['strength_of_schedule'],
-                     'rush_att': row['ties'],
-                     'rush_yards': row['win_loss_percentage'],
-                     'rush_td': row['points_for'],
-                     'rush_longest': row['points_against'],
-                     'targets': row['point_diff'],
-                     'rec': row['avg_margin_of_victory'],
-                     'rec_yards': row['strength_of_schedule'],
-                     'rec_td': row['ties'],
-                     'rec_longest': row['win_loss_percentage'],
-                     'fumbles': row['points_for']}
+        json_dict = {'game_id': int(row['game_id']),
+                     'player_id': int(row['player_id']),
+                     'team_id': int(row['team_id']),
+                     'opp_id': int(row['opp_id']),
+                     'pass_att': int(row['pass_att']),
+                     'pass_comp': int(row['pass_comp']),
+                     'pass_yards': int(row['pass_yards']),
+                     'pass_td': int(row['pass_td']),
+                     'pass_longest': int(row['pass_longest']),
+                     'int': int(row['int']),
+                     'sacks': int(row['sacks']),
+                     'rush_att': int(row['rush_att']),
+                     'rush_yards': int(row['rush_yards']),
+                     'rush_td': int(row['rush_td']),
+                     'rush_longest': int(row['rush_longest']),
+                     'targets': int(row['targets']),
+                     'rec': int(row['rec']),
+                     'rec_yards': int(row['rec_yards']),
+                     'rec_td': int(row['rec_td']),
+                     'rec_longest': int(row['rec_longest']),
+                     'fumbles': int(row['fumbles'])}
         values = list(json_dict.values())
 
         cursor.execute("""INSERT INTO nfl_player_stats (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, 
@@ -1246,7 +1251,7 @@ def nfl_player_stats():
                        (values))
 
         connection.commit()
-        print(f"game_stats have been added to nfl_player_stats tabel.")
+        print(f"game_stats have been added to nfl_player_stats table.")
 
 
     return f"nfl_player_stats has been u[dated ."
