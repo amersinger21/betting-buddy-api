@@ -9,6 +9,7 @@ variables
 /scripts/download_routes.py
 
 .env
+test.csv
 scrap.py
 scrap_1.py
 
