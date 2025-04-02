@@ -23,7 +23,7 @@ def nfl_player_logs():
     limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 'pass_att', 'pass_comp': 'pass_att',
                        'pass_longest': 'pass_att',
                        'rush_att': 'rush_att', 'rush_yards': 'rush_att', 'rush_td': 'rush_att', 'rush_longest': 'rush_att',
-                       'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets', 'rec_longest': 'targets',}
+                       'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets', 'rec_longest': 'targets'}
     limit_stat = limit_stat_dict[column_name]
     json_output = {}
     cols_to_select = f"game_id, player_id, team_id, opp_id, {limit_stat}, {column_name}"
@@ -82,6 +82,27 @@ def nfl_player_logs():
                'rz_20_rush_yards', 'rz_20_rush_td', 'rz_20_rush_percentage', 'rz_10_rush_att', 'rz_10_rush_yards', 'rz_10_rush_td',
                'rz_10_rush_percentage', 'rz_5_rush_att', 'rz_5_rush_yards', 'rz_5_rush_td', 'rz_5_rush_percentage']
     df_red_zone = pd.DataFrame(rz_results, columns=rz_cols).reset_index(drop=True)
+
+    # GET WEEKLY RANK STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards',	'pass_td']:
+        other_cols = ['pyards_per_att', 'pass_td_per_att', 'pass_yards_rank', 'pass_comp_rank', 'pass_td_rank',
+                      'pass_yars_per_att_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}, {other_cols[5]}"
+    elif column_name in ['rush_att', 'rush_yards',	'rush_td']:
+        other_cols = ['ryards_per_att', 'rush_td_per_att', 'rush_att_rank', 'rush_yards_rank', 'rush_td_rank',
+                      'rush_yars_per_att_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}, {other_cols[5]}"
+    else:
+        other_cols = ['rec_td_per_rec', 'rec_yards_rank', 'rec_td_rank', 'rec_rank', 'rec_yars_per_rec_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}"
+    connection = create_connection()
+    cursor = connection.cursor()
+    weekly_rank_query = f'''SELECT {wkly_cols_to_select} FROM nfl_weekly_rank'''
+
+    cursor.execute(weekly_rank_query)
+    weekly_rank_results = list(cursor.fetchall())
+    weekly_rank_cols = ['team_id', 'year', 'week', column_name] + other_cols
+    df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=weekly_rank_cols).reset_index(drop=True)
 
     # Get player position and teams they played for.
     df_player_game_logs = df_all_games[df_all_games['player_id'] == int(player_id)].reset_index(drop=True)
@@ -368,6 +389,27 @@ def nfl_player_logs():
         json_output.update(
             {f"z_coord_league_avg_weekly_stat_total_{year_name_dict[year]}": list(league_wkly_avg_val_dict.values())})
 
+    for year in rank_years:
+        df_weekly_rank_copy = df_weekly_rank.copy()
+        df_weekly_rank_copy = df_weekly_rank_copy.loc[df_weekly_rank_copy['year'] == year]
+        opp_weekly_total = {}
+        opp_per_att = {}
+        opp_td_rank = {}
+        opp_per_att_rank = {}
+        for wk, opp in opp_dict[year].items():
+            df_week = df_weekly_rank_copy.loc[
+                (df_weekly_rank_copy['team_id'] == opp) & (df_weekly_rank_copy['week'] == wk)]
+            data_list = df_week.values.tolist()[0]
+            opp_weekly_total[wk] = data_list[3]
+            opp_per_att[wk] = data_list[4]
+            opp_td_rank[wk] = data_list[7]
+            opp_per_att_rank[wk] = data_list[8]
+
+        json_output.update({f"opponent_weeks_{year_name_dict[year]}": list(opp_weekly_total.keys())})
+        json_output.update({f"opp_stat_totals_{year_name_dict[year]}": list(opp_weekly_total.values())})
+        json_output.update({f"opp_per_att_totals_{year_name_dict[year]}": list(opp_per_att.values())})
+        json_output.update({f"opp_td_weekly_ranks_{year_name_dict[year]}": list(opp_td_rank.values())})
+        json_output.update({f"opp_per_att_ranks_{year_name_dict[year]}": list(opp_per_att_rank.values())})
 
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
@@ -790,7 +832,7 @@ def nfl_opponent_information():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
-# @nfl.route('/nfl/opponent_stats', methods=['GET'])
+
 
 
 
