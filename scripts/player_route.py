@@ -79,25 +79,24 @@ def get_player_dropdown():
 
 @player.route('/players', methods=['PUT'])
 def update_player_status(json_dict):
-    # initialize variables
-    id = json_dict['id']
-    last_name = json_dict['last_name']
-    first_name = json_dict['first_name']
-    currently_playing = json_dict['currently_playing']
+    file = request.files['player_template']
 
-    # connect to the database
-    connection = create_connection()
-    cursor=connection.cursor()
+    # Read CSV data
+    df = pd.read_csv(file)
 
-    values = (currently_playing, id, last_name, first_name)
-    # execute sql query inserting into table
-    cursor.execute('''UPDATE player
-            SET currently_playing = %s
-            WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
-    connection.commit()
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
 
-    print(f"{first_name} {last_name} has had set to actively playing.")
-    pass
+        values = [row['current_team'], row['currently_playing'], row['id'], row['last_name'], row['first_name']]
+
+
+        cursor.execute('''UPDATE player
+                SET current_team = %s, currently_playing = %s
+                WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
+        connection.commit()
+        print(f"{row['first_name']} {row['last_name']} has been added to player tabel.")
+
 
 
 

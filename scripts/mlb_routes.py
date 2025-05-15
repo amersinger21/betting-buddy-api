@@ -3,23 +3,24 @@ from flask import Blueprint, request
 import flask
 import pandas as pd
 
-import json
 
 mlb = Blueprint("mlb", __name__)
 
 
+# UPLOAD [PUT/POST] ROUTES
 @mlb.route('/mlb/games', methods=['POST'])
 def mlb_game_info():
+    # Initialize variables
     file = request.files['mlb_game_info']
 
     # Read CSV data
     df = pd.read_csv(file)
 
     for ind, row in df.iterrows():
+        # Connect to DB
         connection = create_connection()
         cursor = connection.cursor()
 
-        # Add Games:
         json_dict = {'year': int(row['year']),
                      'date': row['date'],
                      'day_of_the_week': row['day_of_the_week'],
@@ -31,9 +32,11 @@ def mlb_game_info():
                      'total_runs': int(row['total_runs'])}
         values = list(json_dict.values())
 
+        # SQL Query
         cursor.execute('''INSERT INTO mlb_games (year, date, day_of_the_week, away_team_id, away_score, home_team_id,
         home_score, margin_of_victory, total_runs) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)''', (values))
 
+        # Commit changes
         connection.commit()
 
     return f"mlb_games table has been updated with the most recent game data."
@@ -41,6 +44,7 @@ def mlb_game_info():
 
 @mlb.route('/mlb/player_stats', methods=['POST'])
 def mlb_player_stats():
+    # Initialize variables
     bat_file = request.files['mlb_batting_log']
     pitch_file = request.files['mlb_pitching_log']
 
@@ -48,7 +52,9 @@ def mlb_player_stats():
     df_bat = pd.read_csv(bat_file)
     df_pitch = pd.read_csv(pitch_file)
 
+    # BATTING DATA
     for ind, row in df_bat.iterrows():
+        # Connect to DB
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -77,15 +83,19 @@ def mlb_player_stats():
                      'stolen_base_percentage': float(row['stolen_base_percentage'])}
         values = list(json_dict.values())
 
+        # SQL Query
         cursor.execute("""INSERT INTO mlb_player_batting (year, month, game_id, player_id, team_id, opp_id, at_bats, runs, hits,
          runs_batted_in, walks, strikeouts, batting_avg, on_base_percentage, slugging_percentage, on_base_plus_slug_percentage, 
          doubles, triples, homeruns, total_bases, stolen_bases, caught_stealing, stolen_base_percentage) 
          VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
 
+        # Commit changes
         connection.commit()
     print(f"game_stats have been added to mlb_player_batting table.")
 
+    # PITCHING DATA
     for ind, row in df_pitch.iterrows():
+        # Connect to DB
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -113,6 +123,7 @@ def mlb_player_stats():
                      'win_prob_added': float(row['win_prob_added'])}
         values = list(json_dict.values())
 
+        # SQL Query
         cursor.execute("""INSERT INTO mlb_player_pitching (year, month, game_id, player_id, team_id, opp_id, innings_pitched, hits_allowed, runs_allowed,
          earned_runs_allowed, walks_allowed, strikeouts, homeruns, earned_run_avg, batters_faced, pitches_thrown, 
          strikes_thrown, swinging_strikes, ground_balls, fly_balls, gamescore, win_prob_added) 
@@ -128,13 +139,15 @@ def mlb_player_stats():
 
 @mlb.route('/mlb/standings', methods=['POST', 'PUT'])
 def mlb_standings():
+    # Initialize variables
     file = request.files['mlb_standings']
+    year = 0
 
     # Read CSV data
     df = pd.read_csv(file)
-    year = 0
 
     for ind, row in df.iterrows():
+        # Connect to DB
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -162,11 +175,13 @@ def mlb_standings():
                          }
             values = list(json_dict.values())
 
+            # SQL Query
             cursor.execute("""INSERT INTO mlb_standings (team_id, year, wins, losses, win_loss_percent, runs_scored,
              runs_allowed, run_diff, home_rec, away_rec, one_run_rec, vs_left, vs_right, over_five_hundred, below_five_hundred,
              last_ten, last_twenty, last_thirty) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                             (values))
 
+            # Commit changes
             connection.commit()
             print(f"stats have been added to mlb_player_batting table.")
 
@@ -193,12 +208,14 @@ def mlb_standings():
                          }
             values = list(json_dict.values())
 
+            # SQL Query
             cursor.execute("""UPDATE  mlb_standings 
                         SET wins = %s, losses = %s, win_loss_percent = %s, runs_scored = %s, runs_allowed = %s,
                         run_diff = %s, home_rec = %s, away_rec = %s, one_run_rec = %s, vs_left = %s, vs_right = %s,
                         over_five_hundred = %s, below_five_hundred = %s, last_ten = %s, last_twenty = %s, last_thirty = %s
                         WHERE mlb_standings.team_id = %s and mlb_standings.year = %s""", (values))
 
+        # Commit changes
         connection.commit()
 
     return f"mlb_standings updated with {year} standings."
@@ -206,11 +223,10 @@ def mlb_standings():
 
 @mlb.route('/mlb/team_stats', methods=['POST', 'PUT'])
 def mlb_team_stats():
+    # Initialize variables
+    year = 0
     bat_file = request.files['mlb_team_batting']
     pitch_file = request.files['mlb_team_pitching']
-
-    # Initialize variable
-    year = 0
 
     # Read CSV data
     df_bat = pd.read_csv(bat_file)
@@ -457,6 +473,7 @@ def mlb_team_stats():
                          'year': row['year']}
             values = list(json_dict.values())
 
+            # SQL Query
             cursor.execute("""UPDATE  mlb_team_pitching
                         SET avg_pitcher_age = %s, runs_allowed_game = %s, earned_run_avg = %s, innings_pitches = %s,
                 hits_allowed = %s, doubles_allowed = %s, triples_allowed = %s, home_runs_allowed = %s, 
@@ -470,6 +487,7 @@ def mlb_team_stats():
                 fly_ball_home_run_percent = %s, extra_base_percentage = %s
                 WHERE mlb_team_pitching.team_id = %s and mlb_team_pitching.year = %s""", (values))
 
+        # Commit changes
         connection.commit()
     print(f"mlb_team_pitching has been updated with {year} data.")
 
