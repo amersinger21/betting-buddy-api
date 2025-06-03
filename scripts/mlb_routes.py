@@ -44,6 +44,7 @@ def mlb_game_info():
 
 @mlb.route('/mlb/player_stats', methods=['POST'])
 def mlb_player_stats():
+    run_stat = request.args.get('stat', None)
     # Initialize variables
     bat_file = request.files['mlb_batting_log']
     pitch_file = request.files['mlb_pitching_log']
@@ -53,89 +54,93 @@ def mlb_player_stats():
     df_pitch = pd.read_csv(pitch_file)
 
     # BATTING DATA
-    for ind, row in df_bat.iterrows():
-        # Connect to DB
-        connection = create_connection()
-        cursor = connection.cursor()
+    if run_stat == 'batting':
+        for ind, row in df_bat.iterrows():
+            # Connect to DB
+            connection = create_connection()
+            cursor = connection.cursor()
 
-        json_dict = {'year': int(row['year']),
-                     'month': row['month'],
-                     'game_id': int(row['game_id']),
-                     'player_id': int(row['player_id']),
-                     'team_id': int(row['team_id']),
-                     'opp_id': int(row['opp_id']),
-                     'at_bats': int(row['at_bats']),
-                     'runs': int(row['runs']),
-                     'hits': int(row['hits']),
-                     'runs_batted_in': int(row['runs_batted_in']),
-                     'walks': int(row['walks']),
-                     'strikeouts': int(row['strikeouts']),
-                     'batting_avg': float(row['batting_avg']),
-                     'on_base_percentage': float(row['on_base_percentage']),
-                     'slugging_percentage': float(row['slugging_percentage']),
-                     'on_base_plus_slug_percentage': float(row['on_base_plus_slug_percentage']),
-                     'doubles': int(row['doubles']),
-                     'triples': int(row['triples']),
-                     'homeruns': int(row['homeruns']),
-                     'total_bases': int(row['total_bases']),
-                     'stolen_bases': int(row['stolen_bases']),
-                     'caught_stealing': int(row['caught_stealing']),
-                     'stolen_base_percentage': float(row['stolen_base_percentage'])}
-        values = list(json_dict.values())
+            json_dict = {'year': int(row['year']),
+                         'month': row['month'],
+                         'game_id': int(row['game_id']),
+                         'player_id': int(row['player_id']),
+                         'team_id': int(row['team_id']),
+                         'opp_id': int(row['opp_id']),
+                         'at_bats': int(row['at_bats']),
+                         'runs': int(row['runs']),
+                         'hits': int(row['hits']),
+                         'runs_batted_in': int(row['runs_batted_in']),
+                         'walks': int(row['walks']),
+                         'strikeouts': int(row['strikeouts']),
+                         'batting_avg': float(row['batting_avg']),
+                         'on_base_percentage': float(row['on_base_percentage']),
+                         'slugging_percentage': float(row['slugging_percentage']),
+                         'on_base_plus_slug_percentage': float(row['on_base_plus_slug_percentage']),
+                         'doubles': int(row['doubles']),
+                         'triples': int(row['triples']),
+                         'homeruns': int(row['homeruns']),
+                         'total_bases': int(row['total_bases']),
+                         'stolen_bases': int(row['stolen_bases']),
+                         'caught_stealing': int(row['caught_stealing']),
+                         'stolen_base_percentage': float(row['stolen_base_percentage'])}
+            values = list(json_dict.values())
 
-        # SQL Query
-        cursor.execute("""INSERT INTO mlb_player_batting (year, month, game_id, player_id, team_id, opp_id, at_bats, runs, hits,
-         runs_batted_in, walks, strikeouts, batting_avg, on_base_percentage, slugging_percentage, on_base_plus_slug_percentage, 
-         doubles, triples, homeruns, total_bases, stolen_bases, caught_stealing, stolen_base_percentage) 
-         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+            # SQL Query
+            cursor.execute("""INSERT INTO mlb_player_batting (year, month, game_id, player_id, team_id, opp_id, at_bats, runs, hits,
+             runs_batted_in, walks, strikeouts, batting_avg, on_base_percentage, slugging_percentage, on_base_plus_slug_percentage, 
+             doubles, triples, homeruns, total_bases, stolen_bases, caught_stealing, stolen_base_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
 
-        # Commit changes
-        connection.commit()
-    print(f"game_stats have been added to mlb_player_batting table.")
+            # Commit changes
+            connection.commit()
+        print(f"game_stats have been added to mlb_player_batting table.")
+        return f"mlb_player_batting has been updated."
+
 
     # PITCHING DATA
-    for ind, row in df_pitch.iterrows():
-        # Connect to DB
-        connection = create_connection()
-        cursor = connection.cursor()
+    elif run_stat == 'pitching':
+        for ind, row in df_pitch.iterrows():
+            # Connect to DB
+            connection = create_connection()
+            cursor = connection.cursor()
 
-        json_dict = {'year': int(row['year']),
-                     'month': row['month'],
-                     'game_id': int(row['game_id']),
-                     'player_id': int(row['player_id']),
-                     'team_id': int(row['team_id']),
-                     'opp_id': int(row['opp_id']),
-                     'innings_pitched': int(row['innings_pitched']),
-                     'hits_allowed': int(row['hits_allowed']),
-                     'runs_allowed': int(row['runs_allowed']),
-                     'earned_runs_allowed': int(row['earned_runs_allowed']),
-                     'walks_allowed': int(row['walks_allowed']),
-                     'strikeouts': int(row['strikeouts']),
-                     'homeruns': int(row['homeruns']),
-                     'earned_run_avg': float(row['earned_run_avg']),
-                     'batters_faced': int(row['batters_faced']),
-                     'pitches_thrown': int(row['pitches_thrown']),
-                     'strikes_thrown': int(row['strikes_thrown']),
-                     'swinging_strikes': int(row['swinging_strikes']),
-                     'ground_balls': int(row['ground_balls']),
-                     'fly_balls': int(row['fly_balls']),
-                     'gamescore': float(row['gamescore']),
-                     'win_prob_added': float(row['win_prob_added'])}
-        values = list(json_dict.values())
+            json_dict = {'year': int(row['year']),
+                         'month': row['month'],
+                         'game_id': int(row['game_id']),
+                         'player_id': int(row['player_id']),
+                         'team_id': int(row['team_id']),
+                         'opp_id': int(row['opp_id']),
+                         'innings_pitched': int(row['innings_pitched']),
+                         'hits_allowed': int(row['hits_allowed']),
+                         'runs_allowed': int(row['runs_allowed']),
+                         'earned_runs_allowed': int(row['earned_runs_allowed']),
+                         'walks_allowed': int(row['walks_allowed']),
+                         'strikeouts': int(row['strikeouts']),
+                         'homeruns': int(row['homeruns']),
+                         'earned_run_avg': float(row['earned_run_avg']),
+                         'batters_faced': int(row['batters_faced']),
+                         'pitches_thrown': int(row['pitches_thrown']),
+                         'strikes_thrown': int(row['strikes_thrown']),
+                         'swinging_strikes': int(row['swinging_strikes']),
+                         'ground_balls': int(row['ground_balls']),
+                         'fly_balls': int(row['fly_balls']),
+                         'gamescore': float(row['gamescore']),
+                         'win_prob_added': float(row['win_prob_added'])}
+            values = list(json_dict.values())
 
-        # SQL Query
-        cursor.execute("""INSERT INTO mlb_player_pitching (year, month, game_id, player_id, team_id, opp_id, innings_pitched, hits_allowed, runs_allowed,
-         earned_runs_allowed, walks_allowed, strikeouts, homeruns, earned_run_avg, batters_faced, pitches_thrown, 
-         strikes_thrown, swinging_strikes, ground_balls, fly_balls, gamescore, win_prob_added) 
-         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                       (values))
+            # SQL Query
+            cursor.execute("""INSERT INTO mlb_player_pitching (year, month, game_id, player_id, team_id, opp_id, innings_pitched, hits_allowed, runs_allowed,
+             earned_runs_allowed, walks_allowed, strikeouts, homeruns, earned_run_avg, batters_faced, pitches_thrown, 
+             strikes_thrown, swinging_strikes, ground_balls, fly_balls, gamescore, win_prob_added) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                           (values))
 
-        connection.commit()
-    print(f"stats have been added to mlb_player_pitching table.")
+            connection.commit()
+        print(f"stats have been added to mlb_player_pitching table.")
+        return f"mlb_player_batting has been updated."
 
-
-    return f"mlb_player_batting has been updated."
-
+    else:
+        raise Exception (f"{run_stat} is not a valid game log.")
 
 @mlb.route('/mlb/standings', methods=['POST', 'PUT'])
 def mlb_standings():
