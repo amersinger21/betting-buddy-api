@@ -194,7 +194,7 @@ def mlb_standings():
         elif flask.request.method == 'PUT':
             json_dict = {'wins': row['wins'],
                          'losses': row['losses'],
-                         'win_loss_percentage': row['win_loss_percentage'],
+                         'win_loss_percent': row['win_loss_percent'],
                          'runs_scored': row['runs_scored'],
                          'runs_allowed': row['runs_allowed'],
                          'run_diff': row['run_diff'],
