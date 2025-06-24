@@ -237,7 +237,6 @@ def mlb_team_stats():
     df_bat = pd.read_csv(bat_file)
     df_pitch = pd.read_csv(pitch_file)
 
-
     # TEAM BATTING
     for ind, row in df_bat.iterrows():
         year = row['year']
@@ -353,18 +352,19 @@ def mlb_team_stats():
                          'year': row['year']}
             values = list(json_dict.values())
 
-            cursor.execute("""UPDATE  mlb_team_batting 
-                        SET avg_batter_age = %s, runs_scored_per_game = %s, plate_appearances, runs_scored = %s,
-                    hits = %s, doubles = %s, triples = %s, homeruns = %s, runs_batted_in = %s, stolen_bases = %s, 
-                    caught_stealing = %s, stolen_base_percent = %s, walks = %s, strikeouts = %s, batting_average = %s, 
-                    on_base_percentage = %s, slugging_percentage = %s, on_base_plus_slugging = %s, ops_plus = %s,
-                    total_bases = %s, babip = %s, iso = %s, home_run_percentage = %s, strikeout_percentage = %s,
-                    walks_percentage = %s, avg_exit_velocity = %s, hard_hit_rate = %s, line_drive_rate = %s, 
-                    ground_ball_rate = %s, fly_ball_rate = %s, ground_ball_fly_ball_ratio = %s, pull_percentage = %s,
-                    center_percentage = %s, opp_percentage = %s, at_bats_per_strikeout = %s, at_bats_per_homerun = %s,
-                    at_bats_per_rbi = %s, strikeout_to_walk_ratio = %s, extra_base_hit_percentage = %s, 
-                    fly_ball_homerun_rate = %s, homeruns_vs_left = %s, homeruns_vs_right = %s, war = %s
-                    WHERE mlb_team_batting.team_id = %s and mlb_team_batting.year = %s""", (values))
+            cursor.execute('''UPDATE  mlb_team_batting 
+                        SET avg_batter_age= %s, runs_scored_per_game= %s, plate_appearances= %s, runs_scored= %s, hits= %s,
+                        doubles= %s, triples= %s, homeruns= %s, runs_batted_in= %s, stolen_bases= %s,
+                        caught_stealing= %s, stolen_base_percent= %s, walks= %s, strikeouts= %s,  batting_average= %s,
+                        on_base_percentage= %s, slugging_percentage= %s, on_base_plus_slugging= %s, ops_plus= %s,
+                        total_bases= %s, babip= %s, iso= %s, home_run_percentage= %s, strikeout_percentage= %s,
+                        walks_percentage= %s, avg_exit_velocity= %s, hard_hit_rate= %s, line_drive_rate= %s, 
+                        ground_ball_rate= %s, fly_ball_rate= %s, ground_ball_fly_ball_ratio= %s, 
+                        pull_percentage= %s, center_percentage= %s, opp_percentage= %s, at_bats_per_strikeout= %s,
+                        at_bats_per_homerun= %s, at_bats_per_rbi= %s, strikeout_to_walk_ratio= %s,
+                        extra_base_hit_percentage= %s, fly_ball_homerun_rate= %s,  homeruns_vs_left= %s, 
+                        homeruns_vs_right= %s, war= %s
+                        WHERE mlb_team_batting.team_id = %s and mlb_team_batting.year = %s''', (values))
 
         connection.commit()
     print(f"mlb_team_pitching has been updated with {year} data.")
