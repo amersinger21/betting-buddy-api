@@ -12,6 +12,82 @@ pd.set_option('display.max_columns', 100)
 year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
 
 
+
+def nfl_get_player_teams(player_id):
+    cols_to_select = f"game_id, player_id, team_id"
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, {cols_to_select}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN 
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
+    values = [player_id]
+    cursor.execute(player_query, values)
+    results = list(cursor.fetchall())
+
+    df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id']
+    df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    team_dict = {}
+    for year in sorted(list(set(df_player_logs['year']))):
+        team_list = df_player_logs.loc[df_player_logs['year'] == year]['team_id'].values.tolist()
+        team_merge = []
+        for team in team_list:
+            if team not in team_merge:
+                team_merge.append(team)
+        if len(team_merge) == 1:
+            team_dict[year] = team_merge[0]
+        else:
+            team_dict[year] = team_merge
+
+    return team_dict
+
+
+def nfl_get_opponents(player_id):
+    cols_to_select = f"game_id, player_id, team_id, opp_id"
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                        CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                        player.position, {cols_to_select}
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
+    values = [int(player_id)]
+    cursor.execute(player_query, values)
+    results = list(cursor.fetchall())
+
+    df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']
+    df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    df_player_logs = df_player_logs.loc[df_player_logs['player_id'] == player_id]
+    playing_years = sorted(list(set(df_player_logs['year'].values.tolist())))
+
+    opponent_dict = {}
+    for year in playing_years[-3:]:
+        df_opp = df_player_logs.copy()
+        df_opp = df_opp.loc[df_opp['year'] == year][['week', 'opp_id']]
+        opponent_dict [year] = dict(zip(df_opp.week, df_opp.opp_id))
+
+    return opponent_dict
+
+
 # GET ROUTES
 @nfl.route('nfl/player_logsdss', methods=['GET'])
 
@@ -70,44 +146,7 @@ def nfl_player_logs():
     df_all_games = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
     df_all_games.reset_index(inplace=True)
 
-    # GET ALL RED ZONE STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    connection = create_connection()
-    cursor = connection.cursor()
-    rz_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.*
-                FROM nfl_redzone_stats
-                JOIN player ON player.id = nfl_redzone_stats.player_id'''
 
-    cursor.execute(rz_query)
-    rz_results = list(cursor.fetchall())
-    rz_cols = ['name', 'id', 'player_id', 'year', 'rz_20_pass_att', 'rz_20_pass_comp',  'rz_20_pass_comp_percentage',
-               'rz_20_pass_yard', 'rz_20_pass_td', 'rz_20_pass_int', 'rz_10_pass_att', 'rz_10_pass_comp', 'rz_10_comp_percentage',
-               'rz_10_pass_yard', 'rz_10_pass_td', 'rz_10_pass_int', 'rz_20_targets', 'rz_20_receptions', 'rz_20_rec_yards',
-               'rz_20_catch_percentage', 'rz_20_rec_td', 'rz_20_target_percentage', 'rz_10_targets', 'rz_10_receptions',
-               'rz_10_rec_yards', 'rz_10_catch_percentage', 'rz_10_rec_td', 'rz_10_target_percentage', 'rz_20_rush_att',
-               'rz_20_rush_yards', 'rz_20_rush_td', 'rz_20_rush_percentage', 'rz_10_rush_att', 'rz_10_rush_yards', 'rz_10_rush_td',
-               'rz_10_rush_percentage', 'rz_5_rush_att', 'rz_5_rush_yards', 'rz_5_rush_td', 'rz_5_rush_percentage']
-    df_red_zone = pd.DataFrame(rz_results, columns=rz_cols).reset_index(drop=True)
-
-    # GET WEEKLY RANK STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    if column_name in ['pass_att', 'pass_comp', 'pass_yards',	'pass_td']:
-        other_cols = ['pyards_per_att', 'pass_td_per_att', 'pass_yards_rank', 'pass_comp_rank', 'pass_td_rank',
-                      'pass_yars_per_att_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}, {other_cols[5]}"
-    elif column_name in ['rush_att', 'rush_yards',	'rush_td']:
-        other_cols = ['ryards_per_att', 'rush_td_per_att', 'rush_att_rank', 'rush_yards_rank', 'rush_td_rank',
-                      'rush_yars_per_att_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}, {other_cols[5]}"
-    else:
-        other_cols = ['rec_td_per_rec', 'rec_yards_rank', 'rec_td_rank', 'rec_rank', 'rec_yars_per_rec_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}"
-    connection = create_connection()
-    cursor = connection.cursor()
-    weekly_rank_query = f'''SELECT {wkly_cols_to_select} FROM nfl_weekly_rank'''
-
-    cursor.execute(weekly_rank_query)
-    weekly_rank_results = list(cursor.fetchall())
-    weekly_rank_cols = ['team_id', 'year', 'week', column_name] + other_cols
-    df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=weekly_rank_cols).reset_index(drop=True)
 
     # Get player position and teams they played for.
     df_player_game_logs = df_all_games[df_all_games['player_id'] == int(player_id)].reset_index(drop=True)
@@ -208,86 +247,6 @@ def nfl_player_logs():
         json_output.update({f"avg_time_between_occurrence_{year_name_dict[year]}": avg_length})
         json_output.update({f"avg_time_between_occurrence_list_{year_name_dict[year]}": length_btw_list})
 
-    # Get Red Zone Stats
-    for year in rank_years:
-        team = player_teams_dict[year]
-
-        # Rank Team RZ Stats Each Year
-        df_team_rz_rank = df_team_offense.copy()
-        df_team_rz_rank = df_team_rz_rank.loc[df_team_rz_rank['year'] == year]
-        df_team_rz_rank["team_rz_percentage rank"] = df_team_rz_rank['rz_percentage'].rank(ascending=False)
-        df_team_rz_rank["team_rz_td rank"] = df_team_rz_rank['rz_td'].rank(ascending=False)
-
-        # Get Team Red Zone Stats
-        df_team_rz = df_team_offense.copy()
-        df_team_rz = df_team_rz.loc[(df_team_rz['team_id'] == team) & (df_team_rz['year'] == year)]
-        team_rz_att = df_team_rz['rz_att'].values.tolist()[0]
-        team_rz_td = df_team_rz['rz_td'].values.tolist()[0]
-        team_rz_sr = df_team_rz['rz_percentage'].values.tolist()[0]
-
-        json_output.update( {f"team_rz_success_rate_rank_{year_name_dict[year]}":
-                                 df_team_rz_rank['team_rz_percentage rank'].values.tolist()[0]})
-        json_output.update({f"team_rz_td_rank_{year_name_dict[year]}":
-                                df_team_rz_rank['team_rz_td rank'].values.tolist()[0]})
-        json_output.update({f"team_rz_success_rate_{year_name_dict[year]}": team_rz_sr})
-        json_output.update({f"team_rz_touchdowns_{year_name_dict[year]}": team_rz_td})
-        json_output.update({f"team_rz_attempts_{year_name_dict[year]}": team_rz_att})
-
-        # Red Zone Stats for Player Each Year
-        df_rz_player = df_red_zone.copy()
-        df_rz_player = df_rz_player.loc[(df_rz_player['player_id'] == int(player_id)) & (df_rz_player['year'] == year)]
-
-        # Red Zone Passing
-        json_output.update({f"rz_total_pass_touchdowns_{year_name_dict[year]}":
-                                df_rz_player['rz_20_pass_td'].values.tolist()[0]})
-        json_output.update({f"rz_within_10yd_pass_touchdowns_{year_name_dict[year]}":
-                                df_rz_player['rz_10_pass_td'].values.tolist()[0]})
-        json_output.update({f"pass_td_pct_of_team_rz_td_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_pass_td'].values.tolist()[0] / team_rz_td), 2)})
-        json_output.update({f"pass_td_pct_of_rz_drives_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_pass_td'].values.tolist()[0] / team_rz_att), 2)})
-        json_output.update(
-            {f"rz_total_pass_att_{year_name_dict[year]}": df_rz_player['rz_20_pass_att'].values.tolist()[0]})
-        json_output.update(
-            {f"rz_within_10yd_pass_att_{year_name_dict[year]}": df_rz_player['rz_20_pass_att'].values.tolist()[0]})
-
-        # Red Zone Rushing
-        json_output.update({f"rz_total_rush_touchdowns_{year_name_dict[year]}":
-                                df_rz_player['rz_20_rush_td'].values.tolist()[0]})
-        json_output.update({f"rush_td_pct_of_team_rz_td_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_rush_td'].values.tolist()[0] / team_rz_td), 2)})
-        json_output.update({f"rush_td_pct_of_rz_drives_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_rush_td'].values.tolist()[0] / team_rz_att), 2)})
-        json_output.update({f"pct_of_total_rz_rushes_{year_name_dict[year]}":
-                                df_rz_player['rz_20_rush_percentage'].values.tolist()[0]})
-        json_output.update({f"pct_of_within_10yd_rz_rushes_{year_name_dict[year]}":
-                                df_rz_player['rz_10_rush_percentage'].values.tolist()[0]})
-        json_output.update({f"pct_of_within_5yd_rz_rushes_{year_name_dict[year]}":
-                                df_rz_player['rz_5_rush_percentage'].values.tolist()[0]})
-
-        # Red Zone Receiving
-        json_output.update({f"rz_total_rec_touchdowns_{year_name_dict[year]}":
-                                df_rz_player['rz_20_rec_td'].values.tolist()[0]})
-        json_output.update({f"rz_within_10yd_rec_touchdowns_{year_name_dict[year]}":
-                                df_rz_player['rz_10_rec_td'].values.tolist()[0]})
-        json_output.update({f"rec_td_pct_of_team_rz_td_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_rec_td'].values.tolist()[0] / team_rz_td), 2)})
-        json_output.update({f"rec_td_pct_of_rz_drives_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_rec_td'].values.tolist()[0] / team_rz_att), 2)})
-        json_output.update({f"rz_total_tgt_percentage_{year_name_dict[year]}":
-                                df_rz_player['rz_20_target_percentage'].values.tolist()[0]})
-        json_output.update({f"rz_within_10yd_tgt_percentage_{year_name_dict[year]}":
-                                df_rz_player['rz_10_target_percentage'].values.tolist()[0]})
-        try:
-            json_output.update({f"rz_touchdown_per_target_{year_name_dict[year]}":
-                                round((df_rz_player['rz_20_rec_td'].values.tolist()[0] /
-                                       df_rz_player['rz_20_targets'].values.tolist()[0]), 2)})
-            json_output.update({f"rz_touchdown_per_target_within_10yd_{year_name_dict[year]}":
-                                round((df_rz_player['rz_10_rec_td'].values.tolist()[0] /
-                                       df_rz_player['rz_10_targets'].values.tolist()[0]), 2)})
-        except ZeroDivisionError:
-            json_output.update({f"rz_touchdown_per_target_{year_name_dict[year]}": 0})
-            json_output.update({f"rz_touchdown_per_target_within_10yd_{year_name_dict[year]}": 0})
 
     if column_name not in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
         # GOAL - To get the players stat total as a percentage of team total.
@@ -356,27 +315,6 @@ def nfl_player_logs():
         json_output.update(
             {f"z_coord_league_avg_weekly_stat_total_{year_name_dict[year]}": list(league_wkly_avg_val_dict.values())})
 
-    for year in rank_years:
-        df_weekly_rank_copy = df_weekly_rank.copy()
-        df_weekly_rank_copy = df_weekly_rank_copy.loc[df_weekly_rank_copy['year'] == year]
-        opp_weekly_total = {}
-        opp_per_att = {}
-        opp_td_rank = {}
-        opp_per_att_rank = {}
-        for wk, opp in opp_dict[year].items():
-            df_week = df_weekly_rank_copy.loc[
-                (df_weekly_rank_copy['team_id'] == opp) & (df_weekly_rank_copy['week'] == wk)]
-            data_list = df_week.values.tolist()[0]
-            opp_weekly_total[wk] = data_list[3]
-            opp_per_att[wk] = data_list[4]
-            opp_td_rank[wk] = data_list[7]
-            opp_per_att_rank[wk] = data_list[8]
-
-        json_output.update({f"opponent_weeks_{year_name_dict[year]}": list(opp_weekly_total.keys())})
-        json_output.update({f"opp_stat_totals_{year_name_dict[year]}": list(opp_weekly_total.values())})
-        json_output.update({f"opp_per_att_totals_{year_name_dict[year]}": list(opp_per_att.values())})
-        json_output.update({f"opp_td_weekly_ranks_{year_name_dict[year]}": list(opp_td_rank.values())})
-        json_output.update({f"opp_per_att_ranks_{year_name_dict[year]}": list(opp_per_att_rank.values())})
 
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
@@ -384,43 +322,60 @@ def nfl_player_logs():
     return json_output
 
 
-def nfl_get_player_teams(player_id):
-    cols_to_select = f"game_id, player_id, team_id"
+@nfl.route('/nfl/opponent_rankings', methods=['GET'])
+def nfl_get_opponent_rankings():
+    column_name = request.args.get('stat', None)
+    player_id = request.args.get('id', None)
 
-    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    team_opponent_dict = nfl_get_opponents(int(player_id))
+    json_output = {}
+
+    # GET WEEKLY RANK STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards',	'pass_td']:
+        other_cols = ['pyards_per_att', 'pass_yards_rank', 'pass_comp_rank', 'pass_td_rank',
+                      'pass_yards_per_att_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}"
+    elif column_name in ['rush_att', 'rush_yards',	'rush_td']:
+        other_cols = ['ryards_per_att', 'rush_att_rank', 'rush_yards_rank', 'rush_td_rank',
+                      'rush_yards_per_att_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}"
+    else:
+        other_cols = ['rec_yards_rank', 'rec_td_rank', 'rec_rank', 'rec_yards_per_rec_rank']
+        wkly_cols_to_select = f"team_id, year, week, {column_name}, {other_cols[0]}, {other_cols[1]}, {other_cols[2]}, {other_cols[3]}, {other_cols[4]}"
+
     connection = create_connection()
     cursor = connection.cursor()
+    weekly_rank_query = f'''SELECT {wkly_cols_to_select} FROM nfl_weekly_rank'''
 
-    player_query = f'''SELECT
-                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                    player.position, {cols_to_select}
-                    FROM
-                    nfl_player_stats
-                    JOIN
-                    player ON player.id = nfl_player_stats.player_id
-                    JOIN 
-                    nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
-    values = [player_id]
-    cursor.execute(player_query, values)
-    results = list(cursor.fetchall())
+    cursor.execute(weekly_rank_query)
+    weekly_rank_results = list(cursor.fetchall())
 
-    df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id']
-    df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    weekly_rank_cols = ['team_id', 'year', 'week', column_name] + other_cols
+    df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=weekly_rank_cols)
 
-    team_dict = {}
-    for year in sorted(list(set(df_player_logs['year']))):
-        team_list = df_player_logs.loc[df_player_logs['year'] == year]['team_id'].values.tolist()
-        team_merge = []
-        for team in team_list:
-            if team not in team_merge:
-                team_merge.append(team)
-        if len(team_merge) == 1:
-            team_dict[year] = team_merge[0]
-        else:
-            team_dict[year] = team_merge
+    rank_col = f"{column_name}_rank"
+    for year in list(team_opponent_dict.keys()):
+        weeks_played = list(team_opponent_dict[year].keys())
+        opponent_rank_dict = {}
 
-    return team_dict
+        for week in weeks_played:
+            df_year = df_weekly_rank.copy()
+            df_year = df_year.loc[(df_year['year'] == year) & (df_year['week'] == week) &
+                                  (df_year['team_id'] == team_opponent_dict[year][week])]
+
+            opponent_rank = df_year[rank_col].values.tolist()[0]
+            opponent_rank_dict[week] = opponent_rank
+
+        json_output.update({f"opponent_rank_y_coordinates_{year_name_dict[year]}": list(opponent_rank_dict.values())})
+        json_output.update({f"opponent_rank_x_coordinates_{year_name_dict[year]}": list(opponent_rank_dict.keys())})
+
+        # opp_rank = df_year[column_name].apply(lambda x: df_year[])
+
+    return json_output
+
+
+
+
 
 @nfl.route('/nfl/player_red_zone', methods=['GET'])
 def nfl_get_player_redzone_stats():
@@ -497,6 +452,13 @@ def nfl_get_player_redzone_stats():
         total_rz_rec_td_percentage = round(((total_rz_rec_td / team_rz_att) * 100), 1)
         json_output.update({f"team_rec_rz_td_{year_name_dict[year]}": total_rz_rec_td})
         json_output.update({f"rz_rec_td_percentage_{year_name_dict[year]}": total_rz_rec_td_percentage})
+
+        # GET TEAM RZ CONVERSION PERCENTAGE RANK
+        df_team_rank = df_team_rz.copy().loc[df_team_rz['year'] == year]
+        df_team_rank['rz_percentage_rank'] = df_team_rank['rz_percentage'].rank(ascending=False)
+
+        team_rank =df_team_rank.loc[df_team_rank['team_id'] == player_team_dict[year]]['rz_percentage_rank'].values.tolist()[0]
+        json_output.update({f"team_rz_percentage_rank_{year_name_dict[year]}": team_rank})
 
     return json_output
 
@@ -1720,9 +1682,6 @@ def nfl_weekly_ranks():
                      'pyards_per_att': float(row['pyards_per_att']),
                      'ryards_per_att': float(row['ryards_per_att']),
                      'ryards_per_recs': float(row['ryards_per_recs']),
-                     'pass_td_per_att': float(row['pass_td_per_att']),
-                     'rush_td_per_att': float(row['rush_td_per_att']),
-                     'rec_td_per_rec': float(row['rec_td_per_rec']),
                      'pass_yards_rank': int(row['pass_yards_rank']),
                      'rush_yards_rank': int(row['rush_yards_rank']),
                      'rec_yards_rank': int(row['rec_yards_rank']),
@@ -1732,19 +1691,18 @@ def nfl_weekly_ranks():
                      'pass_comp_rank': int(row['pass_comp_rank']),
                      'rush_att_rank': int(row['rush_att_rank']),
                      'rec_rank': int(row['rec_rank']),
-                     'pass_yars_per_att_rank': int(row['pass_yars_per_att_rank']),
-                     'rush_yars_per_att_rank': int(row['rush_yars_per_att_rank']),
-                     'rec_yars_per_rec_rank': int(row['rec_yars_per_rec_rank'])}
+                     'pass_yards_per_att_rank': int(row['pass_yards_per_att_rank']),
+                     'rush_yards_per_att_rank': int(row['rush_yards_per_att_rank']),
+                     'rec_yards_per_rec_rank': int(row['rec_yards_per_rec_rank'])}
         values = list(json_dict.values())
 
         cursor.execute("""INSERT INTO nfl_weekly_rank (team_id, year, week, pass_att, pass_comp, pass_yards,
          pass_td, rush_att, rush_yards, rush_td, targets, rec, rec_yards, rec_td, pyards_per_att, 
-         ryards_per_att, ryards_per_recs, pass_td_per_att, rush_td_per_att, rec_td_per_rec, pass_yards_rank, 
-         rush_yards_rank, rec_yards_rank, pass_td_rank, rush_td_rank, rec_td_rank, pass_comp_rank,
-         rush_att_rank, rec_rank, pass_yars_per_att_rank, rush_yars_per_att_rank, rec_yars_per_rec_rank) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                         %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                       (values))
+         ryards_per_att, ryards_per_recs, pass_yards_rank, rush_yards_rank, rec_yards_rank, pass_td_rank, rush_td_rank,
+         rec_td_rank, pass_comp_rank, rush_att_rank, rec_rank, pass_yards_per_att_rank, rush_yards_per_att_rank, rec_yards_per_rec_rank) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+             %s, %s, %s, %s, %s, %s, %s)""",
+           (values))
 
         connection.commit()
         print(f"game_stats have been added to nfl_player_stats table.")
