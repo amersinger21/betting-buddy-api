@@ -10,8 +10,25 @@ nfl = Blueprint("nfl", __name__)
 pd.set_option('display.max_columns', 100)
 
 year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
+limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 'pass_att', 'pass_comp': 'pass_att',
+                   'pass_longest': 'pass_att',
+                   'rush_att': 'rush_att', 'rush_yards': 'rush_att', 'rush_td': 'rush_att', 'rush_longest': 'rush_att',
+                   'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets',
+                   'rec_longest': 'targets'}
 
 
+def get_years_played(df):
+    years_played = sorted(list(set(df['year'].values.tolist())))
+    return years_played
+
+def get_weeks_played(df, year):
+    weeks_played = df.loc[df['year'] == year]['week'].values.tolist()
+    return weeks_played
+
+def filter_games(lst):
+    for i in range(len(lst)):
+        print(lst[i])
+    return lst
 
 def nfl_get_player_teams(player_id):
     cols_to_select = f"game_id, player_id, team_id"
@@ -91,7 +108,6 @@ def nfl_get_opponents(player_id):
 # GET ROUTES
 @nfl.route('nfl/player_logsdss', methods=['GET'])
 
-
 def nfl_player_logs():
     player_id = request.args.get('id', None)
     column_name = request.args.get('stat', None)
@@ -147,7 +163,6 @@ def nfl_player_logs():
     df_all_games.reset_index(inplace=True)
 
 
-
     # Get player position and teams they played for.
     df_player_game_logs = df_all_games[df_all_games['player_id'] == int(player_id)].reset_index(drop=True)
     player_position = df_player_game_logs.head(1)['pos'].values.tolist()[0]
@@ -193,59 +208,6 @@ def nfl_player_logs():
 
     total_game_dict = {2022: third_total_games, 2023: prior_total_games, 2024: current_total_games}
 
-
-
-    # determine what df_final will be for the total/current/prior/third dataframes
-    if operator == 'over':
-        df_game_log_bet = df_player_game_logs.loc[df_player_game_logs[column_name] > value]
-    else:
-        df_game_log_bet = df_player_game_logs.loc[df_player_game_logs[column_name] <= value]
-
-    # Get total bet frequency data
-    df_total_occurrence = df_game_log_bet.copy()
-    total_bet_occurrence = len(df_total_occurrence)
-    total_percentage = str(round(((total_bet_occurrence/total_player_games) *100))) + '%'
-    json_output.update({'career_bet_occurrence':total_bet_occurrence})
-    json_output.update({'career_bet_occurrence_percentage': total_percentage})
-    json_output.update({'career_total_games': total_player_games})
-
-
-
-    # Get the time between bet occurrences
-    for year in rank_years:
-        # Get first and last game played by player each year.
-        player_weeks = week_dict[year]
-        first_game_played = player_weeks[0]
-        last_game_played = player_weeks[-1]
-
-        # Get the first and last weeks that bet would have hit.
-        df_between_games = df_game_log_bet.loc[df_game_log_bet['Year'] == year]
-        weeks_bet_hit_list = df_between_games['Week'].values.tolist()
-        try:
-            first_game_hit = weeks_bet_hit_list[0]
-        except IndexError:
-            first_game_hit = 0
-        try:
-            last_game_hit = weeks_bet_hit_list[-1]
-        except IndexError:
-            last_game_hit = 0
-
-        # Create list of lengths between bet occurrences then take the average.
-        length_btw_list = []
-        for ind in range(len(weeks_bet_hit_list)):
-            week = weeks_bet_hit_list[ind]
-            if ind == 0:
-                length = first_game_hit - first_game_played
-            elif ind == len(weeks_bet_hit_list) - 1:
-                length = last_game_played - last_game_hit
-            else:
-                length = week - weeks_bet_hit_list[ind - 1] - 1
-            length_btw_list.append(length)
-        length_btw_list.append(last_game_played - last_game_hit)
-        avg_length = sum(length_btw_list)/len(length_btw_list)
-
-        json_output.update({f"avg_time_between_occurrence_{year_name_dict[year]}": avg_length})
-        json_output.update({f"avg_time_between_occurrence_list_{year_name_dict[year]}": length_btw_list})
 
 
     if column_name not in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
@@ -354,7 +316,7 @@ def nfl_get_opponent_rankings():
     df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=weekly_rank_cols)
 
     rank_col = f"{column_name}_rank"
-    for year in list(team_opponent_dict.keys()):
+    for year in list(team_opponent_dict.keys())[-3:]:
         weeks_played = list(team_opponent_dict[year].keys())
         opponent_rank_dict = {}
 
@@ -374,8 +336,89 @@ def nfl_get_opponent_rankings():
     return json_output
 
 
+@nfl.route('/nfl/time_between_occurrence', methods=['GET'])
+def nfl_time_btw_bet_occurrences():
+    player_id = request.args.get('id', None)
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+
+    limit_stat = limit_stat_dict[column_name]
+    cols_to_select = f"game_id, player_id, team_id, opp_id, {limit_stat}, {column_name}"
+    json_output = {}
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                        CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                        player.position, {cols_to_select}
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
+    values = [player_id]
+    cursor.execute(player_query, values)
+
+    results = list(cursor.fetchall())
+
+    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', limit_stat, column_name]
+    df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    loop_years = get_years_played(df_player_logs)[-3:]
+    for year in loop_years:
+        weeks_played = get_weeks_played(df_player_logs, year)
+
+        if operator == 'over':
+            df_bet_occurrences = df_player_logs.loc[
+                (df_player_logs[column_name] > value) & (df_player_logs['year'] == year)]
+        else:
+            df_bet_occurrences = df_player_logs.loc[
+                (df_player_logs[column_name] <= value) & (df_player_logs['year'] == year)]
+
+        weeks_bet_hit = df_bet_occurrences['week'].values.tolist()
+
+        first_occurrence = df_bet_occurrences.head(1)['week'].values.tolist()[0]
+        first_week_played = weeks_played[0]
+
+        last_occurrence = df_bet_occurrences.tail(1)['week'].values.tolist()[0]
+        last_week_played = weeks_played[-1]
+
+        if (first_occurrence != 1) and (first_week_played == 1):
+            first_num_to_subtract = 1
+        else:
+            first_num_to_subtract = first_week_played
+
+        if (last_occurrence != 18) and (last_week_played == 18):
+            final_num_to_subtract = 18
+        else:
+            final_num_to_subtract =  last_week_played
 
 
+        # GET THE NUMBER OF WEEKS BETWEEN BET OCCURRENCES AND ADD TO LIST
+        weeks_btw_hits = []
+        for i in range(len(weeks_bet_hit) + 1):
+            if i == 0:
+                time_btw = weeks_bet_hit[i] - first_num_to_subtract
+            elif i == len(weeks_bet_hit):
+                time_btw = final_num_to_subtract - weeks_bet_hit[i - 1]
+            else:
+                time_btw = weeks_bet_hit[i] - (weeks_bet_hit[i-1] + 1)
+
+            weeks_btw_hits.append(time_btw)
+
+        json_output.update({f"avg_weeks_between_occurrence_{year_name_dict[year]}": statistics.mean(weeks_btw_hits)})
+
+    # ADD - SECTION WHERE IT WILL DETERMINE WEEKS SINCE BET LAST HIT
+
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 @nfl.route('/nfl/player_red_zone', methods=['GET'])
 def nfl_get_player_redzone_stats():
@@ -469,10 +512,6 @@ def nfl_get_bet_occurrences():
     operator = request.args.get('operator', None)
     value = int(request.args.get('value', None))
 
-    limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 'pass_att', 'pass_comp': 'pass_att',
-                       'pass_longest': 'pass_att',
-                       'rush_att': 'rush_att', 'rush_yards': 'rush_att', 'rush_td': 'rush_att', 'rush_longest': 'rush_att',
-                       'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets', 'rec_longest': 'targets'}
     limit_stat = limit_stat_dict[column_name]
     cols_to_select = f"game_id, player_id, team_id, opp_id, {limit_stat}, {column_name}"
     json_output = {}
