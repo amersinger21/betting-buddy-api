@@ -30,49 +30,6 @@ def get_weeks_played(df, year):
     weeks_played = df.loc[df['year'] == year]['week'].values.tolist()
     return weeks_played
 
-
-# def nfl_get_player_teams(**kwargs):
-#     if 'df' in kwargs:
-#         df_player_logs = kwargs['df']
-#         df_player_logs = df_player_logs[['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']]
-#     else:
-#         cols_to_select = f"game_id, player_id, team_id, opp_id"
-#
-#         # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
-#         connection = create_connection()
-#         cursor = connection.cursor()
-#
-#         player_query = f'''SELECT
-#                         CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-#                         player.position, {cols_to_select}
-#                         FROM
-#                         nfl_player_stats
-#                         JOIN
-#                         player ON player.id = nfl_player_stats.player_id
-#                         JOIN
-#                         nfl_games on nfl_games.id = nfl_player_stats.game_id
-#                         WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
-#         values = [kwargs['player_id']]
-#         cursor.execute(player_query, values)
-#         results = list(cursor.fetchall())
-#
-#         df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']
-#         df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-#
-#     team_dict = {}
-#     for year in sorted(list(set(df_player_logs['year']))):
-#         team_list = df_player_logs.loc[df_player_logs['year'] == year]['team_id'].values.tolist()
-#         team_merge = []
-#         for team in team_list:
-#             if team not in team_merge:
-#                 team_merge.append(team)
-#         if len(team_merge) == 1:
-#             team_dict[year] = team_merge[0]
-#         else:
-#             team_dict[year] = team_merge
-#
-#     return team_dict
-
 def nfl_info(**kwargs):
     if 'df' in kwargs:
         df_player_logs = kwargs['df']
@@ -132,10 +89,11 @@ def nfl_info(**kwargs):
 
 @nfl.route('/nfl/player_bet_data', methods=['GET'])
 def nfl_player_bet_data():
-    player_id = request.args.get('id', None)
+    player_id = int(request.args.get('id', None))
     column_name = request.args.get('stat', None)
     operator = request.args.get('operator', None)
     value = int(request.args.get('value', None))
+    opp_id = int(request.args.get('opp_id', None))
 
     limit_stat = limit_stat_dict[column_name]
     columns = '''game_id, player_id, team_id, opp_id, pass_att, pass_yards, pass_td, pass_comp, pass_longest, rush_att,
@@ -159,20 +117,20 @@ def nfl_player_bet_data():
                     player ON player.id = nfl_player_stats.player_id
                     JOIN
                     nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = %s'''
-    values = [player_id]
-    cursor.execute(player_query, values)
+                    WHERE nfl_games.year >= 2022'''
+    cursor.execute(player_query)
 
     results = list(cursor.fetchall())
 
-    # Total Bet Occurrences
-    df_player_bet_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    df_player_bet_logs = df_logs.loc[df_logs['player_id'] == player_id]
     df_player_bet_logs = df_player_bet_logs [['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id',
                                               'opp_id', limit_stat, column_name]]
 
     # This block gets players most recent information
     df_player_info = df_player_bet_logs.tail(1)
-    json_output.update({'player_position': df_player_info['pos'].values.tolist()[0]})
+    player_pos = df_player_info['pos'].values.tolist()[0]
+    json_output.update({'player_position': player_pos})
     json_output.update({'player_name': df_player_info['name'].values.tolist()[0]})
     json_output.update({'player_team': df_player_info['team_id'].values.tolist()[0]})
 
@@ -183,6 +141,7 @@ def nfl_player_bet_data():
     total_occurrence_percentage = round((len(df_total_occurrence) / len(df_player_bet_logs) * 100), 1)
     json_output.update({'career_bet_occurrence': total_occurrence_percentage})
 
+    # CURRENT BET OCCURRENCE INFORMATION
     try:
         total_current_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_current_year])
         if operator == 'over':
@@ -196,6 +155,7 @@ def nfl_player_bet_data():
         current_occurrence_percentage = 0.0
     json_output.update({'current_bet_occurrence': current_occurrence_percentage})
 
+    # PRIOR BET OCCURRENCE INFORMATION
     total_prior_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_prior_year])
     if operator == 'over':
         df_prior_occurrences = df_player_bet_logs.loc[
@@ -206,6 +166,7 @@ def nfl_player_bet_data():
     prior_occurrence_percentage = round(((len(df_prior_occurrences) / total_prior_games) * 100), 1)
     json_output.update({'prior_bet_occurrence': prior_occurrence_percentage})
 
+    # THIRD BET OCCURRENCE INFORMATION
     total_third_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_third_year])
     if operator == 'over':
         df_third_occurrences = df_player_bet_logs.loc[
@@ -216,6 +177,7 @@ def nfl_player_bet_data():
     third_occurrence_percentage = round(((len(df_third_occurrences) / total_third_games) * 100), 1)
     json_output.update({'third_bet_occurrence': third_occurrence_percentage})
 
+    # FOURTH BET OCCURRENCE INFORMATION
     total_fourth_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_fourth_year])
     if operator == 'over':
         df_fourth_occurrences = df_player_bet_logs.loc[
@@ -226,7 +188,7 @@ def nfl_player_bet_data():
     fourth_occurrence_percentage = round(((len(df_fourth_occurrences) / total_fourth_games) * 100), 1)
     json_output.update({'third_bet_occurrence': fourth_occurrence_percentage})
 
-
+    # LAST FOUR BET OCCURRENCE INFORMATION
     df_last_four = df_player_bet_logs.tail(4)
     if operator == 'over':
         df_last_four_occurrence = df_last_four.loc[df_last_four[column_name] > value]
@@ -235,6 +197,7 @@ def nfl_player_bet_data():
     last_four_occur_percentage = round(((len(df_last_four_occurrence) / 4) * 100), 1)
     json_output.update({'last_four_bet_occurrence': last_four_occur_percentage})
 
+    # LAST EIGHT BET OCCURRENCE INFORMATION
     df_last_eight = df_player_bet_logs.tail(8)
     if operator == 'over':
         df_last_eight_occurrence = df_last_eight.loc[df_last_eight[column_name] > value]
@@ -244,9 +207,8 @@ def nfl_player_bet_data():
     json_output.update({'last_eight_bet_occurrence': last_eight_occur_percentage})
 
 
-    # Get player game logs
-    df_player_game_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
+    # PLAYER GAME LOG INFORMATION
+    df_player_game_logs = df_player_bet_logs.copy()
     json_output.update({'current_game_logs': df_player_game_logs.loc[
                                                         df_player_game_logs['year'] == nfl_current_year].to_json()})
     json_output.update({'prior_game_logs': df_player_game_logs.loc[
@@ -277,8 +239,65 @@ def nfl_player_bet_data():
         json_output.update({'third_bet_logs': df_player_game_logs.loc[
             (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] <= value)].to_json()})
 
+    # GET OPPONENT GAME LOGS AND BET OCCURRENCE VS SPECIFIED BET
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        limit_stat = 'rush_att'
+        limit_amount = 5
+    elif column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_longest']:
+        limit_stat = 'pass_att'
+        limit_amount = 20
+    else:
+        limit_stat = 'targets'
+        limit_amount = 3
+
+    for year in sorted(list(set(df_player_bet_logs['year'].values.tolist()))):
+        df_log_vs_opp = df_logs.loc[
+            (df_logs['year'] == year) & (df_logs['opp_id'] == opp_id) & (df_logs['pos'] == player_pos)]
+        json_output.update({f"game_logs_vs_opponent_{year_name_dict[year]}": df_log_vs_opp.to_json()})
+
+        # GET OPPONENT DATA VS SPECIFIC BET
+        total_pos_players_faced = len(df_log_vs_opp)
+        opp_games_total = len((list(set(df_logs['week'].values.tolist())))) - 1
+
+        if operator == 'under':
+            df_bet = df_log_vs_opp.loc[
+                (df_log_vs_opp[column_name] < value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
+        else:
+            df_bet = df_log_vs_opp.loc[
+                (df_log_vs_opp[column_name] > value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
+
+        weeks_bet_hit_count = len(list(set(df_bet['week'].values.tolist())))
+        players_hit_bet = len(df_bet)
+
+        opp_plyr_bet_allowed_percentage = round(((players_hit_bet / total_pos_players_faced) *100), 1)
+        opp_week_bet_allowed_percentage = round(((weeks_bet_hit_count / opp_games_total) * 100), 1)
+
+        json_output.update({f"opp_player_bet_percentage_{year_name_dict[year]}": opp_plyr_bet_allowed_percentage})
+        json_output.update({f"opp_week_bet_percentage_{year_name_dict[year]}": opp_week_bet_allowed_percentage})
+
+        # GET OPPONENT TD VS POSITIONS
+        if column_name in ['rush_td', 'rec_td']:
+            td_dict = {'rush_td': int(df_log_vs_opp['rush_td'].sum()),
+                       'rec_td': int(df_log_vs_opp['rec_td'].sum()),
+                       'total_td': int(df_log_vs_opp['rec_td'].sum()) + int(df_log_vs_opp['rec_td'].sum())}
+            json_output.update({f"opp_vs_rb_data_{year_name_dict[year]}": td_dict})
+
+
+    # GET GAME LOGS WHERE PLAYER PREVIOUSLY PLAYED OPPONENT
+    df_player_vs_opp = df_player_bet_logs.loc[df_player_bet_logs['opp_id'] == opp_id]
+    games_vs_opp = len(df_player_vs_opp)
+    if operator == 'over':
+        bet_occurrences_vs_opp = len(df_player_vs_opp.loc[df_player_vs_opp[column_name] > value])
+    else:
+        bet_occurrences_vs_opp = len(df_player_vs_opp.loc[df_player_vs_opp[column_name] <= value])
+    hits_vs_opp = round(((bet_occurrences_vs_opp / games_vs_opp) * 100), 1)
+    json_output.update({f"game_log_vs_opponent": df_player_vs_opp.to_json()})
+    json_output.update({f"bet_occurrences_vs_opponent": bet_occurrences_vs_opp})
+    json_output.update({f"bet_occurrences_vs_opponent_percentage": hits_vs_opp})
+
+
     # Get time between bets
-    df_bet_occurrence = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    df_bet_occurrence = df_player_bet_logs.copy()
     df_bet_occurrence = df_bet_occurrence[['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id',
                                            limit_stat, column_name]]
 
@@ -323,9 +342,7 @@ def nfl_player_bet_data():
                 time_btw = weeks_bet_hit[i] - (weeks_bet_hit[i-1] + 1)
 
             weeks_btw_hits.append(time_btw)
-
         json_output.update({f"avg_weeks_between_occurrence_{year_name_dict[year]}": statistics.mean(weeks_btw_hits)})
-
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -600,16 +617,15 @@ def nfl_get_rankings():
 
 @nfl.route('/nfl/team_stats', methods=['GET'])
 def nfl_team_stats():
-    team_id = request.args.get('team_id', None)
-    # stat = request.args.get('stat', None)
+    team_id = int(request.args.get('team_id', None))
     connection = create_connection()
     cursor = connection.cursor()
-    loop_years = list(range(2019, 2025))
-    rank_years = list(range(2022, 2026))
     json_output = {}
 
-    query = f'''SELECT * FROM nfl_team_offense'''
-    cursor.execute(query)
+    query = f'''SELECT * FROM nfl_team_offense
+                WHERE nfl_team_offense.team_id = %s'''
+    values = [team_id]
+    cursor.execute(query, values)
     cols = ['id', 'team_id', 'year', 'games', 'dvoa', 'epa_per_play', 'success_rate', 'dropback_epa', 'dropback_sr',
         'rush_epa', 'rush_sr', 'pass_comp', 'pass_att', 'pass_comp_percentage', 'pass_yards', 'pass_td', 'pass_td_percentage',
         'yards_per_att', 'pass_yards_per_comp', 'pass_yards_per_game', 'passer_rating', 'sacks', 'ints', 'int_percentage',
@@ -618,143 +634,59 @@ def nfl_team_stats():
         'points_per_drive', 'third_down_att', 'third_down_conv', 'third_down_conv_rate', 'fourth_down_att', 'fourth_down_conv',
         'fourth_down_conv_rate', 'rz_att', 'rz_td', 'rz_percentage']
     results = list(cursor.fetchall())
+    df_team_off_data = pd.DataFrame(results, columns=cols).reset_index(drop=True)
 
-    df_off_hold = pd.DataFrame(results, columns=cols).reset_index(drop=True)
 
-    # Rank data
-    df_ranked = pd.DataFrame()
-    for year in loop_years:
-        df_rank = df_off_hold.copy()
-        df_rank = df_rank.loc[df_rank['year'] == year]
+    # Get team passing data
+    pass_comp = pd.Series(df_team_off_data['pass_comp'].values, index=df_team_off_data['year']).to_dict()
+    pass_att = pd.Series(df_team_off_data['pass_att'].values, index=df_team_off_data['year']).to_dict()
+    pass_comp_percentage = pd.Series(df_team_off_data['pass_comp_percentage'].values, index=df_team_off_data['year']).to_dict()
+    pass_yards = pd.Series(df_team_off_data['pass_yards'].values, index=df_team_off_data['year']).to_dict()
+    pass_td = pd.Series(df_team_off_data['pass_td'].values, index=df_team_off_data['year']).to_dict()
+    pass_td_percentage = pd.Series(df_team_off_data['pass_td_percentage'].values, index=df_team_off_data['year']).to_dict()
+    yards_per_att = pd.Series(df_team_off_data['yards_per_att'].values, index=df_team_off_data['year']).to_dict()
+    pass_yards_per_game = pd.Series(df_team_off_data['pass_yards_per_game'].values, index=df_team_off_data['year']).to_dict()
+    json_output.update({'team_pass_comp': pass_comp})
+    json_output.update({'team_pass_att': pass_att})
+    json_output.update({'team_pass_comp_percentage': pass_comp_percentage})
+    json_output.update({'team_pass_yards': pass_yards})
+    json_output.update({'team_pass_td': pass_td})
+    json_output.update({'team_pass_td_percentage': pass_td_percentage})
+    json_output.update({'team_yards_per_att': yards_per_att})
+    json_output.update({'team_pass_yards_per_game': pass_yards_per_game})
 
-        # rank pass stats
-        df_rank["pass_comp rank"] = df_rank['pass_comp'].rank(ascending=False)
-        df_rank["pass_yards rank"] = df_rank['pass_yards'].rank(ascending=False)
-        df_rank["pass_td rank"] = df_rank['pass_td'].rank(ascending=False)
-        df_rank["yards_per_att rank"] = df_rank['yards_per_att'].rank(ascending=False)
-        df_rank["pass_yards_per_comp rank"] = df_rank['pass_yards_per_comp'].rank(ascending=False)
-        df_rank["pass_yards_per_game rank"] = df_rank['pass_yards_per_game'].rank(ascending=False)
 
-        # rank rush stats
-        df_rank["rush_att rank"] = df_rank['rush_att'].rank(ascending=False)
-        df_rank["rush_yards rank"] = df_rank['rush_yards'].rank(ascending=False)
-        df_rank["rush_td rank"] = df_rank['rush_td'].rank(ascending=False)
-        df_rank["rush_yards_per_att rank"] = df_rank['rush_yards_per_att'].rank(ascending=False)
-        df_rank["rush_yards_per_game rank"] = df_rank['rush_yards_per_game'].rank(ascending=False)
+    # Get teams scoring data
+    pts_per_drive = pd.Series(df_team_off_data['points_per_drive'].values, index=df_team_off_data['year']).to_dict()
+    pts_per_game = pd.Series(df_team_off_data['points_per_game'].values, index=df_team_off_data['year']).to_dict()
+    scoring_percentage = pd.Series(df_team_off_data['scoring_percentage'].values, index=df_team_off_data['year']).to_dict()
+    rz_att = pd.Series(df_team_off_data['rz_att'].values, index=df_team_off_data['year']).to_dict()
+    rz_percentage = pd.Series(df_team_off_data['rz_percentage'].values, index=df_team_off_data['year']).to_dict()
+    plays_per_drive = pd.Series(df_team_off_data['plays_per_drive'].values, index=df_team_off_data['year']).to_dict()
+    yards_per_drive = pd.Series(df_team_off_data['yards_per_drive'].values, index=df_team_off_data['year']).to_dict()
+    json_output.update({'pts_per_drive': pts_per_drive})
+    json_output.update({'pts_per_game': pts_per_game})
+    json_output.update({'scoring_percentage': scoring_percentage})
+    json_output.update({'plays_per_drive': plays_per_drive})
+    json_output.update({'yards_per_drive': yards_per_drive})
+    json_output.update({'team_rz_att': rz_att})
+    json_output.update({'team_rz_percentage': rz_percentage})
 
-        # rank per drive stats
-        df_rank["points_per_game rank"] = df_rank['points_per_game'].rank(ascending=False)
-        df_rank["total_points rank"] = df_rank['total_points'].rank(ascending=False)
-        df_rank["plays_per_drive rank"] = df_rank['plays_per_drive'].rank(ascending=False)
-        df_rank["yards_per_drive rank"] = df_rank['yards_per_drive'].rank(ascending=False)
-        df_rank["points_per_drive rank"] = df_rank['points_per_drive'].rank(ascending=False)
 
-        # rank red zone stats
-        df_rank["rz_td rank"] = df_rank['rz_td'].rank(ascending=False)
-        df_rank["rz_percentage rank"] = df_rank['rz_percentage'].rank(ascending=False)
+    # Get team rushing data
+    rush_att = pd.Series(df_team_off_data['rush_att'].values, index=df_team_off_data['year']).to_dict()
+    rush_yards = pd.Series(df_team_off_data['rush_yards'].values, index=df_team_off_data['year']).to_dict()
+    rush_td = pd.Series(df_team_off_data['rush_td'].values, index=df_team_off_data['year']).to_dict()
+    rush_yards_per_game = pd.Series(df_team_off_data['rush_yards_per_game'].values, index=df_team_off_data['year']).to_dict()
+    rush_yards_per_att = pd.Series(df_team_off_data['rush_yards_per_att'].values, index=df_team_off_data['year']).to_dict()
+    json_output.update({'team_rush_att': rush_att})
+    json_output.update({'team_rush_yards': rush_yards})
+    json_output.update({'team_rush_td': rush_td})
+    json_output.update({'team_rush_yards_per_game': rush_yards_per_game})
+    json_output.update({'team_rush_att_yards_per_att': rush_yards_per_att})
 
-        df_ranked = pd.concat([df_ranked, df_rank])
-        print('==============================================')
 
-    # Get offensive stats by year
-    for year in rank_years:
-        df_red_zone = df_ranked[['team_id', 'year', 'games', 'rz_td', 'rz_td rank', 'rz_percentage', 'rz_percentage rank']]
-        df_red_zone = df_red_zone.loc[df_red_zone['team_id'] == int(team_id)]
-
-        # get red zone data third year
-        df_red_zone_third = df_red_zone.loc[df_red_zone['year'] == year]
-        json_output.update({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
-        json_output.update({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
-        json_output.update({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
-        json_output.update({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
-
-        # PASSING DATA
-        df_passing = df_ranked[['team_id', 'year', 'games', 'pass_comp', 'pass_comp rank', 'pass_yards', 'pass_yards rank',
-                               'pass_td', 'pass_td rank', 'yards_per_att', 'yards_per_att rank', 'pass_yards_per_comp',
-                               'pass_yards_per_comp rank', 'pass_yards_per_game', 'pass_yards_per_game rank']]
-        df_passing = df_passing.loc[df_passing['team_id'] == int(team_id)]
-
-        # get passing data third year
-        df_passing_third = df_passing.loc[df_passing['year'] == year]
-        json_output.update({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
-        json_output.update(
-            {f"pass_comp_rank_{year_name_dict[year]}": df_passing_third['pass_comp rank'].values.tolist()[0]})
-        json_output.update({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
-        json_output.update({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
-        json_output.update({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
-        json_output.update({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
-        json_output.update(
-            {f"yards_per_att_{year_name_dict[year]}": df_passing_third['yards_per_att'].values.tolist()[0]})
-        json_output.update(
-            {f"yards_per_att_rank_{year_name_dict[year]}": df_passing_third['yards_per_att rank'].values.tolist()[0]})
-        json_output.update(
-            {f"pass_yards_per_comp_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp'].values.tolist()[0]})
-        json_output.update(
-            {f"pass_yards_per_comp_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]})
-        json_output.update(
-            {f"pass_yards_per_game_{year_name_dict[year]}": df_passing_third['pass_yards_per_game'].values.tolist()[0]})
-        json_output.update(
-            {f"pass_yards_per_game_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_game rank'].values.tolist()[0]})
-
-        # RUSHING DATA
-        df_rushing = df_ranked[['team_id', 'year', 'games', 'rush_att', 'rush_att rank', 'rush_yards', 'rush_yards rank',
-                               'rush_td', 'rush_td rank', 'rush_yards_per_att', 'rush_yards_per_att rank', 'rush_yards_per_game',
-                               'rush_yards_per_game rank']]
-        df_rushing = df_rushing.loc[df_rushing['team_id'] == int(team_id)]
-
-        # get rushing data third year
-        df_rushing_third = df_rushing.loc[df_rushing['year'] == year]
-        json_output.update(
-            {f"rush_att_{year_name_dict[year]}": df_rushing_third['rush_att'].values.tolist()[0]})
-        json_output.update(
-            {"rush_att_rank_{year_name_dict[year]}": df_rushing_third['rush_att rank'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_{year_name_dict[year]}": df_rushing_third['rush_yards'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_rank_{year_name_dict[year]}": df_rushing_third['rush_yards rank'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_td_{year_name_dict[year]}": df_rushing_third['rush_td'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_td_rank_{year_name_dict[year]}": df_rushing_third['rush_td rank'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_per_game_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game'].values.tolist()[0]})
-        json_output.update(
-            {f"rush_yards_per_game_rank_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]})
-
-        # DRIVE DATA
-        df_drive = df_ranked[['team_id', 'year', 'games', 'points_per_game', 'points_per_game rank', 'total_points',
-                             'total_points rank', 'plays_per_drive', 'plays_per_drive rank', 'yards_per_drive', 'yards_per_drive rank',
-                             'points_per_drive', 'points_per_drive rank']]
-        df_drive = df_drive.loc[df_drive['team_id'] == int(team_id)]
-
-        # get drive data third year
-        df_drive_third = df_drive.loc[df_drive['year'] == year]
-        json_output.update(
-            {f"points_per_game_{year_name_dict[year]}": df_drive_third['points_per_game'].values.tolist()[0]})
-        json_output.update(
-            {f"points_per_game_rank_{year_name_dict[year]}": df_drive_third['points_per_game rank'].values.tolist()[0]})
-        json_output.update(
-            {f"total_points_{year_name_dict[year]}": df_drive_third['total_points'].values.tolist()[0]})
-        json_output.update(
-            {f"total_points_rank_{year_name_dict[year]}": df_drive_third['total_points rank'].values.tolist()[0]})
-        json_output.update(
-            {f"plays_per_drive_{year_name_dict[year]}":  df_drive_third['plays_per_drive'].values.tolist()[0]})
-        json_output.update(
-            {f"plays_per_drive_rank_{year_name_dict[year]}": df_drive_third['plays_per_drive rank'].values.tolist()[0]})
-        json_output.update(
-            {f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive'].values.tolist()[0]})
-        json_output.update(
-            {f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive rank'].values.tolist()[0]})
-        json_output.update(
-            {f"points_per_drive_{year_name_dict[year]}": df_drive_third['points_per_drive'].values.tolist()[0]})
-        json_output.update(
-            {f"points_per_drive_rank_{year_name_dict[year]}": df_drive_third['points_per_drive rank'].values.tolist()[0]})
-
-    # Get teams standings over the past three years - current/prior/third
+    # Get teams standings
     standings_query = f'''select * from nfl_standings
                 where team_id = %s'''
     vals = [team_id]
@@ -763,45 +695,32 @@ def nfl_team_stats():
     standing_results = list(cursor.fetchall())
     standing_cols = ['id', 'year', 'team_id', 'wins', 'losses', 'ties', 'win_loss_percentage', 'points_for', 'points_against',
                      'point_diff', 'avg_margin_of_victory', 'strength_of_schedule']
-    df_standings_hold = pd.DataFrame(standing_results, columns=standing_cols).reset_index(drop=True)
+    df_standings = pd.DataFrame(standing_results, columns=standing_cols).reset_index(drop=True)
 
-    for year in rank_years:
-        df_standings = df_standings_hold.loc[df_standings_hold['year'] == year]
-        record = f"{df_standings['wins'].values.tolist()[0]}-{df_standings['losses'].values.tolist()[0]}-{df_standings['ties'].values.tolist()[0]}"
-        json_output.update({f"team_record_{year_name_dict[year]}": record})
+    team_record_dict = {}
+    for year in df_standings['year'].values.tolist():
+        df_year = df_standings.loc[df_standings['year'] == year]
+        record = f"{df_year['wins'].values.tolist()[0]}-{df_year['losses'].values.tolist()[0]}-{df_year['ties'].values.tolist()[0]}"
+        team_record_dict[year] = record
+    json_output.update({f"team_record": team_record_dict})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
 
-@nfl.route('/nfl/opponent_stats', methods=['GET'])
+@nfl.route('/nfl/opponent_info', methods=['GET'])
 def nfl_opponent_information():
     # initialize variables
-    team_id = request.args.get('team_id', None)
-    player_id = request.args.get('id', None)
-    column_name = request.args.get('stat', None)
-    operator = request.args.get('operator', None)
-    value = float(request.args.get('value', None))
-    pos = request.args.get('position', None).upper()
-
-    year_name_dict = {2022: 'third', 2023: 'prior', 2024: 'current'}
-    loop_years = list(range(2019, 2025))
-    rank_years = list(range(2022, 2025))
+    opp_id = int(request.args.get('opp_id', None))
 
     json_output = {}
-
-    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-        limit_stat = 'rush_att'
-    elif column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_longest']:
-        limit_stat = 'pass_att'
-    else:
-        limit_stat = 'targets'
 
     # Get team defense and rank stats
     connection = create_connection()
     cursor = connection.cursor()
     team_def_query = f'''SELECT * FROM nfl_team_defense'''
+
     cursor.execute(team_def_query)
 
     team_def_results = list(cursor.fetchall())
@@ -814,198 +733,100 @@ def nfl_opponent_information():
         'fourth_down_conv_rate', 'rz_att', 'rz_td', 'rz_percentage', 'qb_rush_att', 'qb_rush_yards', 'qb_rush_td',
         'rb_att', 'rb_yards', 'rb_td', 'rb_targets', 'rb_rec', 'rb_rec_yards', 'rb_rec_td', 'wr_targets','wr_rec',
         'wr_yards', 'wr_td', 'te_targets', 'te_rec', 'te_yards', 'te_td']
-    df_def_hold = pd.DataFrame(team_def_results, columns=cols).reset_index(drop=True)
+    df_defense = pd.DataFrame(team_def_results, columns=cols).reset_index(drop=True)
+    df_defense = df_defense.loc[df_defense['team_id'] == opp_id]
 
-    # RANK COLUMNS AND ADD TO DATAFRAME
-    df_ranked = pd.DataFrame()
-    for year in loop_years:
-        df_rank = df_def_hold.copy()
-        df_rank = df_rank.loc[df_rank['year'] == year]
+    # Vs position stats
+    qb_rush_att = pd.Series(df_defense['qb_rush_att'].values, index=df_defense['year']).to_dict()
+    qb_rush_yards = pd.Series(df_defense['qb_rush_yards'].values, index=df_defense['year']).to_dict()
+    qb_rush_td = pd.Series(df_defense['qb_rush_td'].values, index=df_defense['year']).to_dict()
+    rb_att = pd.Series(df_defense['rb_att'].values, index=df_defense['year']).to_dict()
+    rb_yards = pd.Series(df_defense['rb_yards'].values, index=df_defense['year']).to_dict()
+    rb_td = pd.Series(df_defense['rb_td'].values, index=df_defense['year']).to_dict()
+    rb_targets = pd.Series(df_defense['rb_targets'].values, index=df_defense['year']).to_dict()
+    rb_rec = pd.Series(df_defense['rb_rec'].values, index=df_defense['year']).to_dict()
+    rb_rec_yards = pd.Series(df_defense['rb_rec_yards'].values, index=df_defense['year']).to_dict()
+    rb_rec_td = pd.Series(df_defense['rb_rec_td'].values, index=df_defense['year']).to_dict()
+    wr_targets = pd.Series(df_defense['wr_targets'].values, index=df_defense['year']).to_dict()
+    wr_rec = pd.Series(df_defense['wr_rec'].values, index=df_defense['year']).to_dict()
+    wr_yards = pd.Series(df_defense['wr_yards'].values, index=df_defense['year']).to_dict()
+    wr_td = pd.Series(df_defense['wr_td'].values, index=df_defense['year']).to_dict()
+    te_targets = pd.Series(df_defense['te_targets'].values, index=df_defense['year']).to_dict()
+    te_rec = pd.Series(df_defense['te_rec'].values, index=df_defense['year']).to_dict()
+    te_yards = pd.Series(df_defense['te_yards'].values, index=df_defense['year']).to_dict()
+    te_td = pd.Series(df_defense['te_td'].values, index=df_defense['year']).to_dict()
 
-        # rank pass stats
-        df_rank["pass_comp rank"] = df_rank['pass_comp'].rank()
-        df_rank["pass_yards rank"] = df_rank['pass_yards'].rank()
-        df_rank["pass_td rank"] = df_rank['pass_td'].rank()
-        df_rank["yards_per_att rank"] = df_rank['yards_per_att'].rank()
-        df_rank["pass_yards_per_comp rank"] = df_rank['pass_yards_per_comp'].rank()
-        df_rank["pass_yards_per_game rank"] = df_rank['pass_yards_per_game'].rank()
+    json_output.update({'qb_rush_att': qb_rush_att})
+    json_output.update({'qb_rush_yards': qb_rush_yards})
+    json_output.update({'qb_rush_td': qb_rush_td})
+    json_output.update({'rb_att': rb_att})
+    json_output.update({'rb_yards': rb_yards})
+    json_output.update({'rb_td': rb_td})
+    json_output.update({'rb_targets': rb_targets})
+    json_output.update({'rb_rec': rb_rec})
+    json_output.update({'rb_rec_yards': rb_rec_yards})
+    json_output.update({'rb_rec_td': rb_rec_td})
+    json_output.update({'wr_rec': wr_rec})
+    json_output.update({'wr_targets': wr_targets})
+    json_output.update({'wr_yards': wr_yards})
+    json_output.update({'wr_td': wr_td})
+    json_output.update({'te_targets': te_targets})
+    json_output.update({'te_rec': te_rec})
+    json_output.update({'te_yards': te_yards})
+    json_output.update({'te_td': te_td})
 
-        # rank rush stats
-        df_rank["rush_att rank"] = df_rank['rush_att'].rank()
-        df_rank["rush_yards rank"] = df_rank['rush_yards'].rank()
-        df_rank["rush_td rank"] = df_rank['rush_td'].rank()
-        df_rank["rush_yards_per_att rank"] = df_rank['rush_yards_per_att'].rank()
-        df_rank["rush_yards_per_game rank"] = df_rank['rush_yards_per_game'].rank()
+    # Get team rushing data
+    rush_att = pd.Series(df_defense['rush_att'].values, index=df_defense['year']).to_dict()
+    rush_yards = pd.Series(df_defense['rush_yards'].values, index=df_defense['year']).to_dict()
+    rush_td = pd.Series(df_defense['rush_td'].values, index=df_defense['year']).to_dict()
+    rush_yards_per_game = pd.Series(df_defense['rush_yards_per_game'].values, index=df_defense['year']).to_dict()
+    rush_yards_per_att = pd.Series(df_defense['rush_yards_per_att'].values, index=df_defense['year']).to_dict()
+    json_output.update({'team_rush_att': rush_att})
+    json_output.update({'team_rush_yards': rush_yards})
+    json_output.update({'team_rush_td': rush_td})
+    json_output.update({'team_rush_yards_per_game': rush_yards_per_game})
+    json_output.update({'team_rush_att_yards_per_att': rush_yards_per_att})
 
-        # rank per drive stats
-        df_rank["points_per_game rank"] = df_rank['points_per_game'].rank(ascending=True)
-        df_rank["total_points rank"] = df_rank['total_points'].rank(ascending=True)
-        df_rank["plays_per_drive rank"] = df_rank['plays_per_drive'].rank(ascending=True)
-        df_rank["yards_per_drive rank"] = df_rank['yards_per_drive'].rank(ascending=True)
-        df_rank["points_per_drive rank"] = df_rank['points_per_drive'].rank(ascending=True)
+    # Get teams scoring data
+    pts_per_drive = pd.Series(df_defense['points_per_drive'].values, index=df_defense['year']).to_dict()
+    pts_per_game = pd.Series(df_defense['points_per_game'].values, index=df_defense['year']).to_dict()
+    scoring_percentage = pd.Series(df_defense['scoring_percentage'].values, index=df_defense['year']).to_dict()
+    rz_att = pd.Series(df_defense['rz_att'].values, index=df_defense['year']).to_dict()
+    rz_percentage = pd.Series(df_defense['rz_percentage'].values, index=df_defense['year']).to_dict()
+    plays_per_drive = pd.Series(df_defense['plays_per_drive'].values, index=df_defense['year']).to_dict()
+    yards_per_drive = pd.Series(df_defense['yards_per_drive'].values, index=df_defense['year']).to_dict()
+    json_output.update({'pts_per_drive': pts_per_drive})
+    json_output.update({'pts_per_game': pts_per_game})
+    json_output.update({'scoring_percentage': scoring_percentage})
+    json_output.update({'plays_per_drive': plays_per_drive})
+    json_output.update({'yards_per_drive': yards_per_drive})
+    json_output.update({'team_rz_att': rz_att})
+    json_output.update({'team_rz_percentage': rz_percentage})
 
-        # rank red zone stats
-        df_rank["rz_td rank"] = df_rank['rz_td'].rank(ascending=True)
-        df_rank["rz_percentage rank"] = df_rank['rz_percentage'].rank(ascending=True)
+    # Get team passing data
+    pass_comp = pd.Series(df_defense['pass_comp'].values, index=df_defense['year']).to_dict()
+    pass_att = pd.Series(df_defense['pass_att'].values, index=df_defense['year']).to_dict()
+    pass_comp_percentage = pd.Series(df_defense['pass_comp_percentage'].values, index=df_defense['year']).to_dict()
+    pass_yards = pd.Series(df_defense['pass_yards'].values, index=df_defense['year']).to_dict()
+    pass_td = pd.Series(df_defense['pass_td'].values, index=df_defense['year']).to_dict()
+    pass_td_percentage = pd.Series(df_defense['pass_td_percentage'].values, index=df_defense['year']).to_dict()
+    yards_per_att = pd.Series(df_defense['yards_per_att'].values, index=df_defense['year']).to_dict()
+    pass_yards_per_game = pd.Series(df_defense['pass_yards_per_game'].values, index=df_defense['year']).to_dict()
+    qb_hits = pd.Series(df_defense['qb_hits'].values, index=df_defense['year']).to_dict()
+    int_percentage = pd.Series(df_defense['int_percentage'].values, index=df_defense['year']).to_dict()
+    ints = pd.Series(df_defense['ints'].values, index=df_defense['year']).to_dict()
+    json_output.update({'defense_pass_comp': pass_comp})
+    json_output.update({'defense_pass_att': pass_att})
+    json_output.update({'defense_pass_comp_percentage': pass_comp_percentage})
+    json_output.update({'defense_pass_yards': pass_yards})
+    json_output.update({'defense_pass_td': pass_td})
+    json_output.update({'defense_pass_td_percentage': pass_td_percentage})
+    json_output.update({'defense_yards_per_att': yards_per_att})
+    json_output.update({'defense_pass_yards_per_game': pass_yards_per_game})
+    json_output.update({'defense_qb_hits': qb_hits})
+    json_output.update({'defense_int_percentage': int_percentage})
+    json_output.update({'defense_ints': ints})
 
-        df_ranked = pd.concat([df_ranked, df_rank])
-        print('==============================================')
-
-    for year in rank_years:
-        # RED ZONE DATA
-        df_red_zone = df_ranked[
-            ['team_id', 'year', 'games', 'rz_td', 'rz_td rank', 'rz_percentage', 'rz_percentage rank']]
-        df_red_zone = df_red_zone.loc[df_red_zone['team_id'] == int(team_id)]
-
-        df_red_zone_third = df_red_zone.loc[df_red_zone['year'] == year]
-        json_output.update({f"rz_td_{year_name_dict[year]}": df_red_zone_third['rz_td'].values.tolist()[0]})
-        json_output.update({f"rz_td_rank_{year_name_dict[year]}": df_red_zone_third['rz_td rank'].values.tolist()[0]})
-        json_output.update({f"rz_percentage_{year_name_dict[year]}": df_red_zone_third['rz_percentage'].values.tolist()[0]})
-        json_output.update({f"rz_percentage_rank_{year_name_dict[year]}": df_red_zone_third['rz_percentage rank'].values.tolist()[0]})
-
-        # PASSING DATA
-        df_passing = df_ranked[['team_id', 'year', 'games', 'pass_comp', 'pass_comp rank', 'pass_yards', 'pass_yards rank',
-                               'pass_td', 'pass_td rank', 'yards_per_att', 'yards_per_att rank', 'pass_yards_per_comp',
-                               'pass_yards_per_comp rank', 'pass_yards_per_game', 'pass_yards_per_game rank']]
-        df_passing = df_passing.loc[df_passing['team_id'] == int(team_id)]
-
-        df_passing_third = df_passing.loc[df_passing['year'] == year]
-        json_output.update({f"pass_comp_{year_name_dict[year]}": df_passing_third['pass_comp'].values.tolist()[0]})
-        json_output.update({f"pass_comp_rank_{year_name_dict[year]}": df_passing_third['pass_comp rank'].values.tolist()[0]})
-        json_output.update({f"pass_yards_{year_name_dict[year]}": df_passing_third['pass_yards'].values.tolist()[0]})
-        json_output.update({f"pass_yards_rank_{year_name_dict[year]}": df_passing_third['pass_yards rank'].values.tolist()[0]})
-        json_output.update({f"pass_td_{year_name_dict[year]}": df_passing_third['pass_td'].values.tolist()[0]})
-        json_output.update({f"pass_td_rank_{year_name_dict[year]}": df_passing_third['pass_td rank'].values.tolist()[0]})
-        json_output.update({f"yards_per_att_{year_name_dict[year]}": df_passing_third['yards_per_att'].values.tolist()[0]})
-        json_output.update({f"yards_per_att_rank_{year_name_dict[year]}": df_passing_third['yards_per_att rank'].values.tolist()[0]})
-        json_output.update({f"pass_yards_per_comp_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp'].values.tolist()[0]})
-        json_output.update({f"pass_yards_per_comp_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_comp rank'].values.tolist()[0]})
-        json_output.update({f"pass_yards_per_game_{year_name_dict[year]}": df_passing_third['pass_yards_per_game'].values.tolist()[0]})
-        json_output.update({f"pass_yards_per_game_rank_{year_name_dict[year]}": df_passing_third['pass_yards_per_game rank'].values.tolist()[0]})
-
-        # RUSHING DATA
-        df_rushing = df_ranked[['team_id', 'year', 'games', 'rush_att', 'rush_att rank', 'rush_yards', 'rush_yards rank',
-                               'rush_td', 'rush_td rank', 'rush_yards_per_att', 'rush_yards_per_att rank', 'rush_yards_per_game',
-                               'rush_yards_per_game rank']]
-        df_rushing = df_rushing.loc[df_rushing['team_id'] == int(team_id)]
-
-        df_rushing_third = df_rushing.loc[df_rushing['year'] == year]
-        json_output.update({f"rush_att_{year_name_dict[year]}": df_rushing_third['rush_att'].values.tolist()[0]})
-        json_output.update({f"rush_att_rank_{year_name_dict[year]}": df_rushing_third['rush_att rank'].values.tolist()[0]})
-        json_output.update({f"rush_yards_{year_name_dict[year]}": df_rushing_third['rush_yards'].values.tolist()[0]})
-        json_output.update({f"rush_yards_rank_{year_name_dict[year]}": df_rushing_third['rush_yards rank'].values.tolist()[0]})
-        json_output.update({f"rush_td_{year_name_dict[year]}": df_rushing_third['rush_td'].values.tolist()[0]})
-        json_output.update({f"rush_td_rank_{year_name_dict[year]}": df_rushing_third['rush_td rank'].values.tolist()[0]})
-        json_output.update({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att'].values.tolist()[0]})
-        json_output.update({f"rush_yards_per_att_{year_name_dict[year]}": df_rushing_third['rush_yards_per_att rank'].values.tolist()[0]})
-        json_output.update({f"rush_yards_per_game_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game'].values.tolist()[0]})
-        json_output.update({f"rush_yards_per_game_rank_{year_name_dict[year]}": df_rushing_third['rush_yards_per_game rank'].values.tolist()[0]})
-
-        # DRIVE DATA
-        df_drive = df_ranked[['team_id', 'year', 'games', 'points_per_game', 'points_per_game rank', 'total_points',
-                             'total_points rank', 'plays_per_drive', 'plays_per_drive rank', 'yards_per_drive', 'yards_per_drive rank',
-                             'points_per_drive', 'points_per_drive rank']]
-        df_drive = df_drive.loc[df_drive['team_id'] == int(team_id)]
-
-        df_drive_third = df_drive.loc[df_drive['year'] == year]
-        json_output.update({f"points_per_game_{year_name_dict[year]}": df_drive_third['points_per_game'].values.tolist()[0]})
-        json_output.update({f"points_per_game_rank_{year_name_dict[year]}": df_drive_third['points_per_game rank'].values.tolist()[0]})
-        json_output.update({f"total_points_{year_name_dict[year]}": df_drive_third['total_points'].values.tolist()[0]})
-        json_output.update({f"total_points_rank_{year_name_dict[year]}": df_drive_third['total_points rank'].values.tolist()[0]})
-        json_output.update({f"plays_per_drive_{year_name_dict[year]}": df_drive_third['plays_per_drive'].values.tolist()[0]})
-        json_output.update({f"plays_per_drive_rank_{year_name_dict[year]}": df_drive_third['plays_per_drive rank'].values.tolist()[0]})
-        json_output.update({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive'].values.tolist()[0]})
-        json_output.update({f"yards_per_drive_att_{year_name_dict[year]}": df_drive_third['yards_per_drive rank'].values.tolist()[0]})
-        json_output.update({f"points_per_drive_{year_name_dict[year]}": df_drive_third['points_per_drive'].values.tolist()[0]})
-        json_output.update({f"points_per_drive_rank_{year_name_dict[year]}": df_drive_third['points_per_drive rank'].values.tolist()[0]})
-
-    # Get game logs where team was the opponent vs position
-    opp_game_log_query = f'''SELECT
-                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                    player.position, team.name, nfl_player_stats.*
-                    FROM
-                    nfl_player_stats
-                    JOIN
-                    player ON player.id = nfl_player_stats.player_id
-                    JOIN 
-                    nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    JOIN
-                    team on team.id = nfl_player_stats.opp_id
-                    WHERE nfl_player_stats.opp_id = %s'''
-    vals = [team_id]
-    cursor.execute(opp_game_log_query, vals)
-    game_log_results = list(cursor.fetchall())
-
-    game_log_cols = ['name', 'Year', 'Week', 'pos', 'opponent_name', 'id', 'game_id', 'player_id', 'team_id', 'opp_id',
-                'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'ints', 'sacks', 'rush_att',
-                'rush_yards', 'rush_td', 'rush_longest', 'targets', 'rec', 'rec_yards', 'rec_td', 'rec_longest', 'fumbles']
-    df_game_logs = pd.DataFrame(game_log_results, columns=game_log_cols).reset_index(drop=True)
-
-    df_pos = df_game_logs.loc[df_game_logs['pos'] == pos]
-    for year in rank_years:
-        df_bet = df_pos.loc[(df_pos['Year'] == year) & (df_pos[limit_stat] >= 1)]
-        total_pos_faced_current = len(df_bet)
-
-        if operator == 'under':
-            df_bet = df_bet.loc[df_bet[column_name] < value]
-            bet_allowed_current = len(df_bet)
-        else:
-            df_bet = df_bet.loc[df_bet[column_name] > value]
-            bet_allowed_current = len(df_bet)
-
-        df_bet = df_bet[
-            ['name', 'Year', 'Week', 'pos', 'opponent_name', limit_stat, column_name]].reset_index(drop=True)
-
-        json_output.update({f"opp_allowed_bet_{year_name_dict[year]}": round(((bet_allowed_current / total_pos_faced_current) * 100), 1)})
-        json_output.update({f"opp_allowed_bet_log_{year_name_dict[year]}": df_bet.to_json()})
-
-    # Get the game logs where the opponent played against the player
-    log_vs_player_query = f'''SELECT
-                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                    player.position, team.name, nfl_player_stats.*
-                    FROM
-                    nfl_player_stats
-                    JOIN
-                    player ON player.id = nfl_player_stats.player_id
-                    JOIN 
-                    nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    JOIN
-                    team on team.id = nfl_player_stats.opp_id
-                    WHERE nfl_player_stats.opp_id = %s AND nfl_player_stats.player_id = %s'''
-    vals = [team_id, player_id]
-    cursor.execute(log_vs_player_query, vals)
-    player_log_results = list(cursor.fetchall())
-
-    log_vs_player_cols = ['name', 'Year', 'Week', 'pos', 'opponent_name', 'id', 'game_id', 'player_id', 'team_id', 'opp_id',
-                     'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'ints', 'sacks', 'rush_att',
-                     'rush_yards', 'rush_td', 'rush_longest', 'targets', 'rec', 'rec_yards', 'rec_td', 'rec_longest',
-                     'fumbles']
-    df_vs_player = pd.DataFrame(player_log_results, columns=log_vs_player_cols).reset_index(drop=True)
-
-    df_vs_player = df_vs_player.reset_index(drop=True)
-    json_output.update({f"player_game_logs_vs_opponent": df_vs_player.to_json()})
-
-    # Get total touchdowns allowed to RB, TE, and WR
-    for year in rank_years:
-        df_rb = df_game_logs.loc[(df_game_logs['pos'] == 'RB') & (df_game_logs['Year'] ==  year)]
-        rb_rush_td_total = df_rb['rush_td'].sum()
-        rb_rec_td_total = df_rb['rec_td'].sum()
-        json_output.update({f"rb_rush_td_total_{year_name_dict[year]}": int(rb_rush_td_total)})
-        json_output.update({f"rb_rec_td_total_{year_name_dict[year]}": int(rb_rec_td_total)})
-
-        df_wr = df_game_logs.loc[(df_game_logs['pos'] == 'WR') & (df_game_logs['Year'] ==  year)]
-        wr_rush_td_total = df_wr['rush_td'].sum()
-        wr_rec_td_total = df_wr['rec_td'].sum()
-        json_output.update({f"wr_rush_td_total_{year_name_dict[year]}": int(wr_rush_td_total)})
-        json_output.update({f"wr_rec_td_total_{year_name_dict[year]}": int(wr_rec_td_total)})
-
-        df_qb = df_game_logs.loc[(df_game_logs['pos'] == 'QB') & (df_game_logs['Year'] ==  year)]
-        qb_rush_td_total = df_qb['rush_td'].sum()
-        json_output.update({f"qb_rush_td_total_{year_name_dict[year]}": int(qb_rush_td_total)})
-
-        df_te = df_game_logs.loc[(df_game_logs['pos'] == 'QB') & (df_game_logs['Year'] ==  year)]
-        te_rec_td_total = df_te['rush_td'].sum()
-        json_output.update({f"te_rec_td_total_{year_name_dict[year]}": int(te_rec_td_total)})
 
 
 
@@ -1244,18 +1065,20 @@ def nfl_team_offense():
                          'rz_percentage': row['rz_percentage']}
             values = list(json_dict.values())
 
-            cursor.execute("""INSERT INTO nfl_team_offense (team_id, year, games, dvoa, epa_per_play, success_rate,
-             dropback_epa, dropback_sr, rush_epa, rush_sr, pass_comp, pass_att, pass_comp_percentage, pass_yards, pass_td, 
-             pass_td_percentage, yards_per_att, pass_yards_per_comp, pass_yards_per_game, passer_rating, sacks, ints, 
-             int_percentage, rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, fumbles, total_points,
-             points_per_game, drives, plays, scoring_percentage, to_percentage, plays_per_drive, yards_per_drive, points_per_drive,
-             third_down_att, third_down_conv, third_down_conv_rate, fourth_down_att,fourth_down_conv, fourth_down_conv_rate, rz_att, rz_td, rz_percentage) 
+            cursor.execute("""INSERT INTO nfl_team_offense (team_id, year, games, dvoa, epa_per_play, success_rate, dropback_epa,
+             dropback_sr, rush_epa, rush_sr, pass_comp, pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, 
+             yards_per_att, pass_yards_per_comp, pass_yards_per_game, passer_rating, sacks, ints, int_percentage, 
+             rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, fumbles, points_per_game, total_points,
+             drives, plays, scoring_percentage, to_percentage, plays_per_drive, yards_per_drive, points_per_drive, third_down_att,
+             third_down_conv, third_down_conv_rate, fourth_down_att, fourth_down_conv, fourth_down_conv_rate, rz_att, rz_td, rz_percentage) 
              VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
              %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
 
         # Update Data
         elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
                          'dvoa': row['dvoa'],
                          'epa_per_play': row['epa_per_play'],
                          'success_rate': row['success_rate'],
@@ -1298,9 +1121,7 @@ def nfl_team_offense():
                          'fourth_down_conv': row['fourth_down_conv'],
                          'fourth_down_conv_rate': row['fourth_down_conv_rate'],
                          'rz_att': row['rz_att'], 'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
+                         'rz_percentage': row['rz_percentage']}
             values = list(json_dict.values())
 
             cursor.execute("""UPDATE nfl_team_offense 
