@@ -1076,9 +1076,7 @@ def nfl_team_offense():
 
         # Update Data
         elif flask.request.method == 'PUT':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
+            json_dict = {'games': row['games'],
                          'dvoa': row['dvoa'],
                          'epa_per_play': row['epa_per_play'],
                          'success_rate': row['success_rate'],
@@ -1120,8 +1118,11 @@ def nfl_team_offense():
                          'fourth_down_att': row['fourth_down_att'],
                          'fourth_down_conv': row['fourth_down_conv'],
                          'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-                         'rz_att': row['rz_att'], 'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage']}
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
             values = list(json_dict.values())
 
             cursor.execute("""UPDATE nfl_team_offense 
@@ -1129,8 +1130,8 @@ def nfl_team_offense():
                     rush_epa = %s, rush_sr = %s, pass_comp = %s, pass_att = %s, pass_comp_percentage = %s, pass_yards = %s, 
                     pass_td = %s, pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
                     passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s, rush_att = %s, rush_yards = %s, 
-                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s, total_points = %s,
-                    points_per_game = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
+                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s, points_per_game = %s,
+                    total_points = %s,, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
                     yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
                     fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
                     WHERE nfl_team_offense.team_id = %s AND nfl_team_offense.year = %s""",(values))
