@@ -437,7 +437,7 @@ def player_percentage_stats():
             team_total = df[column_name].sum()
 
             # Get player total
-            df_player_week = df_year.loc[df_year['week'] == week]
+            df_player_week = df_player_logs.loc[df_player_logs['week'] == week]
             player_total = df_player_week[column_name].values.tolist()[0]
 
             percent_of_total_dict[week] = round((player_total/team_total) * 100, 1)
