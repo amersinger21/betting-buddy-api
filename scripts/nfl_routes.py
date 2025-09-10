@@ -419,7 +419,7 @@ def player_percentage_stats():
         json_output.update({f"player_targets_{year_name_dict[year]}": player_targets})
         json_output.update({f"team_target_breakdown_{year_name_dict[year]}": team_target_breakdown.to_json()})
 
-
+        df_player_year = df_player_logs.loc[df_player_logs['player_id'] == int(player_id)]
         df_year = df_logs.loc[(df_logs['year'] == year) & (df_logs['team_id'] == player_team)]
         percent_of_total_dict = {}
         player_stat_total_dict = {}
@@ -429,7 +429,7 @@ def player_percentage_stats():
             team_total = df[column_name].sum()
 
             # Get player total
-            df_player_week = df_player_logs.loc[df_player_logs['week'] == week]
+            df_player_week = df_player_year.loc[df_player_year['week'] == week]
             player_total = df_player_week[column_name].values.tolist()[0]
 
             percent_of_total_dict[week] = round((player_total/team_total) * 100, 1)
