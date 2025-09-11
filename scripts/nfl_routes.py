@@ -361,28 +361,26 @@ def stat_and_target_percentages():
     cursor = connection.cursor()
 
     player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                        player.position, player_id, team_id, opp_id, game_id, {column_name}, targets
+                            player.position, player_id, team_id, game_id, {column_name}, targets
                         FROM
                         nfl_player_stats
                         JOIN
                         player ON player.id = nfl_player_stats.player_id
                         JOIN 
                         nfl_games on nfl_games.id = nfl_player_stats.game_id
-                        WHERE nfl_games.year >= 2022 and nfl_player_stats.team_id = %s 
-                        GROUP BY player_name, nfl_games.year, nfl_games.week,
-                        player.position, player_id, team_id, opp_id, game_id, {column_name}, targets'''
-    values = [team_id]
+                        WHERE nfl_games.year >=2022 AND nfl_player_stats.game_id IN 
+                        (select nfl_player_stats.game_id from nfl_player_stats where nfl_player_stats.player_id = %s)
+                         '''
+    values = [player_id]
     cursor.execute(player_query, values)
     results = list(cursor.fetchall())
 
-    df_columns = ['name', 'year', 'week', 'position', 'player_id', 'team_id', 'opp_id', 'game_id', column_name,
-                  'targets']
+    df_columns = ['name', 'year', 'week', 'position', 'player_id', 'team_id', 'game_id', column_name, 'targets']
     df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
 
     loop_years = np.unique(df_logs['year'].values)
     for year in loop_years:
-        df_year = df_logs[df_logs['year'] == year]
+        df_year = df_logs[(df_logs['year'] == year) & (df_logs['team_id'] == int(team_id))]
         df_player = df_year[df_year['player_id'] == int(player_id)]
 
         grouped_week = df_year.groupby(['week'])[[column_name, 'targets']].sum()
