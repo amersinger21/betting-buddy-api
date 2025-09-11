@@ -399,16 +399,11 @@ def player_percentage_stats():
         player_name = df_player_logs.loc[df_logs['player_id'] == int(player_id)].head(1)['name'].values.tolist()[0]
 
         loop_years = get_years_played(df_player_logs)[-4:]
-        weeks_played_dict = {nfl_fourth_year: get_weeks_played(df_player_logs, nfl_fourth_year),
-                             nfl_third_year: get_weeks_played(df_player_logs, nfl_third_year),
-                             nfl_prior_year: get_weeks_played(df_player_logs, nfl_prior_year),
-                             nfl_current_year: get_weeks_played(df_player_logs, nfl_current_year)}
         player_teams_dict = nfl_info(player_id=int(player_id), df=df_player_logs)['team']
 
         for year in loop_years:
             print(year)
             try:
-                weeks = weeks_played_dict[year]
                 player_team = player_teams_dict[year]
             except KeyError:
                 print(f"{year} not in {loop_years}")
