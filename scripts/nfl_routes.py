@@ -86,6 +86,88 @@ def nfl_info(**kwargs):
 
 
 # GET ROUTES - Player related bet data
+@nfl.route('/nfl/player/game_logs', methods=['GET'])
+def nfl_player_game_logs():
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    opp_id = int(request.args.get('opp_id', None))
+    json_output = {}
+
+    limit_stat = limit_stat_dict[column_name]
+    if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
+        columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
+                      'pass_td', 'pass_comp', 'pass_longest']
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards',
+                      'rush_td', 'rush_longest', 'fumbles']
+    else:
+        columns = 'rec, targets, rec_yards, rec_td, rec_longest'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets',
+                      'rec_yards', 'rec_td', 'rec_longest']
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id, {columns}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = %s'''
+    values = [player_id]
+    cursor.execute(player_query, values)
+
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # This block gets players most recent information
+    df_player_info = df_logs.tail(1)
+    player_pos = df_player_info['pos'].values.tolist()[0]
+
+    json_output.update({'player_position': player_pos})
+    json_output.update({'player_name': df_player_info['name'].values.tolist()[0]})
+    json_output.update({'player_team': df_player_info['team_id'].values.tolist()[0]})
+
+    # PLAYER GAME LOG INFORMATION
+    json_output.update({'current_game_logs': df_logs[ df_logs['year'] == nfl_current_year].to_json()})
+    json_output.update({'prior_game_logs': df_logs[df_logs['year'] == nfl_prior_year].to_json()})
+    json_output.update({'third_game_logs': df_logs[df_logs['year'] == nfl_third_year].to_json()})
+    json_output.update({'fourth_game_logs': df_logs[df_logs['year'] == nfl_fourth_year].to_json()})
+    json_output.update({'last_four_game_logs': df_logs.tail(4).to_json()})
+    json_output.update({'last_eight_game_logs': df_logs.tail(8).to_json()})
+
+    if operator == 'over':
+        json_output.update({'current_bet_logs': df_logs[
+            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'prior_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'fourth_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] > value)].to_json()})
+    else:
+        json_output.update({'current_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'prior_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] <= value)].to_json()})
+
+    return json_output
+
+
 @nfl.route('/nfl/player_bet_data', methods=['GET'])
 def nfl_player_bet_data():
     player_id = int(request.args.get('id', None))
@@ -207,37 +289,37 @@ def nfl_player_bet_data():
     json_output.update({'last_eight_bet_occurrence': last_eight_occur_percentage})
 
 
-    # PLAYER GAME LOG INFORMATION
-    df_player_game_logs = df_player_bet_logs.copy()
-    json_output.update({'current_game_logs': df_player_game_logs.loc[
-                                                        df_player_game_logs['year'] == nfl_current_year].to_json()})
-    json_output.update({'prior_game_logs': df_player_game_logs.loc[
-                                                        df_player_game_logs['year'] == nfl_prior_year].to_json()})
-    json_output.update({'third_game_logs': df_player_game_logs.loc[
-                                                        df_player_game_logs['year'] == nfl_third_year].to_json()})
-    json_output.update({'fourth_game_logs': df_player_game_logs.loc[
-                                                        df_player_game_logs['year'] == nfl_fourth_year].to_json()})
-    json_output.update({'last_four_game_logs': df_player_game_logs.tail(4).to_json()})
-    json_output.update({'last_eight_game_logs': df_player_game_logs.tail(8).to_json()})
-
-    if operator == 'over':
-        json_output.update({'current_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] > value)].to_json()})
-        json_output.update({'prior_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] > value)].to_json()})
-        json_output.update({'third_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] > value)].to_json()})
-        json_output.update({'fourth_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] > value)].to_json()})
-    else:
-        json_output.update({'current_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-        json_output.update({'prior_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-        json_output.update({'third_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-        json_output.update({'third_bet_logs': df_player_game_logs.loc[
-            (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] <= value)].to_json()})
+    # # PLAYER GAME LOG INFORMATION
+    # df_player_game_logs = df_player_bet_logs.copy()
+    # json_output.update({'current_game_logs': df_player_game_logs.loc[
+    #                                                     df_player_game_logs['year'] == nfl_current_year].to_json()})
+    # json_output.update({'prior_game_logs': df_player_game_logs.loc[
+    #                                                     df_player_game_logs['year'] == nfl_prior_year].to_json()})
+    # json_output.update({'third_game_logs': df_player_game_logs.loc[
+    #                                                     df_player_game_logs['year'] == nfl_third_year].to_json()})
+    # json_output.update({'fourth_game_logs': df_player_game_logs.loc[
+    #                                                     df_player_game_logs['year'] == nfl_fourth_year].to_json()})
+    # json_output.update({'last_four_game_logs': df_player_game_logs.tail(4).to_json()})
+    # json_output.update({'last_eight_game_logs': df_player_game_logs.tail(8).to_json()})
+    #
+    # if operator == 'over':
+    #     json_output.update({'current_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] > value)].to_json()})
+    #     json_output.update({'prior_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] > value)].to_json()})
+    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] > value)].to_json()})
+    #     json_output.update({'fourth_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] > value)].to_json()})
+    # else:
+    #     json_output.update({'current_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] <= value)].to_json()})
+    #     json_output.update({'prior_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] <= value)].to_json()})
+    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] <= value)].to_json()})
+    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
+    #         (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] <= value)].to_json()})
 
     # GET OPPONENT GAME LOGS AND BET OCCURRENCE VS SPECIFIED BET
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
