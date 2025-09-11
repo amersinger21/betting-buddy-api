@@ -349,101 +349,76 @@ def nfl_player_bet_data():
     return json_output
 
 
-@nfl.route('/nfl/player_percentage_stats', methods=['GET'])
-def player_percentage_stats():
+@nfl.route('/nfl/stats/target_and_percentages', methods=['GET'])
+def stat_and_target_percentages():
+    team_id = request.args.get('team_id', None)
     player_id = request.args.get('id', None)
     column_name = request.args.get('stat', None)
-
-
-    cols_to_select = f'''game_id, player_id, team_id, opp_id, pass_att, pass_yards, pass_td, pass_comp, pass_longest, rush_att,
-         rush_yards, rush_td, rush_longest, rec, targets, rec_yards, rec_td, rec_longest, fumbles'''
     json_output = {}
 
-    if column_name in ['pass_yards', 'pass_td', 'pass_att', 'pass_comp', 'pass_longest']:
-        for year in range(2022, 2026):
-            json_output.update({f"player_percent_of_total_{year_name_dict[year]}": 0})
-            json_output.update({f"player_stat_total_{year_name_dict[year]}": 0})
-            json_output.update({f"player_target_share_{year_name_dict[year]}": 0})
-            json_output.update({f"player_targets_{year_name_dict[year]}": 0})
-            json_output.update({f"team_target_breakdown_{year_name_dict[year]}": 'no val'})
-            json_output.update({f"player_target_share_{year_name_dict[year]}": 0})
-            json_output.update({f"player_targets_{year_name_dict[year]}": 0})
-            json_output.update({f"team_target_breakdown_{year_name_dict[year]}": 'no val'})
-    else:
-        limit_stat = limit_stat_dict[column_name]
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
 
-        # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
-        connection = create_connection()
-        cursor = connection.cursor()
+    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                        player.position, player_id, team_id, opp_id, game_id, {column_name}, targets
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >= 2022 and nfl_player_stats.team_id = %s 
+                        GROUP BY player_name, nfl_games.year, nfl_games.week,
+                        player.position, player_id, team_id, opp_id, game_id, {column_name}, targets'''
+    values = [team_id]
+    cursor.execute(player_query, values)
+    results = list(cursor.fetchall())
 
-        player_query = f'''SELECT
-                            CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                            player.position, {cols_to_select}
-                            FROM
-                            nfl_player_stats
-                            JOIN
-                            player ON player.id = nfl_player_stats.player_id
-                            JOIN 
-                            nfl_games on nfl_games.id = nfl_player_stats.game_id
-                            WHERE nfl_games.year >= 2022'''
-        cursor.execute(player_query)
-        results = list(cursor.fetchall())
-
-        df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
-                      'pass_td', 'pass_comp', 'pass_longest', 'rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'rec',
-                      'targets', 'rec_yards', 'rec_td', 'rec_longest', 'fumbles']
-        df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
-        df_logs_limit = df_logs[['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id', limit_stat, column_name]]
-        df_player_logs = df_logs_limit.loc[df_logs_limit['player_id'] == int(player_id)]
-        player_name = df_player_logs.loc[df_logs['player_id'] == int(player_id)].head(1)['name'].values.tolist()[0]
-
-        loop_years = get_years_played(df_player_logs)[-4:]
-        player_teams_dict = nfl_info(player_id=int(player_id), df=df_player_logs)['team']
-
-        for year in loop_years:
-            print(year)
-            try:
-                player_team = player_teams_dict[year]
-            except KeyError:
-                print(f"{year} not in {loop_years}")
-                continue
-
-            df_team_targets = df_logs.loc[(df_logs['team_id'] == player_team) & (df_logs['year'] == year)]
-            total_team_targets = df_team_targets['targets'].sum()
-
-            team_target_breakdown = df_team_targets.groupby(by=['name']).agg(targets=('targets', 'sum')).reset_index()
-            team_target_breakdown['target_percent_of_total'] = round(((team_target_breakdown['targets'] / total_team_targets) * 100), 1)
-            team_target_breakdown  = team_target_breakdown.sort_values(by=['targets'], ascending=False)
-            team_target_breakdown = team_target_breakdown.loc[team_target_breakdown['targets'] > 0]
-
-            player_target_share = team_target_breakdown.loc[
-                                    team_target_breakdown['name'] == player_name]['target_percent_of_total'].values.tolist()[0]
-            player_targets = team_target_breakdown.loc[
-                                    team_target_breakdown['name'] == player_name]['targets'].values.tolist()[0]
-            json_output.update(
-                {f"player_target_share_{year_name_dict[year]}": player_target_share})
-            json_output.update({f"player_targets_{year_name_dict[year]}": player_targets})
-            json_output.update({f"team_target_breakdown_{year_name_dict[year]}": team_target_breakdown.to_json()})
-
-            df_player_year = df_player_logs.loc[df_player_logs['year'] == year]
-            df_year = df_logs.loc[(df_logs['year'] == year) & (df_logs['team_id'] == player_team)]
-
-            player_weekly_stats = df_player_year.groupby(by=['week']).agg(stat=(column_name, 'sum'))
-            team_stat_total = df_year.groupby(by=['week']).agg(stat=(column_name, 'sum'))
-            player_weekly_stats['team_total'] = team_stat_total['stat']
-            player_weekly_stats['player_percentage'] = round(((player_weekly_stats['stat'] / player_weekly_stats['team_total']) * 100), 1)
-
-            player_stat_total_dict = pd.Series(player_weekly_stats['stat'].values,
-                                              index=player_weekly_stats.index).to_dict()
-            percent_of_total_dict = pd.Series(player_weekly_stats['player_percentage'].values,
-                                              index=player_weekly_stats.index).to_dict()
+    df_columns = ['name', 'year', 'week', 'position', 'player_id', 'team_id', 'opp_id', 'game_id', column_name,
+                  'targets']
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
 
 
-            json_output.update(
-                {f"player_percent_of_total_{year_name_dict[year]}": percent_of_total_dict})
-            json_output.update(
-                {f"player_stat_total_{year_name_dict[year]}": player_stat_total_dict})
+    loop_years = np.unique(df_logs['year'].values)
+    for year in loop_years:
+        df_year = df_logs[df_logs['year'] == year]
+        df_player = df_year[df_year['player_id'] == int(player_id)]
+
+        grouped_week = df_year.groupby(['week'])[[column_name, 'targets']].sum()
+        grouped_week['player_total'] = df_player[column_name].values
+        grouped_week['player_targets'] = df_player['targets'].values
+        grouped_week['percentage_of_total'] = round(((grouped_week['player_total'] / grouped_week[column_name]) * 100),
+                                                    1)
+        grouped_week['player_target_share'] = round(((grouped_week['player_targets'] / grouped_week['targets']) * 100),
+                                                    1)
+
+        # GET PLAYER AND TEAM STAT TOTALS
+        team_weekly_stat_total = pd.Series(grouped_week[column_name].values, index=grouped_week.index).to_dict()
+        player_weekly_stat_total = pd.Series(grouped_week['player_total'].values, index=grouped_week.index).to_dict()
+        percentage_of_weekly_total = pd.Series(grouped_week['percentage_of_total'].values,
+                                               index=grouped_week.index).to_dict()
+        json_output.update(
+                {f"team_weekly_stat_total_{year_name_dict[year]}": team_weekly_stat_total})
+        json_output.update(
+                {f"player_weekly_stat_total_{year_name_dict[year]}": player_weekly_stat_total})
+        json_output.update(
+                {f"percentage_of_weekly_total_{year_name_dict[year]}": percentage_of_weekly_total})
+
+
+        # GET TEAM TARGETS AND PLAYER TARGET SHARE
+        team_weekly_target_total = pd.Series(grouped_week['targets'].values, index=grouped_week.index).to_dict()
+        player_weekly_target_total = pd.Series(grouped_week['player_targets'].values,
+                                               index=grouped_week.index).to_dict()
+        player_weekly_target_share = pd.Series(grouped_week['player_target_share'].values,
+                                               index=grouped_week.index).to_dict()
+        json_output.update(
+                {f"team_weekly_target_total_{year_name_dict[year]}": team_weekly_target_total})
+        json_output.update(
+                {f"player_weekly_target_total_{year_name_dict[year]}": player_weekly_target_total})
+        json_output.update(
+                {f"player_weekly_target_share_{year_name_dict[year]}": player_weekly_target_share})
+
 
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
