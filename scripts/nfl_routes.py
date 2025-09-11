@@ -92,10 +92,8 @@ def nfl_player_game_logs():
     column_name = request.args.get('stat', None)
     operator = request.args.get('operator', None)
     value = int(request.args.get('value', None))
-    opp_id = int(request.args.get('opp_id', None))
     json_output = {}
 
-    limit_stat = limit_stat_dict[column_name]
     if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
@@ -168,22 +166,18 @@ def nfl_player_game_logs():
     return json_output
 
 
-@nfl.route('/nfl/player_bet_data', methods=['GET'])
+@nfl.route('/nfl/player/bet_occurrence_data', methods=['GET'])
 def nfl_player_bet_data():
     player_id = int(request.args.get('id', None))
     column_name = request.args.get('stat', None)
     operator = request.args.get('operator', None)
     value = int(request.args.get('value', None))
     opp_id = int(request.args.get('opp_id', None))
+    json_output = {}
 
     limit_stat = limit_stat_dict[column_name]
-    columns = '''game_id, player_id, team_id, opp_id, pass_att, pass_yards, pass_td, pass_comp, pass_longest, rush_att,
-         rush_yards, rush_td, rush_longest, rec, targets, rec_yards, rec_td, rec_longest, fumbles'''
-    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest',
-                  'rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'rec', 'targets', 'rec_yards', 'rec_td',
-                  'rec_longest', 'fumbles']
-
-    json_output = {}
+    columns = f'''{limit_stat}, {column_name}'''
+    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', limit_stat, column_name]
 
     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
     connection = create_connection()
@@ -191,240 +185,201 @@ def nfl_player_bet_data():
 
     player_query = f'''SELECT
                     CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                    player.position, {columns}
+                    player.position, game_id, player_id, team_id, opp_id, {columns}
                     FROM
                     nfl_player_stats
                     JOIN
                     player ON player.id = nfl_player_stats.player_id
                     JOIN
                     nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2022'''
+                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = {player_id}'''
+    # values = [player_id]
     cursor.execute(player_query)
-
     results = list(cursor.fetchall())
 
     df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-    df_player_bet_logs = df_logs.loc[df_logs['player_id'] == player_id]
-    df_player_bet_logs = df_player_bet_logs [['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id',
-                                              'opp_id', limit_stat, column_name]]
 
-    # This block gets players most recent information
-    df_player_info = df_player_bet_logs.tail(1)
-    player_pos = df_player_info['pos'].values.tolist()[0]
+    # GET TOTAL BET OCCURRENCE (LAST 3 YEARS AND CURRENT YEAR)
+    total_games_played = len(df_logs.index)
 
-    json_output.update({'player_position': player_pos})
-    json_output.update({'player_name': df_player_info['name'].values.tolist()[0]})
-    json_output.update({'player_team': df_player_info['team_id'].values.tolist()[0]})
+    # GET CURRENT YEAR BET OCCURRENCE (2025)
+    df_current = df_logs[df_logs['year'] == nfl_current_year]
+    current_games_played = len(df_current.index)
+
+    # GET PRIOR YEAR BET OCCURRENCE (2024)
+    df_prior = df_logs[df_logs['year'] == nfl_prior_year]
+    prior_games_played = len(df_prior.index)
+
+    # GET THIRD YEAR BET OCCURRENCE (2023)
+    df_third = df_logs[df_logs['year'] == nfl_third_year]
+    third_games_played = len(df_third.index)
+
+    # GET FOURTH YEAR BET OCCURRENCE (2023)
+    df_fourth = df_logs[df_logs['year'] == nfl_fourth_year]
+    fourth_games_played = len(df_fourth.index)
+
+    # BET OCCURRENCES IN THE LAST 4 AND 8 GAMES
+    last_four = df_logs.tail(4)
+    last_eight = df_logs.tail(8)
+
+    # BET OCCURRENCES IN GAMES VS OPPONENT
+    df_opponent = df_logs[df_logs['opp_id'] == opp_id]
+    games_vs_opponent = len(df_opponent.index)
+
 
     if operator == 'over':
-        df_total_occurrence = df_player_bet_logs.loc[df_player_bet_logs[column_name] > value]
+        total_bet_occurrences = df_logs[df_logs[column_name] > value]
+        current_bet_occurrences = df_current[df_current[column_name] > value]
+        prior_bet_occurrences = df_prior[df_prior[column_name] > value]
+        third_bet_occurrences = df_third[df_third[column_name] > value]
+        fourth_bet_occurrences = df_fourth[df_fourth[column_name] > value]
+        previous_four_game_occurrences = last_four[last_four[column_name] > value]
+        previous_eight_game_occurrences = last_eight[last_eight[column_name] > value]
+        vs_opponent_occurrences = df_opponent[df_opponent[column_name] > value]
     else:
-        df_total_occurrence = df_player_bet_logs.loc[df_player_bet_logs[column_name] <= value]
-    total_occurrence_percentage = round((len(df_total_occurrence) / len(df_player_bet_logs) * 100), 1)
-    json_output.update({'career_bet_occurrence': total_occurrence_percentage})
+        total_bet_occurrences = df_logs[df_logs[column_name] <= value]
+        prior_bet_occurrences = df_prior[df_prior[column_name] <= value]
+        current_bet_occurrences = df_current[df_current[column_name] <= value]
+        third_bet_occurrences = df_third[df_third[column_name] <= value]
+        fourth_bet_occurrences = df_fourth[df_fourth[column_name] <= value]
+        previous_four_game_occurrences = last_four[last_four[column_name] <= value]
+        previous_eight_game_occurrences = last_eight[last_eight[column_name] <= value]
+        vs_opponent_occurrences = df_opponent[df_opponent[column_name] > value]
 
-    # CURRENT BET OCCURRENCE INFORMATION
     try:
-        total_current_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_current_year])
-        if operator == 'over':
-            df_current_occurrences = df_player_bet_logs.loc[
-                (df_player_bet_logs[column_name] > value) & (df_player_bet_logs['year'] == nfl_current_year)]
-        else:
-            df_current_occurrences = df_player_bet_logs.loc[
-                (df_player_bet_logs[column_name] <= value) & (df_player_bet_logs['year'] == nfl_current_year)]
-        current_occurrence_percentage = round(((len(df_current_occurrences) / total_current_games) * 100), 1)
+        json_output.update(
+            {'career_bet_occurrence': round((len(total_bet_occurrences.index) / total_games_played) * 100, 1)})
     except ZeroDivisionError:
-        current_occurrence_percentage = 0.0
-    json_output.update({'current_bet_occurrence': current_occurrence_percentage})
-
-    # PRIOR BET OCCURRENCE INFORMATION
-    total_prior_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_prior_year])
-    if operator == 'over':
-        df_prior_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] > value) & (df_player_bet_logs['year'] == nfl_prior_year)]
-    else:
-        df_prior_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] <= value) & (df_player_bet_logs['year'] == nfl_prior_year)]
-    prior_occurrence_percentage = round(((len(df_prior_occurrences) / total_prior_games) * 100), 1)
-    json_output.update({'prior_bet_occurrence': prior_occurrence_percentage})
-
-    # THIRD BET OCCURRENCE INFORMATION
-    total_third_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_third_year])
-    if operator == 'over':
-        df_third_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] > value) & (df_player_bet_logs['year'] == nfl_third_year)]
-    else:
-        df_third_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] <= value) & (df_player_bet_logs['year'] == nfl_third_year)]
-    third_occurrence_percentage = round(((len(df_third_occurrences) / total_third_games) * 100), 1)
-    json_output.update({'third_bet_occurrence': third_occurrence_percentage})
-
-    # FOURTH BET OCCURRENCE INFORMATION
-    total_fourth_games = len(df_player_bet_logs.loc[df_player_bet_logs['year'] == nfl_fourth_year])
-    if operator == 'over':
-        df_fourth_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] > value) & (df_player_bet_logs['year'] == nfl_fourth_year)]
-    else:
-        df_fourth_occurrences = df_player_bet_logs.loc[
-            (df_player_bet_logs[column_name] <= value) & (df_player_bet_logs['year'] == nfl_fourth_year)]
-    fourth_occurrence_percentage = round(((len(df_fourth_occurrences) / total_fourth_games) * 100), 1)
-    json_output.update({'third_bet_occurrence': fourth_occurrence_percentage})
-
-    # LAST FOUR BET OCCURRENCE INFORMATION
-    df_last_four = df_player_bet_logs.tail(4)
-    if operator == 'over':
-        df_last_four_occurrence = df_last_four.loc[df_last_four[column_name] > value]
-    else:
-        df_last_four_occurrence = df_last_four.loc[ df_player_bet_logs[column_name] <= value]
-    last_four_occur_percentage = round(((len(df_last_four_occurrence) / 4) * 100), 1)
-    json_output.update({'last_four_bet_occurrence': last_four_occur_percentage})
-
-    # LAST EIGHT BET OCCURRENCE INFORMATION
-    df_last_eight = df_player_bet_logs.tail(8)
-    if operator == 'over':
-        df_last_eight_occurrence = df_last_eight.loc[df_last_eight[column_name] > value]
-    else:
-        df_last_eight_occurrence = df_last_eight.loc[ df_last_eight[column_name] <= value]
-    last_eight_occur_percentage = round(((len(df_last_eight_occurrence) / 8) * 100), 1)
-    json_output.update({'last_eight_bet_occurrence': last_eight_occur_percentage})
+        json_output.update( {'career_bet_occurrence': 0.0})
+    try:
+        json_output.update(
+            {'current_bet_occurrence': round((len(current_bet_occurrences.index) / current_games_played) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'current_bet_occurrence': 0.0})
+    try:
+        json_output.update({'prior_bet_occurrence': round((len(prior_bet_occurrences.index) / prior_games_played) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'prior_bet_occurrence': 0.0})
+    try:
+        json_output.update({'third_bet_occurrence': round((len(third_bet_occurrences.index) / third_games_played) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'third_bet_occurrence': 0.0})
+    try:
+        json_output.update(
+            {'fourth_bet_occurrence': round((len(fourth_bet_occurrences.index) / fourth_games_played) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'fourth_bet_occurrence': 0.0})
+    try:
+        json_output.update(
+            {'last_four_game_bet_occurrence': round((len(previous_four_game_occurrences.index) / 4) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'last_four_game_bet_occurrence': 0.0})
+    try:
+        json_output.update(
+            {'last_eight_game_bet_occurrence': round((len(previous_eight_game_occurrences.index) / 8) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'last_eight_game_bet_occurrence': 0.0})
+    try:
+        json_output.update(
+            {'vs_opponent_occurrences': round((len(vs_opponent_occurrences.index) / 8) * 100, games_vs_opponent)})
+    except ZeroDivisionError:
+        json_output.update({'vs_opponent_occurrences': 0.0})
 
 
-    # # PLAYER GAME LOG INFORMATION
-    # df_player_game_logs = df_player_bet_logs.copy()
-    # json_output.update({'current_game_logs': df_player_game_logs.loc[
-    #                                                     df_player_game_logs['year'] == nfl_current_year].to_json()})
-    # json_output.update({'prior_game_logs': df_player_game_logs.loc[
-    #                                                     df_player_game_logs['year'] == nfl_prior_year].to_json()})
-    # json_output.update({'third_game_logs': df_player_game_logs.loc[
-    #                                                     df_player_game_logs['year'] == nfl_third_year].to_json()})
-    # json_output.update({'fourth_game_logs': df_player_game_logs.loc[
-    #                                                     df_player_game_logs['year'] == nfl_fourth_year].to_json()})
-    # json_output.update({'last_four_game_logs': df_player_game_logs.tail(4).to_json()})
-    # json_output.update({'last_eight_game_logs': df_player_game_logs.tail(8).to_json()})
-    #
-    # if operator == 'over':
-    #     json_output.update({'current_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] > value)].to_json()})
-    #     json_output.update({'prior_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] > value)].to_json()})
-    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] > value)].to_json()})
-    #     json_output.update({'fourth_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] > value)].to_json()})
+
+
+    # # GET OPPONENT GAME LOGS AND BET OCCURRENCE VS SPECIFIED BET
+    # if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+    #     limit_stat = 'rush_att'
+    #     limit_amount = 5
+    # elif column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_longest']:
+    #     limit_stat = 'pass_att'
+    #     limit_amount = 20
     # else:
-    #     json_output.update({'current_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_current_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-    #     json_output.update({'prior_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_prior_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_third_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-    #     json_output.update({'third_bet_logs': df_player_game_logs.loc[
-    #         (df_player_game_logs['year'] == nfl_fourth_year) & (df_player_game_logs[column_name] <= value)].to_json()})
-
-    # GET OPPONENT GAME LOGS AND BET OCCURRENCE VS SPECIFIED BET
-    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-        limit_stat = 'rush_att'
-        limit_amount = 5
-    elif column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_longest']:
-        limit_stat = 'pass_att'
-        limit_amount = 20
-    else:
-        limit_stat = 'targets'
-        limit_amount = 3
-
-    for year in sorted(list(set(df_player_bet_logs['year'].values.tolist()))):
-        df_log_vs_opp = df_logs.loc[
-            (df_logs['year'] == year) & (df_logs['opp_id'] == opp_id) & (df_logs['pos'] == player_pos)]
-        json_output.update({f"game_logs_vs_opponent_{year_name_dict[year]}": df_log_vs_opp.to_json()})
-
-        # GET OPPONENT DATA VS SPECIFIC BET
-        total_pos_players_faced = len(df_log_vs_opp)
-        opp_games_total = len((list(set(df_logs['week'].values.tolist())))) - 1
-
-        if operator == 'under':
-            df_bet = df_log_vs_opp.loc[
-                (df_log_vs_opp[column_name] < value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
-        else:
-            df_bet = df_log_vs_opp.loc[
-                (df_log_vs_opp[column_name] > value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
-
-        weeks_bet_hit_count = len(list(set(df_bet['week'].values.tolist())))
-        players_hit_bet = len(df_bet)
-
-        opp_plyr_bet_allowed_percentage = round(((players_hit_bet / total_pos_players_faced) *100), 1)
-        opp_week_bet_allowed_percentage = round(((weeks_bet_hit_count / opp_games_total) * 100), 1)
-
-        json_output.update({f"opp_player_bet_percentage_{year_name_dict[year]}": opp_plyr_bet_allowed_percentage})
-        json_output.update({f"opp_week_bet_percentage_{year_name_dict[year]}": opp_week_bet_allowed_percentage})
-
-        # GET OPPONENT TD VS POSITIONS
-        if column_name in ['rush_td', 'rec_td']:
-            td_dict = {'rush_td': int(df_log_vs_opp['rush_td'].sum()),
-                       'rec_td': int(df_log_vs_opp['rec_td'].sum()),
-                       'total_td': int(df_log_vs_opp['rec_td'].sum()) + int(df_log_vs_opp['rec_td'].sum())}
-            json_output.update({f"opp_vs_rb_data_{year_name_dict[year]}": td_dict})
+    #     limit_stat = 'targets'
+    #     limit_amount = 3
+    #
+    # for year in sorted(list(set(df_player_bet_logs['year'].values.tolist()))):
+    #     df_log_vs_opp = df_logs.loc[
+    #         (df_logs['year'] == year) & (df_logs['opp_id'] == opp_id) & (df_logs['pos'] == player_pos)]
+    #     json_output.update({f"game_logs_vs_opponent_{year_name_dict[year]}": df_log_vs_opp.to_json()})
+    #
+    #     # GET OPPONENT DATA VS SPECIFIC BET
+    #     total_pos_players_faced = len(df_log_vs_opp)
+    #     opp_games_total = len((list(set(df_logs['week'].values.tolist())))) - 1
+    #
+    #     if operator == 'under':
+    #         df_bet = df_log_vs_opp.loc[
+    #             (df_log_vs_opp[column_name] < value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
+    #     else:
+    #         df_bet = df_log_vs_opp.loc[
+    #             (df_log_vs_opp[column_name] > value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
+    #
+    #     weeks_bet_hit_count = len(list(set(df_bet['week'].values.tolist())))
+    #     players_hit_bet = len(df_bet)
+    #
+    #     opp_plyr_bet_allowed_percentage = round(((players_hit_bet / total_pos_players_faced) *100), 1)
+    #     opp_week_bet_allowed_percentage = round(((weeks_bet_hit_count / opp_games_total) * 100), 1)
+    #
+    #     json_output.update({f"opp_player_bet_percentage_{year_name_dict[year]}": opp_plyr_bet_allowed_percentage})
+    #     json_output.update({f"opp_week_bet_percentage_{year_name_dict[year]}": opp_week_bet_allowed_percentage})
+    #
+    #     # GET OPPONENT TD VS POSITIONS
+    #     if column_name in ['rush_td', 'rec_td']:
+    #         td_dict = {'rush_td': int(df_log_vs_opp['rush_td'].sum()),
+    #                    'rec_td': int(df_log_vs_opp['rec_td'].sum()),
+    #                    'total_td': int(df_log_vs_opp['rec_td'].sum()) + int(df_log_vs_opp['rec_td'].sum())}
+    #         json_output.update({f"opp_vs_rb_data_{year_name_dict[year]}": td_dict})
 
 
-    # GET GAME LOGS WHERE PLAYER PREVIOUSLY PLAYED OPPONENT
-    df_player_vs_opp = df_player_bet_logs.loc[df_player_bet_logs['opp_id'] == opp_id]
-    games_vs_opp = len(df_player_vs_opp)
-    if operator == 'over':
-        bet_occurrences_vs_opp = len(df_player_vs_opp.loc[df_player_vs_opp[column_name] > value])
-    else:
-        bet_occurrences_vs_opp = len(df_player_vs_opp.loc[df_player_vs_opp[column_name] <= value])
-    hits_vs_opp = round(((bet_occurrences_vs_opp / games_vs_opp) * 100), 1)
-    json_output.update({f"game_log_vs_opponent": df_player_vs_opp.to_json()})
-    json_output.update({f"bet_occurrences_vs_opponent": bet_occurrences_vs_opp})
-    json_output.update({f"bet_occurrences_vs_opponent_percentage": hits_vs_opp})
-
-
-    # Get time between bets
-    df_bet_occurrence = df_player_bet_logs.copy()
-    df_bet_occurrence = df_bet_occurrence[['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id',
-                                           limit_stat, column_name]]
-
-    loop_years = get_years_played(df_bet_occurrence)[-4:]
-    for year in loop_years:
-        weeks_played = get_weeks_played(df_bet_occurrence, year)
-
-        if operator == 'over':
-            df_bet_occurrences = df_bet_occurrence.loc[
-                (df_bet_occurrence[column_name] > value) & (df_bet_occurrence['year'] == year)]
-        else:
-            df_bet_occurrences = df_bet_occurrence.loc[
-                (df_bet_occurrence[column_name] <= value) & (df_bet_occurrence['year'] == year)]
-
-        weeks_bet_hit = df_bet_occurrences['week'].values.tolist()
-
-        first_occurrence = df_bet_occurrences.head(1)['week'].values.tolist()[0]
-        first_week_played = weeks_played[0]
-
-        last_occurrence = df_bet_occurrences.tail(1)['week'].values.tolist()[0]
-        last_week_played = weeks_played[-1]
-
-        if (first_occurrence != 1) and (first_week_played == 1):
-            first_num_to_subtract = 1
-        else:
-            first_num_to_subtract = first_week_played
-
-        if (last_occurrence != 18) and (last_week_played == 18):
-            final_num_to_subtract = 18
-        else:
-            final_num_to_subtract =  last_week_played
-
-
-        # GET THE NUMBER OF WEEKS BETWEEN BET OCCURRENCES AND ADD TO LIST
-        weeks_btw_hits = []
-        for i in range(len(weeks_bet_hit) + 1):
-            if i == 0:
-                time_btw = weeks_bet_hit[i] - first_num_to_subtract
-            elif i == len(weeks_bet_hit):
-                time_btw = final_num_to_subtract - weeks_bet_hit[i - 1]
-            else:
-                time_btw = weeks_bet_hit[i] - (weeks_bet_hit[i-1] + 1)
-
-            weeks_btw_hits.append(time_btw)
-        json_output.update({f"avg_weeks_between_occurrence_{year_name_dict[year]}": statistics.mean(weeks_btw_hits)})
+    #
+    # # Get time between bets
+    # df_bet_occurrence = df_player_bet_logs.copy()
+    # df_bet_occurrence = df_bet_occurrence[['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id',
+    #                                        limit_stat, column_name]]
+    #
+    # loop_years = get_years_played(df_bet_occurrence)[-4:]
+    # for year in loop_years:
+    #     weeks_played = get_weeks_played(df_bet_occurrence, year)
+    #
+    #     if operator == 'over':
+    #         df_bet_occurrences = df_bet_occurrence.loc[
+    #             (df_bet_occurrence[column_name] > value) & (df_bet_occurrence['year'] == year)]
+    #     else:
+    #         df_bet_occurrences = df_bet_occurrence.loc[
+    #             (df_bet_occurrence[column_name] <= value) & (df_bet_occurrence['year'] == year)]
+    #
+    #     weeks_bet_hit = df_bet_occurrences['week'].values.tolist()
+    #
+    #     first_occurrence = df_bet_occurrences.head(1)['week'].values.tolist()[0]
+    #     first_week_played = weeks_played[0]
+    #
+    #     last_occurrence = df_bet_occurrences.tail(1)['week'].values.tolist()[0]
+    #     last_week_played = weeks_played[-1]
+    #
+    #     if (first_occurrence != 1) and (first_week_played == 1):
+    #         first_num_to_subtract = 1
+    #     else:
+    #         first_num_to_subtract = first_week_played
+    #
+    #     if (last_occurrence != 18) and (last_week_played == 18):
+    #         final_num_to_subtract = 18
+    #     else:
+    #         final_num_to_subtract =  last_week_played
+    #
+    #
+    #     # GET THE NUMBER OF WEEKS BETWEEN BET OCCURRENCES AND ADD TO LIST
+    #     weeks_btw_hits = []
+    #     for i in range(len(weeks_bet_hit) + 1):
+    #         if i == 0:
+    #             time_btw = weeks_bet_hit[i] - first_num_to_subtract
+    #         elif i == len(weeks_bet_hit):
+    #             time_btw = final_num_to_subtract - weeks_bet_hit[i - 1]
+    #         else:
+    #             time_btw = weeks_bet_hit[i] - (weeks_bet_hit[i-1] + 1)
+    #
+    #         weeks_btw_hits.append(time_btw)
+    #     json_output.update({f"avg_weeks_between_occurrence_{year_name_dict[year]}": statistics.mean(weeks_btw_hits)})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
