@@ -285,51 +285,164 @@ def nfl_player_bet_data():
     except ZeroDivisionError:
         json_output.update({'vs_opponent_occurrences': 0.0})
 
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 
+@nfl.route('/nfl/team/opponent_logs_and_occurrence')
+def nfl_opponent_logs_and_occurrences():
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    opp_id = int(request.args.get('opp_id', None))
+    json_output = {}
 
-    # # GET OPPONENT GAME LOGS AND BET OCCURRENCE VS SPECIFIED BET
-    # if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-    #     limit_stat = 'rush_att'
-    #     limit_amount = 5
-    # elif column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_longest']:
-    #     limit_stat = 'pass_att'
-    #     limit_amount = 20
-    # else:
-    #     limit_stat = 'targets'
-    #     limit_amount = 3
-    #
-    # for year in sorted(list(set(df_player_bet_logs['year'].values.tolist()))):
-    #     df_log_vs_opp = df_logs.loc[
-    #         (df_logs['year'] == year) & (df_logs['opp_id'] == opp_id) & (df_logs['pos'] == player_pos)]
-    #     json_output.update({f"game_logs_vs_opponent_{year_name_dict[year]}": df_log_vs_opp.to_json()})
-    #
-    #     # GET OPPONENT DATA VS SPECIFIC BET
-    #     total_pos_players_faced = len(df_log_vs_opp)
-    #     opp_games_total = len((list(set(df_logs['week'].values.tolist())))) - 1
-    #
-    #     if operator == 'under':
-    #         df_bet = df_log_vs_opp.loc[
-    #             (df_log_vs_opp[column_name] < value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
-    #     else:
-    #         df_bet = df_log_vs_opp.loc[
-    #             (df_log_vs_opp[column_name] > value) & (df_log_vs_opp[limit_stat] >= limit_amount)]
-    #
-    #     weeks_bet_hit_count = len(list(set(df_bet['week'].values.tolist())))
-    #     players_hit_bet = len(df_bet)
-    #
-    #     opp_plyr_bet_allowed_percentage = round(((players_hit_bet / total_pos_players_faced) *100), 1)
-    #     opp_week_bet_allowed_percentage = round(((weeks_bet_hit_count / opp_games_total) * 100), 1)
-    #
-    #     json_output.update({f"opp_player_bet_percentage_{year_name_dict[year]}": opp_plyr_bet_allowed_percentage})
-    #     json_output.update({f"opp_week_bet_percentage_{year_name_dict[year]}": opp_week_bet_allowed_percentage})
-    #
-    #     # GET OPPONENT TD VS POSITIONS
-    #     if column_name in ['rush_td', 'rec_td']:
-    #         td_dict = {'rush_td': int(df_log_vs_opp['rush_td'].sum()),
-    #                    'rec_td': int(df_log_vs_opp['rec_td'].sum()),
-    #                    'total_td': int(df_log_vs_opp['rec_td'].sum()) + int(df_log_vs_opp['rec_td'].sum())}
-    #         json_output.update({f"opp_vs_rb_data_{year_name_dict[year]}": td_dict})
+
+    limit_stat = limit_stat_dict[column_name]
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
+        columns = f'''pass_att, pass_comp, pass_yards, pass_td, pass_longest, int, sack'''
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att',
+                      'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']
+        limit_amount = 5
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
+        columns = f'''rush_att, rush_yards, rush_td, rush_longest, fumbles'''
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att',
+                      'rush_yards', 'rush_td', 'rush_longest', 'fumbles']
+        limit_amount = 1
+    else:
+        columns = f'''targets, rec, rec_yards, rec_td, rec_longest'''
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'targets',
+                      'rec', 'rec_yards', 'rec_td', 'rec_longest']
+        limit_amount = 1
+
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id, {columns}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.opp_id = {opp_id}
+                    AND nfl_player_stats.{limit_stat} >= {limit_amount}'''
+
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    last_four_id = np.unique(df_logs['game_id'].values)[-4:]
+    last_eight_id = np.unique(df_logs['game_id'].values)[-8:]
+
+    # GET OPPONENT GAME LOGS
+    opp_current_game_logs = df_logs[df_logs['year'] == nfl_current_year].reset_index(drop=True)
+    opp_prior_game_logs = df_logs[df_logs['year'] == nfl_prior_year].reset_index(drop=True)
+    opp_third_game_logs = df_logs[df_logs['year'] == nfl_third_year].reset_index(drop=True)
+    opp_fourth_game_logs = df_logs[df_logs['year'] == nfl_fourth_year].reset_index(drop=True)
+    opp_last_four_game_logs = df_logs[df_logs['game_id'].isin(last_four_id)].reset_index(drop=True)
+    opp_last_eight_game_logs = df_logs[df_logs['game_id'].isin(last_eight_id)].reset_index(drop=True)
+
+    # GET NUMBER OF WEEKS BET HIT
+    total_games_played = len(np.unique(df_logs['game_id'].values))
+    prior_games_played = len(np.unique(opp_prior_game_logs['game_id'].values))
+    third_games_played = len(np.unique(opp_third_game_logs['game_id'].values))
+    fourth_games_played = len(np.unique(opp_fourth_game_logs['game_id'].values))
+
+    # GET BET OCCURRENCES VS OPPONENT
+    if operator == 'over':
+        total_bet_occurrences = df_logs[df_logs[column_name] > value]
+        current_bet_occurrences = opp_current_game_logs[opp_current_game_logs[column_name] > value]
+        prior_bet_occurrences = opp_prior_game_logs[opp_prior_game_logs[column_name] > value]
+        third_bet_occurrences = opp_third_game_logs[opp_third_game_logs[column_name] > value]
+        fourth_bet_occurrences = opp_fourth_game_logs[opp_fourth_game_logs[column_name] > value]
+        last_four_bet_occurrences = opp_last_four_game_logs[opp_last_four_game_logs[column_name] > value]
+        last_eight_bet_occurrences = opp_last_eight_game_logs[opp_last_eight_game_logs[column_name] > value]
+    else:
+        total_bet_occurrences = df_logs[df_logs[column_name] <= value]
+        current_bet_occurrences = opp_current_game_logs[opp_current_game_logs[column_name] <= value]
+        prior_bet_occurrences = opp_prior_game_logs[opp_prior_game_logs[column_name] <= value]
+        third_bet_occurrences = opp_third_game_logs[opp_third_game_logs[column_name] <= value]
+        fourth_bet_occurrences = opp_fourth_game_logs[opp_fourth_game_logs[column_name] <= value]
+        last_four_bet_occurrences = opp_last_four_game_logs[opp_last_four_game_logs[column_name] <= value]
+        last_eight_bet_occurrences = opp_last_eight_game_logs[opp_last_eight_game_logs[column_name] <= value]
+
+    # PERCENTAGE OF WEEKS THAT BET HIT
+    json_output.update(
+        {'career_weekly_bet_occurrence': round(((len(np.unique(total_bet_occurrences['game_id'].values))) / total_games_played) * 100, 1)})
+    json_output.update(
+        {'prior_weekly_bet_occurrence': round(((len(np.unique(prior_bet_occurrences['game_id'].values))) / prior_games_played) * 100, 1)})
+    json_output.update(
+        {'third_weekly_bet_occurrence': round(((len(np.unique(third_bet_occurrences['game_id'].values))) / third_games_played) * 100, 1)})
+    json_output.update(
+        {'fourth_weekly_bet_occurrence': round(((len(np.unique(fourth_bet_occurrences['game_id'].values))) / fourth_games_played) * 100, 1)})
+    json_output.update(
+        {'last_four_weekly_bet_occurrence': round(((len(np.unique(last_four_bet_occurrences['game_id'].values))) / 4) * 100, 1)})
+    json_output.update(
+        {'last_eight_weekly_bet_occurrence': round(((len(np.unique(last_eight_bet_occurrences['game_id'].values))) / 8) * 100, 1)})
+
+    # NUMBER OF PLAYERS FOR EACH TIME PERIOD THAT HIT BET EACH WEEK AGAINST OPPONENT
+    current_player_count = current_bet_occurrences.groupby(by=['week']).agg(weekly_total=(column_name, "count"))
+    current_weekly_player_counts = pd.Series(current_player_count['weekly_total'].values, index=current_player_count.index).to_dict()
+    current_weekly_total_players_avg = round(current_player_count['weekly_total'].mean(), 1)
+    json_output.update({'current_weekly_player_counts': current_weekly_player_counts})
+    json_output.update({'current_weekly_total_players_avg': current_weekly_total_players_avg})
+
+    prior_player_count = prior_bet_occurrences.groupby(by=['week']).agg(weekly_total=(column_name, "count"))
+    prior_weekly_player_counts = pd.Series(prior_player_count['weekly_total'].values, index=prior_player_count.index).to_dict()
+    prior_weekly_total_players_avg = round(prior_player_count['weekly_total'].mean(), 1)
+    json_output.update({'prior_weekly_player_counts': prior_weekly_player_counts})
+    json_output.update({'prior_weekly_total_players_avg': prior_weekly_total_players_avg})
+
+    third_player_count = third_bet_occurrences.groupby(by=['week']).agg(weekly_total=(column_name, "count"))
+    third_weekly_player_counts = pd.Series(third_player_count['weekly_total'].values, index=third_player_count.index).to_dict()
+    third_weekly_total_players_avg = round(third_player_count['weekly_total'].mean(), 1)
+    json_output.update({'third_weekly_player_counts': third_weekly_player_counts})
+    json_output.update({'third_weekly_total_players_avg': third_weekly_total_players_avg})
+
+    fourth_player_count = fourth_bet_occurrences.groupby(by=['week']).agg(weekly_total=(column_name, "count"))
+    fourth_weekly_player_counts = pd.Series(fourth_player_count['weekly_total'].values, index=fourth_player_count.index).to_dict()
+    fourth_weekly_total_players_avg = round(fourth_player_count['weekly_total'].mean(), 1)
+    json_output.update({'fourth_weekly_player_counts': fourth_weekly_player_counts})
+    json_output.update({'fourth_weekly_total_players_avg': fourth_weekly_total_players_avg})
+
+    last_four_player_count = last_four_bet_occurrences.groupby(by=['game_id']).agg(weekly_total=(column_name, "count"))
+    last_four_weekly_player_counts = pd.Series(last_four_player_count['weekly_total'].values,
+                                            index=last_four_player_count.index).to_dict()
+    last_four_weekly_total_players_avg = round(last_four_player_count['weekly_total'].mean(), 1)
+    json_output.update({'last_four_weekly_player_counts': last_four_weekly_player_counts})
+    json_output.update({'last_four_weekly_total_players_avg': last_four_weekly_total_players_avg})
+
+    last_eight_player_count = last_eight_bet_occurrences.groupby(by=['game_id']).agg(weekly_total=(column_name, "count"))
+    last_eight_weekly_player_counts = pd.Series(last_eight_player_count['weekly_total'].values,
+                                            index=last_eight_player_count.index).to_dict()
+    last_eight_weekly_total_players_avg = round(last_eight_player_count['weekly_total'].mean(), 1)
+    json_output.update({'last_eight_weekly_player_counts': last_eight_weekly_player_counts})
+    json_output.update({'last_eight_weekly_total_players_avg': last_eight_weekly_total_players_avg})
+
+
+    # GET OPPONENT GAME LOGS VS SELECTED PLAYER
+    opp_logs_vs_player = df_logs[df_logs['player_id'] == player_id].reset_index(drop=True)
+    opp_games_vs_player_count = len(opp_logs_vs_player.index)
+    if operator == 'over':
+        vs_player_bet_occurrences = opp_logs_vs_player[opp_logs_vs_player[column_name] > value]
+    else:
+        vs_player_bet_occurrences = opp_logs_vs_player[opp_logs_vs_player[column_name] <= value]
+    json_output.update({'vs_player_bet_occurrences': round(
+        (len(vs_player_bet_occurrences.index) / opp_games_vs_player_count) * 100, 1)})
+    json_output.update({'vs_player_game_logs': opp_logs_vs_player.to_json()})
+
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
 
 
     #
@@ -380,10 +493,6 @@ def nfl_player_bet_data():
     #
     #         weeks_btw_hits.append(time_btw)
     #     json_output.update({f"avg_weeks_between_occurrence_{year_name_dict[year]}": statistics.mean(weeks_btw_hits)})
-
-    json_output = jsonify(json_output)
-    json_output.headers.add("Access-Control-Allow-Origin", "*")
-    return json_output
 
 
 @nfl.route('/nfl/stats/target_and_percentages', methods=['GET'])
