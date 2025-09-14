@@ -541,7 +541,102 @@ def stat_and_target_percentages():
 
     return json_output
 
+@nfl.route('/nfl/player/home_road_splits', methods=['GET'])
+def nfl_home_road_logs():
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    team_id = int(request.args.get('team_id', None))
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    json_output = {}
 
+
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
+        columns = f'''pass_att, pass_comp, pass_yards, pass_td, pass_longest, int, sack'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att',
+                      'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
+        columns = f'''rush_att, rush_yards, rush_td, rush_longest, fumbles'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att',
+                      'rush_yards', 'rush_td', 'rush_longest', 'fumbles']
+    else:
+        columns = f'''targets, rec, rec_yards, rec_td, rec_longest'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'targets',
+                      'rec', 'rec_yards', 'rec_td', 'rec_longest']
+
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, 
+                        nfl_games.week, nfl_games.home_id, nfl_games.away_id, player.position, game_id, player_id, team_id, opp_id, {columns}
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >=2022 AND nfl_player_stats.player_id = {player_id}'''
+
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # SEPARATE OUT HOME AND AWAY LOGS
+    df_home = df_logs[df_logs['home_id'] == team_id].reset_index(drop=True)
+    df_away = df_logs[df_logs['away_id'] == team_id].reset_index(drop=True)
+
+    total_home_games = len(df_home.index)
+    total_away_games = len(df_away.index)
+    prior_home_games = len(df_home[df_home['year'] == nfl_prior_year].index)
+    third_home_games = len(df_home[df_home['year'] == nfl_third_year].index)
+    fourth_home_games = len(df_home[df_home['year'] == nfl_fourth_year].index)
+    prior_away_games = len(df_away[df_away['year'] == nfl_prior_year].index)
+    third_away_games = len(df_away[df_away['year'] == nfl_third_year].index)
+    fourth_away_games = len(df_away[df_away['year'] == nfl_fourth_year].index)
+
+    if operator == 'over':
+        home_bet_occurrences = df_home[df_home[column_name] > value]
+        away_bet_occurrences = df_away[df_away[column_name] > value]
+        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] > value)]
+        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] > value)]
+        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] > value)]
+    else:
+        home_bet_occurrences = df_home[df_home[column_name] <= value]
+        away_bet_occurrences = df_away[df_away[column_name] <= value]
+        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] <= value)]
+        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] <= value)]
+        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] <= value)]
+    json_output.update(
+        {'home_game_bet_occurrence': round((len(home_bet_occurrences.index) / total_home_games) * 100, 1)})
+    json_output.update(
+        {'away_game_bet_occurrence': round((len(away_bet_occurrences.index) / total_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_prior': round((len(home_bet_occurrences_prior.index) / prior_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_prior': round((len(away_bet_occurrences_prior.index) / prior_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_third': round((len(home_bet_occurrences_third.index) / third_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_third': round((len(away_bet_occurrences_third.index) / third_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_fourth': round((len(home_bet_occurrences_fourth.index) / fourth_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_fourth': round((len(away_bet_occurrences_fourth.index) / fourth_away_games) * 100, 1)})
+
+
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 
 
