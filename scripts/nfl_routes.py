@@ -23,14 +23,6 @@ limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 
                    'rec_longest': 'targets'}
 
 
-def get_years_played(df):
-    years_played = sorted(list(set(df['year'].values.tolist())))
-    return years_played
-
-def get_weeks_played(df, year):
-    weeks_played = df.loc[df['year'] == year]['week'].values.tolist()
-    return weeks_played
-
 def nfl_info(**kwargs):
     if 'df' in kwargs:
         df_player_logs = kwargs['df']
@@ -288,8 +280,21 @@ def nfl_player_bet_data():
     except ZeroDivisionError:
         json_output.update({'vs_opponent_occurrences': 0.0})
 
-    # GET WEEKS BETWEEN BET OCCURRENCES
+    # GET BIN AND RANGE DICT BASED ON COLUMN NAME
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']:
+        bins = [0, 150, 175, 200, 225, 250, 275, 300, 350, 400, 10000]
+        range_dict = {'0-150yds': 0, '151-175yds': 0, '176-200yds': 0, '201-225yds': 0, '226-250yds': 0,
+                      '251-275yds': 0,
+                      '276-300yds': 0, '301-350yds': 0, '351-400yds': 0, '401+': 0}
+    else:
+        bins = [0, 10, 25, 40, 50, 60, 70, 80, 90, 100, 10000]
+        range_dict = {'0-10yds': 0, '11-25yds': 0, '26-40yds': 0, '41-50yds': 0, '51-60yds': 0, '61-70yds': 0,
+                      '71-80yds': 0, '81-90yds': 0, '91-100yds': 0, '101+': 0}
+    yardage_ranges_total = df_logs[column_name].value_counts(bins=bins, sort=False)
+    json_output.update({f"yardage_ranges_total": dict(zip(list(range_dict.keys()), list(yardage_ranges_total)))})
+
     for year in np.unique(df_logs['year'].values):
+        # GET WEEKS BETWEEN BET OCCURRENCES
         df_year = df_logs[df_logs['year'] == year].reset_index(drop=True)
         df_year.index = df_year.index + 1
 
@@ -308,6 +313,110 @@ def nfl_player_bet_data():
             weeks_bet_occurred = np.append(weeks_bet_occurred, last_game)
         time_btw_hits = np.diff(weeks_bet_occurred).mean()
         json_output.update({f"weeks_between_hits_{year_name_dict[year]}": round(time_btw_hits, 1)})
+
+        # GROUP PLAYER TOTAL STAT AMOUNTS IN RANGES
+        yardage_ranges = df_year[column_name].value_counts(bins=bins, sort=False)
+        json_output.update(
+            {f"yardage_ranges_{year_name_dict[year]}": dict(zip(list(range_dict.keys()), list(yardage_ranges)))})
+
+
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
+@nfl.route('/nfl/player/home_road_splits', methods=['GET'])
+def nfl_home_road_logs():
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    team_id = int(request.args.get('team_id', None))
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    json_output = {}
+
+
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
+        columns = f'''pass_att, pass_comp, pass_yards, pass_td, pass_longest, int, sack'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att',
+                      'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
+        columns = f'''rush_att, rush_yards, rush_td, rush_longest, fumbles'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att',
+                      'rush_yards', 'rush_td', 'rush_longest', 'fumbles']
+    else:
+        columns = f'''targets, rec, rec_yards, rec_td, rec_longest'''
+        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'targets',
+                      'rec', 'rec_yards', 'rec_td', 'rec_longest']
+
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, 
+                        nfl_games.week, nfl_games.home_id, nfl_games.away_id, player.position, game_id, player_id, team_id, opp_id, {columns}
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >=2022 AND nfl_player_stats.player_id = {player_id}'''
+
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # SEPARATE OUT HOME AND AWAY LOGS
+    df_home = df_logs[df_logs['home_id'] == team_id].reset_index(drop=True)
+    df_away = df_logs[df_logs['away_id'] == team_id].reset_index(drop=True)
+
+    total_home_games = len(df_home.index)
+    total_away_games = len(df_away.index)
+    prior_home_games = len(df_home[df_home['year'] == nfl_prior_year].index)
+    third_home_games = len(df_home[df_home['year'] == nfl_third_year].index)
+    fourth_home_games = len(df_home[df_home['year'] == nfl_fourth_year].index)
+    prior_away_games = len(df_away[df_away['year'] == nfl_prior_year].index)
+    third_away_games = len(df_away[df_away['year'] == nfl_third_year].index)
+    fourth_away_games = len(df_away[df_away['year'] == nfl_fourth_year].index)
+
+    if operator == 'over':
+        home_bet_occurrences = df_home[df_home[column_name] > value]
+        away_bet_occurrences = df_away[df_away[column_name] > value]
+        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] > value)]
+        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] > value)]
+        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] > value)]
+    else:
+        home_bet_occurrences = df_home[df_home[column_name] <= value]
+        away_bet_occurrences = df_away[df_away[column_name] <= value]
+        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] <= value)]
+        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] <= value)]
+        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] <= value)]
+    json_output.update(
+        {'home_game_bet_occurrence': round((len(home_bet_occurrences.index) / total_home_games) * 100, 1)})
+    json_output.update(
+        {'away_game_bet_occurrence': round((len(away_bet_occurrences.index) / total_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_prior': round((len(home_bet_occurrences_prior.index) / prior_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_prior': round((len(away_bet_occurrences_prior.index) / prior_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_third': round((len(home_bet_occurrences_third.index) / third_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_third': round((len(away_bet_occurrences_third.index) / third_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_fourth': round((len(home_bet_occurrences_fourth.index) / fourth_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_fourth': round((len(away_bet_occurrences_fourth.index) / fourth_away_games) * 100, 1)})
+
+
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -466,7 +575,7 @@ def nfl_opponent_logs_and_occurrences():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
-@nfl.route('/nfl/stats/target_and_percentages', methods=['GET'])
+@nfl.route('/nfl/team/target_and_percentages', methods=['GET'])
 def stat_and_target_percentages():
     team_id = request.args.get('team_id', None)
     player_id = request.args.get('id', None)
@@ -541,188 +650,82 @@ def stat_and_target_percentages():
 
     return json_output
 
-@nfl.route('/nfl/player/home_road_splits', methods=['GET'])
-def nfl_home_road_logs():
-    player_id = int(request.args.get('id', None))
+
+
+@nfl.route('/nfl/player/red_zone', methods=['GET'])
+def nfl_get_player_redzone_stats():
+    player_id = request.args.get('id', None)
     column_name = request.args.get('stat', None)
-    team_id = int(request.args.get('team_id', None))
-    operator = request.args.get('operator', None)
-    value = int(request.args.get('value', None))
     json_output = {}
 
-
     if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
-        columns = f'''pass_att, pass_comp, pass_yards, pass_td, pass_longest, int, sack'''
-        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att',
-                      'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']
+        columns = f'''player_id, rz_20_pass_att, rz_20_pass_td'''
+        df_columns = ['name', 'year', 'pos', 'player_id', 'rz_20_pass_att', 'rz_20_pass_td']
     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
-        columns = f'''rush_att, rush_yards, rush_td, rush_longest, fumbles'''
-        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att',
-                      'rush_yards', 'rush_td', 'rush_longest', 'fumbles']
+        columns = f'''player_id, rz_20_rush_att, rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_percentage,
+                      rz_5_rush_percentage'''
+        df_columns = ['name', 'year', 'pos', 'player_id', 'rz_20_rush_att', 'rz_20_rush_td', 'rz_20_rush_percentage',
+                      'rz_10_rush_percentage', 'rz_5_rush_percentage']
     else:
-        columns = f'''targets, rec, rec_yards, rec_td, rec_longest'''
-        df_columns = ['name', 'year', 'week', 'home_id', 'away_id', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'targets',
-                      'rec', 'rec_yards', 'rec_td', 'rec_longest']
+        columns = f'''player_id, rz_20_targets, rz_20_receptions, rz_20_rec_td, rz_20_target_percentage'''
+        df_columns = ['name', 'year', 'pos', 'player_id', 'rz_20_targets', 'rz_20_receptions', 'rz_20_rec_td',
+        'rz_20_target_percentage',]
 
-
-    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
     connection = create_connection()
     cursor = connection.cursor()
 
-    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, 
-                        nfl_games.week, nfl_games.home_id, nfl_games.away_id, player.position, game_id, player_id, team_id, opp_id, {columns}
-                        FROM
-                        nfl_player_stats
-                        JOIN
-                        player ON player.id = nfl_player_stats.player_id
-                        JOIN 
-                        nfl_games on nfl_games.id = nfl_player_stats.game_id
-                        WHERE nfl_games.year >=2022 AND nfl_player_stats.player_id = {player_id}'''
+    player_rz_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.year, player.position, {columns}
+                FROM nfl_redzone_stats
+                JOIN player ON player.id = nfl_redzone_stats.player_id
+                WHERE nfl_redzone_stats.player_id = {player_id}'''
+    cursor.execute(player_rz_query)
+    rz_results = list(cursor.fetchall())
 
-    cursor.execute(player_query)
-    results = list(cursor.fetchall())
+    df_rz_player = pd.DataFrame(rz_results, columns=df_columns).reset_index(drop=True)
 
-    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
-    # SEPARATE OUT HOME AND AWAY LOGS
-    df_home = df_logs[df_logs['home_id'] == team_id].reset_index(drop=True)
-    df_away = df_logs[df_logs['away_id'] == team_id].reset_index(drop=True)
-
-    total_home_games = len(df_home.index)
-    total_away_games = len(df_away.index)
-    prior_home_games = len(df_home[df_home['year'] == nfl_prior_year].index)
-    third_home_games = len(df_home[df_home['year'] == nfl_third_year].index)
-    fourth_home_games = len(df_home[df_home['year'] == nfl_fourth_year].index)
-    prior_away_games = len(df_away[df_away['year'] == nfl_prior_year].index)
-    third_away_games = len(df_away[df_away['year'] == nfl_third_year].index)
-    fourth_away_games = len(df_away[df_away['year'] == nfl_fourth_year].index)
-
-    if operator == 'over':
-        home_bet_occurrences = df_home[df_home[column_name] > value]
-        away_bet_occurrences = df_away[df_away[column_name] > value]
-        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] > value)]
-        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] > value)]
-        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] > value)]
-        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] > value)]
-        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] > value)]
-        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] > value)]
+    if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
+        json_output.update({f"rz_pass_att_total": int(df_rz_player['rz_20_pass_att'].values.sum())})
+        json_output.update({f"rz_pass_td_total": int(df_rz_player['rz_20_pass_td'].values.sum())})
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
+        json_output.update({f"rz_rush_att_total": int(df_rz_player['rz_20_rush_att'].values.sum())})
+        json_output.update({f"rush_td_total": int(df_rz_player['rz_20_rush_td'].values.sum())})
+        json_output.update(
+            {f"rush_percentage_total": round(float(df_rz_player['rz_20_rush_percentage'].values.mean()), 1)})
+        json_output.update(
+            {f"rush_percentage_10_yds": round(float(df_rz_player['rz_10_rush_percentage'].values.mean()), 1)})
+        json_output.update(
+            {f"rush_percentage_5_yds": round(float(df_rz_player['rz_5_rush_percentage'].values.mean()), 1)})
     else:
-        home_bet_occurrences = df_home[df_home[column_name] <= value]
-        away_bet_occurrences = df_away[df_away[column_name] <= value]
-        home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] <= value)]
-        away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] <= value)]
-        home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] <= value)]
-        away_bet_occurrences_third = df_away[(df_away['year'] == nfl_third_year) & (df_away[column_name] <= value)]
-        home_bet_occurrences_fourth = df_home[(df_home['year'] == nfl_fourth_year) & (df_home[column_name] <= value)]
-        away_bet_occurrences_fourth = df_away[(df_away['year'] == nfl_fourth_year) & (df_away[column_name] <= value)]
-    json_output.update(
-        {'home_game_bet_occurrence': round((len(home_bet_occurrences.index) / total_home_games) * 100, 1)})
-    json_output.update(
-        {'away_game_bet_occurrence': round((len(away_bet_occurrences.index) / total_away_games) * 100, 1)})
-    json_output.update(
-        {'home_bet_occurrences_prior': round((len(home_bet_occurrences_prior.index) / prior_home_games) * 100, 1)})
-    json_output.update(
-        {'away_bet_occurrences_prior': round((len(away_bet_occurrences_prior.index) / prior_away_games) * 100, 1)})
-    json_output.update(
-        {'home_bet_occurrences_third': round((len(home_bet_occurrences_third.index) / third_home_games) * 100, 1)})
-    json_output.update(
-        {'away_bet_occurrences_third': round((len(away_bet_occurrences_third.index) / third_away_games) * 100, 1)})
-    json_output.update(
-        {'home_bet_occurrences_fourth': round((len(home_bet_occurrences_fourth.index) / fourth_home_games) * 100, 1)})
-    json_output.update(
-        {'away_bet_occurrences_fourth': round((len(away_bet_occurrences_fourth.index) / fourth_away_games) * 100, 1)})
+        json_output.update({f"rz_targets_total": int(df_rz_player['rz_20_targets'].values.sum())})
+        json_output.update(
+            {f"rz_tgt_percentage_total": round(float(df_rz_player['rz_20_target_percentage'].values.mean()), 1)})
+        json_output.update({f"rz_rec_total": int(df_rz_player['rz_20_receptions'].values.sum())})
+        json_output.update({f"rz_td_total": int(df_rz_player['rz_20_rec_td'].values.sum())})
 
+    for year in np.unique(df_rz_player['year'].values):
+        df_year = df_rz_player[df_rz_player['year'] == year]
 
+        if column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest', 'int', 'sack']:
+            json_output.update({f"rz_pass_att_{year_name_dict[year]}": int(df_year['rz_20_pass_att'].values)})
+            json_output.update({f"rz_pass_td_{year_name_dict[year]}": int(df_year['rz_20_pass_td'].values)})
+        elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']:
+            json_output.update({f"rz_rush_att_{year_name_dict[year]}": int(df_year['rz_20_rush_att'].values)})
+            json_output.update({f"rush_td_{year_name_dict[year]}": int(df_year['rz_20_rush_td'].values)})
+            json_output.update(
+                {f"rush_percentage_{year_name_dict[year]}": float(df_year['rz_20_rush_percentage'].values)})
+            json_output.update(
+                {f"rush_percentage_10_yds_{year_name_dict[year]}": round(float(df_rz_player['rz_10_rush_percentage'].values.mean()), 1)})
+            json_output.update(
+                {f"rush_percentage_5_yds_{year_name_dict[year]}": round(float(df_rz_player['rz_5_rush_percentage'].values.mean()), 1)})
+        else:
+            json_output.update({f"rz_targets_{year_name_dict[year]}": int(df_year['rz_20_targets'].values)})
+            json_output.update(
+                {f"rz_tgt_percentage_{year_name_dict[year]}": float(df_year['rz_20_target_percentage'].values)})
+            json_output.update({f"rz_rec_{year_name_dict[year]}": int(df_year['rz_20_receptions'].values)})
+            json_output.update({f"rz_td_{year_name_dict[year]}": int(df_year['rz_20_rec_td'].values)})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
-    return json_output
-
-
-
-@nfl.route('/nfl/player_red_zone', methods=['GET'])
-def nfl_get_player_redzone_stats():
-    player_id = request.args.get('id', None)
-
-    player_team_dict = nfl_info(player_id=player_id)['team']
-    playing_years = list(player_team_dict.keys())
-
-    json_output = {}
-
-    # GET PLAYER RED ZONE STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    player_rz_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name), nfl_redzone_stats.*
-                FROM nfl_redzone_stats
-                JOIN player ON player.id = nfl_redzone_stats.player_id
-                WHERE nfl_redzone_stats.player_id = %s'''
-    values = [player_id]
-    cursor.execute(player_rz_query, values)
-    rz_results = list(cursor.fetchall())
-
-
-    rz_cols = ['name', 'id', 'player_id', 'year', 'rz_20_pass_att', 'rz_20_pass_comp', 'rz_20_pass_comp_percentage',
-               'rz_20_pass_yard', 'rz_20_pass_td', 'rz_20_pass_int', 'rz_10_pass_att', 'rz_10_pass_comp',
-               'rz_10_comp_percentage', 'rz_10_pass_yard', 'rz_10_pass_td', 'rz_10_pass_int', 'rz_20_targets',
-               'rz_20_receptions', 'rz_20_rec_yards', 'rz_20_catch_percentage', 'rz_20_rec_td',
-               'rz_20_target_percentage', 'rz_10_targets', 'rz_10_receptions', 'rz_10_rec_yards',
-               'rz_10_catch_percentage', 'rz_10_rec_td', 'rz_10_target_percentage', 'rz_20_rush_att',
-               'rz_20_rush_yards', 'rz_20_rush_td', 'rz_20_rush_percentage', 'rz_10_rush_att', 'rz_10_rush_yards',
-               'rz_10_rush_td', 'rz_10_rush_percentage', 'rz_5_rush_att', 'rz_5_rush_yards', 'rz_5_rush_td',
-               'rz_5_rush_percentage']
-    df_red_zone = pd.DataFrame(rz_results, columns=rz_cols).reset_index(drop=True)
-
-
-    # GET TEAM RED ZONE STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    connection = create_connection()
-    cursor = connection.cursor()
-    team_off_query = f'''SELECT id, team_id, year, games, rz_att, rz_td, rz_percentage FROM nfl_team_offense'''
-
-    cursor.execute(team_off_query)
-    results = list(cursor.fetchall())
-
-    off_cols = ['id', 'team_id', 'year', 'games', 'rz_att', 'rz_td', 'rz_percentage']
-    df_team_rz = pd.DataFrame(results, columns=off_cols).reset_index(drop=True)
-
-    for year in playing_years[-3:]:
-        df_player_yr_rz = df_red_zone.copy()
-        df_player_yr_rz = df_player_yr_rz.loc[df_player_yr_rz['year'] == year]
-
-        df_team_yr_rz = df_team_rz.copy()
-        df_team_yr_rz = df_team_yr_rz.loc[df_team_yr_rz['team_id'] == player_team_dict[year]]
-        team_rz_att = df_team_yr_rz.loc[df_team_yr_rz['year'] == year]['rz_att'].values.tolist()[0]
-        json_output.update({f"team_total_rz_td_{year_name_dict[year]}": team_rz_att})
-
-        # GET RZ PASSING TD AS PERCENTAGE OF RZ ATT
-        total_rz_pass_td = (df_player_yr_rz['rz_20_pass_td'].values.tolist()[0] +
-                            df_player_yr_rz['rz_10_pass_td'].values.tolist()[0])
-        total_rz_pass_td_percentage = round(((total_rz_pass_td / team_rz_att) * 100), 1)
-        json_output.update({f"team_pass_rz_td_{year_name_dict[year]}": total_rz_pass_td})
-        json_output.update({f"rz_pass_td_percentage_{year_name_dict[year]}": total_rz_pass_td_percentage})
-
-        # GET RZ RUSHING TD AS PERCENTAGE OF RZ ATT
-        total_rz_rush_td = (df_player_yr_rz['rz_20_rush_td'].values.tolist()[0] +
-                            df_player_yr_rz['rz_10_rush_td'].values.tolist()[0] +
-                            df_player_yr_rz['rz_5_rush_td'].values.tolist()[0])
-        total_rz_rush_td_percentage = round(((total_rz_rush_td / team_rz_att) * 100), 1)
-        json_output.update({f"team_rush_rz_td_{year_name_dict[year]}": total_rz_rush_td})
-        json_output.update({f"rz_rush_td_percentage_{year_name_dict[year]}": total_rz_rush_td_percentage})
-
-        # GET RZ RECEIVING TD AS PERCENTAGE OF RZ ATT
-        total_rz_rec_td = (df_player_yr_rz['rz_20_rec_td'].values.tolist()[0] +
-                           df_player_yr_rz['rz_10_rec_td'].values.tolist()[0])
-        total_rz_rec_td_percentage = round(((total_rz_rec_td / team_rz_att) * 100), 1)
-        json_output.update({f"team_rec_rz_td_{year_name_dict[year]}": total_rz_rec_td})
-        json_output.update({f"rz_rec_td_percentage_{year_name_dict[year]}": total_rz_rec_td_percentage})
-
-        # GET TEAM RZ CONVERSION PERCENTAGE RANK
-        df_team_rank = df_team_rz.copy().loc[df_team_rz['year'] == year]
-        df_team_rank['rz_percentage_rank'] = df_team_rank['rz_percentage'].rank(ascending=False)
-
-        team_rank =df_team_rank.loc[df_team_rank['team_id'] == player_team_dict[year]]['rz_percentage_rank'].values.tolist()[0]
-        json_output.update({f"team_rz_percentage_rank_{year_name_dict[year]}": team_rank})
-
     return json_output
 
 
@@ -892,6 +895,20 @@ def nfl_team_stats():
     return json_output
 
 
+    # # GET TEAM RED ZONE STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
+    # connection = create_connection()
+    # cursor = connection.cursor()
+    # team_off_query = f'''SELECT id, team_id, year, games, rz_att, rz_td, rz_percentage FROM nfl_team_offense
+    #                      WHERE nfl_team_offense.team_id IN {player_teams}'''
+    #
+    # cursor.execute(team_off_query)
+    # results = list(cursor.fetchall())
+    #
+    # off_cols = ['id', 'team_id', 'year', 'games', 'rz_att', 'rz_td', 'rz_percentage']
+    # df_rz_team = pd.DataFrame(results, columns=off_cols).reset_index(drop=True)
+    # print(df_rz_team)
+
+
 @nfl.route('/nfl/opponent_info', methods=['GET'])
 def nfl_opponent_information():
     # initialize variables
@@ -1016,10 +1033,6 @@ def nfl_opponent_information():
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
-
-
-
-
 
 
 
