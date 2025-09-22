@@ -28,11 +28,6 @@ export default function Form(props) {
               ></option>
             )}
           </For>
-          <option value="Option A" data-id="3" data-position="QB" />
-          <option value="Option B" />
-          <option value="Option C" />
-          <option value="Another Option" />
-          <option value="Final Choice" />
         </datalist>
       </form>
       <p>{console.log(players())}</p>
