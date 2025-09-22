@@ -1,0 +1,54 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  magin: 0 auto;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 1em;
+}
+
+A {
+  text-decoration: none;
+  color: black;
+}
+
+A:hover {
+  text-decoration: underline;
+}
+
+.card {
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  background: red;
+  border-radius: 4px;
+  border: 3px solid green;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+input::-webkit-calendar-picker-indicator {
+  display: none;
+  opacity: 0;
+}
+
+input::-moz-calendar-picker-indicator {
+  display: none;
+  opacity: 0;
+}
+
+input::-ms-expand {
+  /* For older IE versions */
+  display: none;
+}
