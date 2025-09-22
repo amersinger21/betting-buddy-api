@@ -1,25 +1,21 @@
 import { render } from "solid-js/web";
-import { Router, Route, A } from "@solidjs/router";
+import { Router, Route } from "@solidjs/router";
 
 import Home from "./pages/Home";
 import Football from "./pages/Football";
-
-const App = (props) => (
-  <>
-    <nav>
-      <A href="/">Home</A>
-      <A href="/football">Football</A>
-    </nav>
-    <h1>Site Title</h1>
-    {props.children}
-  </>
-);
+import Baseball from "./pages/Baseball";
+import Basketball from "./pages/Basketball";
+import Error from "./pages/Error";
+import App from "./App";
+import "./index.css";
 
 render(
   () => (
     <Router root={App}>
       <Route path="/" component={Home} />
       <Route path="/football" component={Football} />
+      <Route path="/baseball" component={Error} />
+      <Route path="/basketball" component={Error} />
     </Router>
   ),
   document.getElementById("root")
