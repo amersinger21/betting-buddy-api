@@ -801,7 +801,7 @@ def nfl_get_rankings():
 
 
 # GET ROUTES - Team related bet data
-@nfl.route('/nfl/team_stats', methods=['GET'])
+@nfl.route('/nfl/team/stats', methods=['GET'])
 def nfl_team_stats():
     team_id = int(request.args.get('team_id', None))
     connection = create_connection()
@@ -885,7 +885,7 @@ def nfl_team_stats():
 
     team_record_dict = {}
     for year in df_standings['year'].values.tolist():
-        df_year = df_standings.loc[df_standings['year'] == year]
+        df_year = df_standings[df_standings['year'] == year]
         record = f"{df_year['wins'].values.tolist()[0]}-{df_year['losses'].values.tolist()[0]}-{df_year['ties'].values.tolist()[0]}"
         team_record_dict[year] = record
     json_output.update({f"team_record": team_record_dict})
@@ -908,6 +908,28 @@ def nfl_team_stats():
     # df_rz_team = pd.DataFrame(results, columns=off_cols).reset_index(drop=True)
     # print(df_rz_team)
 
+@nfl.route('/nfl/team/results', methods=['GET'])
+def nfl_team_results():
+    team_id = int(request.args.get('team_id', None))
+    connection = create_connection()
+    cursor = connection.cursor()
+    json_output = {}
+
+    query = f'''SELECT week, year, home_id, home_score, away_id, away_score, winner, margin_of_victory, vegas_line,
+    vegas_line_result, over_under, total_points, over_under_result
+                FROM nfl_games
+                WHERE nfl_games.home_id = {team_id} OR nfl_games.away_id = {team_id} AND nfl_games.year >= 2022'''
+    cursor.execute(query)
+    cols = ['week', 'year', 'home_id', 'home_score', 'away_id', 'away_score', 'winner', 'margin_of_victory', 'vegas_line',
+            'vegas_line_result', 'over_under', 'total_points', 'over_under_result']
+    results = list(cursor.fetchall())
+    df_results = pd.DataFrame(results, columns=cols).reset_index(drop=True)
+    print(df_results)
+
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 @nfl.route('/nfl/opponent_info', methods=['GET'])
 def nfl_opponent_information():
@@ -1540,12 +1562,13 @@ def nfl_player_stats():
                      'rec_yards': int(row['rec_yards']),
                      'rec_td': int(row['rec_td']),
                      'rec_longest': int(row['rec_longest']),
-                     'fumbles': int(row['fumbles'])}
+                     'fumbles': int(row['fumbles']),
+                     'home_id': int(row['home_id'])}
         values = list(json_dict.values())
 
         cursor.execute("""INSERT INTO nfl_player_stats (game_id, player_id, team_id, opp_id, pass_att, pass_comp, pass_yards, pass_td, pass_longest, 
-                        ints, sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        ints, sacks, rush_att, rush_yards, rush_td, rush_longest, targets, rec, rec_yards, rec_td, rec_longest, fumbles, home_id) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                        (values))
 
         connection.commit()
