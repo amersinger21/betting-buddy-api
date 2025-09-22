@@ -5,7 +5,6 @@ const App = (props) => (
       <A href="/">
         <h1>The Betting Buddy</h1>
       </A>
-      <A href="/">Home</A>
       <A href="/football">Football</A>
       <A href="/basketball">Basketball</A>
       <A href="/baseball">Baseball</A>
