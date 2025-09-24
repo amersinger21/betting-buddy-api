@@ -499,6 +499,7 @@ def nfl_get_player_redzone_stats():
     return json_output
 
 
+
 # GET ROUTES (TEAM DATA)
 @nfl.route('/nfl/team/opponent_logs_and_occurrence')
 def nfl_opponent_logs_and_occurrences():
@@ -1030,17 +1031,17 @@ def nfl_get_rankings():
 
         for week in weeks_played:
             df_year = df_weekly_rank.copy()
-            df_opp = df_year.loc[(df_year['year'] == year) & (df_year['week'] == week) &
+            df_opp = df_year[(df_year['year'] == year) & (df_year['week'] == week) &
                                   (df_year['team_id'] == team_opponent_dict[year][week])]
-            opponent_rank = df_opp[rank_col].values.tolist()[0]
+            opponent_rank = df_opp[rank_col].values[0]
             opp_rank_dict[week] = opponent_rank
-            opp_stat_total_dict[week] = df_opp[column_name].values.tolist()[0]
+            opp_stat_total_dict[week] = df_opp[column_name].values[0]
 
-            df_team_rank = df_year.loc[(df_year['year'] == year) & (df_year['week'] == week) &
+            df_team_rank = df_year[(df_year['year'] == year) & (df_year['week'] == week) &
                                   (df_year['team_id'] == player_teams_dict[year])]
-            team_rank = df_team_rank[rank_col].values.tolist()[0]
+            team_rank = df_team_rank[rank_col].values[0]
             team_rank_dict[week] = team_rank
-            team_stat_total_dict[week] = df_team_rank[column_name].values.tolist()[0]
+            team_stat_total_dict[week] = df_team_rank[column_name].values[0]
 
             json_output.update({f"opponent_rank_z_coordinates_{year_name_dict[year]}": list(opp_stat_total_dict.values())})
             json_output.update({f"opponent_rank_y_coordinates_{year_name_dict[year]}": list(opp_rank_dict.values())})
