@@ -22,61 +22,6 @@ limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 
                    'rec': 'targets', 'targets': 'targets', 'rec_yards': 'targets', 'rec_td': 'targets',
                    'rec_longest': 'targets'}
 
-
-def nfl_info(**kwargs):
-    if 'df' in kwargs:
-        df_player_logs = kwargs['df']
-        df_player_logs = df_player_logs[['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']]
-    else:
-        cols_to_select = f"game_id, player_id, team_id, opp_id"
-
-        # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        player_query = f'''SELECT
-                        CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                        player.position, {cols_to_select}
-                        FROM
-                        nfl_player_stats
-                        JOIN
-                        player ON player.id = nfl_player_stats.player_id
-                        JOIN 
-                        nfl_games on nfl_games.id = nfl_player_stats.game_id
-                        WHERE nfl_games.year >= 2019 AND nfl_player_stats.player_id = %s'''
-        values = [kwargs['player_id']]
-        cursor.execute(player_query, values)
-        results = list(cursor.fetchall())
-
-        df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']
-        df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-        df_player_logs = df_player_logs.loc[df_player_logs['player_id'] == int(kwargs['player_id'])]
-
-
-    playing_years = sorted(list(set(df_player_logs['year'].values.tolist())))
-    opponent_dict = {}
-    team_dict = {}
-    for year in playing_years[-4:]:
-        df_opp = df_player_logs.copy()
-        df_opp = df_opp.loc[df_opp['year'] == year][['week', 'opp_id']]
-        opponent_dict[year] = dict(zip(df_opp.week, df_opp.opp_id))
-
-
-        team_list = df_player_logs.loc[df_player_logs['year'] == year]['team_id'].values.tolist()
-        team_merge = []
-        for team in team_list:
-            if team not in team_merge:
-                team_merge.append(team)
-        if len(team_merge) == 1:
-            team_dict[year] = team_merge[0]
-        else:
-            team_dict[year] = team_merge
-
-    output = {'opponent': opponent_dict, 'team': team_dict}
-    return output
-
-
-
 # GET ROUTES (PLAYER DATA)
 @nfl.route('/nfl/player/game_logs', methods=['GET'])
 def nfl_player_game_logs():
@@ -991,70 +936,89 @@ def nfl_opponent_information():
 def nfl_get_rankings():
     column_name = request.args.get('stat', None)
     player_id = request.args.get('id', None)
-
-    player_info = nfl_info(player_id=player_id)
-    team_opponent_dict = player_info['opponent']
-    player_teams_dict = player_info['team']
     json_output = {}
 
-    # GET WEEKLY RANK STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    if column_name in ['pass_att', 'pass_comp', 'pass_yards',	'pass_td']:
-        other_cols = ['pyards_per_att', 'pass_yards_rank', 'pass_comp_rank', 'pass_td_rank',
-                      'pass_yards_per_att_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, pyards_per_att, pass_yards_rank, pass_comp_rank, pass_td_rank, pass_yards_per_att_rank"
-    elif column_name in ['rush_att', 'rush_yards',	'rush_td']:
-        other_cols = ['ryards_per_att', 'rush_att_rank', 'rush_yards_rank', 'rush_td_rank',
-                      'rush_yards_per_att_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, ryards_per_att, rush_att_rank, rush_yards_rank, rush_td_rank, rush_yards_per_att_rank"
-    else:
-        other_cols = ['rec_yards_rank', 'rec_td_rank', 'rec_rank', 'rec_yards_per_rec_rank']
-        wkly_cols_to_select = f"team_id, year, week, {column_name}, rec_yards_rank, rec_td_rank, rec_rank, rec_yards_per_rec_rank"
-
+    # GET DATA FROM DB WITH SQL QUERY AND MAKE DF OUT OF IT
     connection = create_connection()
     cursor = connection.cursor()
-    weekly_rank_query = f'''SELECT {wkly_cols_to_select} FROM nfl_weekly_rank'''
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN 
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = {player_id}'''
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_columns = ['name', 'year', 'week', 'position', 'game_id', 'player_id', 'team_id', 'opp_id']
+    df_player_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    df_current = df_player_logs[df_player_logs['year'] == nfl_current_year]
+    current_opponents = pd.Series(df_current['opp_id'].values, index=df_current['week']).to_dict()
+
+    df_prior = df_player_logs[df_player_logs['year'] == nfl_prior_year]
+    prior_opponents = pd.Series(df_prior['opp_id'].values, index=df_prior['week']).to_dict()
+
+    df_third = df_player_logs[df_player_logs['year'] == nfl_third_year]
+    third_opponents = pd.Series(df_third['opp_id'].values, index=df_third['week']).to_dict()
+
+    df_fourth = df_player_logs[df_player_logs['year'] == nfl_fourth_year]
+    fourth_opponents = pd.Series(df_fourth['opp_id'].values, index=df_fourth['week']).to_dict()
+
+    # GET WEEKLY RANK STAT DATA
+    if column_name in ['rec', 'rec_yards', 'rec_td']:
+        columns = f"team_id, year, week, {limit_stat_dict[column_name]}, {column_name}, {column_name}_rank"
+        rank_cols = ['team_id', 'year', 'week', f"{limit_stat_dict[column_name]}", f"{column_name}", f"{column_name}_rank"]
+    else:
+        columns = f"team_id, year, week, {limit_stat_dict[column_name]}, {limit_stat_dict[column_name]}_rank, {column_name}, {column_name}_rank"
+        rank_cols = ['team_id', 'year', 'week', f"{limit_stat_dict[column_name]}", f"{limit_stat_dict[column_name]}_rank", f"{column_name}",
+                   f"{column_name}_rank"]
+
+    # GET DATA FROM DB WITH SQL QUERY AND MAKE DF OUT OF IT
+    connection = create_connection()
+    cursor = connection.cursor()
+    weekly_rank_query = f'''SELECT {columns} FROM nfl_weekly_rank'''
 
     cursor.execute(weekly_rank_query)
     weekly_rank_results = list(cursor.fetchall())
 
-    weekly_rank_cols = ['team_id', 'year', 'week', column_name] + other_cols
-    df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=weekly_rank_cols)
+    df_weekly_rank = pd.DataFrame(weekly_rank_results, columns=rank_cols)
 
     # Get opponent ranks for specific stats
     rank_col = f"{column_name}_rank"
-    for year in list(team_opponent_dict.keys())[-4:]:
-        weeks_played = list(team_opponent_dict[year].keys())
-        opp_rank_dict = {}
-        opp_stat_total_dict = {}
-        team_rank_dict = {}
-        team_stat_total_dict = {}
+    for opp_dict in [current_opponents, prior_opponents, third_opponents, fourth_opponents]:
+        if opp_dict == current_opponents:
+            df_year = df_weekly_rank[df_weekly_rank['year'] == nfl_current_year]
+            year = nfl_current_year
+        elif opp_dict == prior_opponents:
+            df_year = df_weekly_rank[df_weekly_rank['year'] == nfl_prior_year]
+            year = nfl_prior_year
+        elif opp_dict == third_opponents:
+            df_year = df_weekly_rank[df_weekly_rank['year'] == nfl_third_year]
+            year = nfl_third_year
+        else:
+            df_year = df_weekly_rank[df_weekly_rank['year'] == nfl_fourth_year]
+            year = nfl_fourth_year
 
-        for week in weeks_played:
-            df_year = df_weekly_rank.copy()
-            df_opp = df_year[(df_year['year'] == year) & (df_year['week'] == week) &
-                                  (df_year['team_id'] == team_opponent_dict[year][week])]
-            opponent_rank = df_opp[rank_col].values[0]
-            opp_rank_dict[week] = opponent_rank
-            opp_stat_total_dict[week] = df_opp[column_name].values[0]
+        opponent_rank_dict = {}
+        opponent_total_dict = {}
+        for key, val in opp_dict.items():
+            opponent_rank_dict[key] = int(df_year[
+                                              (df_year['week'] == key) & (df_year['team_id'] == val)][rank_col].values)
+            opponent_total_dict[key] = int(df_year[
+                                               (df_year['week'] == key) & (df_year['team_id'] == val)][column_name].values)
 
-            df_team_rank = df_year[(df_year['year'] == year) & (df_year['week'] == week) &
-                                  (df_year['team_id'] == player_teams_dict[year])]
-            team_rank = df_team_rank[rank_col].values[0]
-            team_rank_dict[week] = team_rank
-            team_stat_total_dict[week] = df_team_rank[column_name].values[0]
-
-            json_output.update({f"opponent_rank_z_coordinates_{year_name_dict[year]}": list(opp_stat_total_dict.values())})
-            json_output.update({f"opponent_rank_y_coordinates_{year_name_dict[year]}": list(opp_rank_dict.values())})
-            json_output.update({f"opponent_rank_x_coordinates_{year_name_dict[year]}": list(opp_rank_dict.keys())})
-
-            json_output.update({f"team_rank_z_coordinates_{year_name_dict[year]}": list(team_stat_total_dict.values())})
-            json_output.update({f"team_rank_y_coordinates_{year_name_dict[year]}": list(team_rank_dict.values())})
-            json_output.update({f"team_rank_x_coordinates_{year_name_dict[year]}": list(team_rank_dict.keys())})
+        json_output.update( {f"opponents_weekly_rank_{year_name_dict[year]}": opponent_rank_dict})
+        json_output.update({f"opponents_season_total_{year_name_dict[year]}": opponent_total_dict})
 
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
-
     return json_output
 
 
