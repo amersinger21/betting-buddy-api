@@ -265,7 +265,6 @@ def nfl_player_bet_data():
             {f"yardage_ranges_{year_name_dict[year]}": dict(zip(list(range_dict.keys()), list(yardage_ranges)))})
 
 
-
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
@@ -1028,7 +1027,92 @@ def nfl_get_rankings():
 
 
 
-
+# potential new route - for rec stats, get QB's percentage/breakdown by position
+# @nfl.route('/nfl/player/qb_breakdowns', methods=['GET'])
+# def nfl_qb_breakdown():
+#     player_id = int(request.args.get('id', None))
+#     column_name = request.args.get('stat', None)
+#     # operator = request.args.get('operator', None)
+#     # value = int(request.args.get('value', None))
+#     json_output = {}
+#
+#     if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
+#         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
+#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
+#                       'pass_td', 'pass_comp', 'pass_longest']
+#     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+#         columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
+#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards',
+#                       'rush_td', 'rush_longest', 'fumbles']
+#     else:
+#         columns = 'rec, targets, rec_yards, rec_td, rec_longest'
+#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets',
+#                       'rec_yards', 'rec_td', 'rec_longest']
+#
+#     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+#                             player.position, game_id, player_id, team_id, opp_id, {columns}
+#                         FROM
+#                         nfl_player_stats
+#                         JOIN
+#                         player ON player.id = nfl_player_stats.player_id
+#                         JOIN
+#                         nfl_games on nfl_games.id = nfl_player_stats.game_id
+#                         WHERE nfl_games.year >=2022 AND nfl_player_stats.game_id IN
+#                         (select nfl_player_stats.game_id from nfl_player_stats where nfl_player_stats.player_id = {player_id})
+#                          '''
+#     cursor.execute(player_query)
+#
+#     results = list(cursor.fetchall())
+#     df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+#
+#     player_team_dict = {nfl_current_year: '', nfl_prior_year: '', nfl_third_year: '', nfl_fourth_year: ''}
+#     try:
+#         df_player_curr = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_current_year)]
+#         player_team_dict[nfl_current_year] = int(np.unique(df_player_curr['team_id'].values))
+#     except TypeError:
+#         player_team_dict[nfl_current_year] = 0
+#
+#     try:
+#         df_player_prior = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_prior_year)]
+#         player_team_dict[nfl_prior_year] = int(np.unique(df_player_prior['team_id'].values))
+#     except TypeError:
+#         player_team_dict[nfl_prior_year] = 0
+#
+#     try:
+#         df_player_third = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_third_year)]
+#         player_team_dict[nfl_third_year] = int(np.unique(df_player_third['team_id'].values))
+#     except TypeError:
+#         player_team_dict[nfl_third_year] = 0
+#
+#     try:
+#         df_player_fourth = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_fourth_year)]
+#         player_team_dict[nfl_fourth_year] = int(np.unique(df_player_fourth['team_id'].values))
+#     except TypeError:
+#         player_team_dict[nfl_fourth_year] = 0
+#
+#     print(player_team_dict)
+#     # GET PRIOR TEAM GAMES
+#     team_games_prior = df_logs[
+#         (df_logs['team_id'] == player_team_dict[nfl_prior_year]) & (df_logs['year'] == nfl_prior_year)]
+#     current_player_count = team_games_prior.groupby(['week', 'pos'])['targets'].sum().reset_index(name='targets')
+#     for week in np.unique(team_games_prior['week'].values):
+#         weekly_target_frame = current_player_count[current_player_count['week'] == week]
+#         weekly_total_targets = current_player_count[current_player_count['week'] == week]['targets'].sum()
+#         weekly_target_frame['percent_of_team_total'] = weekly_target_frame['targets'].apply(
+#             lambda x: round(((x / weekly_total_targets) * 100), 1))
+#         print(weekly_target_frame)
+#         print('-----------------------------------------------------')
+#
+#
+#     # print(current_player_count)
+#
+#
+#
+#     return json_output
 
 # UPLOAD/ADD ROUTES
 @nfl.route('/nfl/games', methods=['POST', 'PUT'])
@@ -1596,6 +1680,114 @@ def nfl_weekly_ranks():
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
              %s, %s, %s, %s, %s, %s, %s)""",
            (values))
+
+        connection.commit()
+        print(f"game_stats have been added to nfl_player_stats table.")
+
+
+    return f"nfl_weekly_rank has been updated ."
+
+
+
+
+# STARTING LINEUP ROUTES
+@nfl.route('/nfl/team/starting_lineup_qb', methods=['PUT'])
+def nfl_update_starting_lineup_qb():
+    file = request.files['nfl_starting_lineup_qb']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'player_id': int(row['player_id']),
+                     'team_id': int(row['team_id']),
+                     'position': f"'{row['position']}'"}
+
+        cursor.execute(f"""UPDATE nfl_starting_lineups 
+                SET player_id = {json_dict['player_id']}
+                WHERE nfl_starting_lineups.team_id = {json_dict['team_id']} AND 
+                nfl_starting_lineups.position = {json_dict['position']}""")
+
+        connection.commit()
+        print(f"game_stats have been added to nfl_player_stats table.")
+
+
+    return f"nfl_weekly_rank has been updated ."
+
+@nfl.route('/nfl/team/starting_lineup_wr', methods=['PUT'])
+def nfl_update_starting_lineup_wr():
+    file = request.files['nfl_starting_lineup_wr']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'player_id': int(row['player_id']),
+                     'team_id': int(row['team_id']),
+                     'position': f"'{row['position']}'"}
+
+        cursor.execute(f"""UPDATE nfl_starting_lineups 
+                SET player_id = {json_dict['player_id']}
+                WHERE nfl_starting_lineups.team_id = {json_dict['team_id']} AND 
+                nfl_starting_lineups.position = {json_dict['position']}""")
+
+        connection.commit()
+        print(f"game_stats have been added to nfl_player_stats table.")
+
+
+    return f"nfl_weekly_rank has been updated ."
+
+@nfl.route('/nfl/team/starting_lineup_rb', methods=['PUT'])
+def nfl_update_starting_lineup_rb():
+    file = request.files['nfl_starting_lineup_rb']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'player_id': int(row['player_id']),
+                     'team_id': int(row['team_id']),
+                     'position': f"'{row['position']}'"}
+
+        cursor.execute(f"""UPDATE nfl_starting_lineups 
+                SET player_id = {json_dict['player_id']}
+                WHERE nfl_starting_lineups.team_id = {json_dict['team_id']} AND 
+                nfl_starting_lineups.position = {json_dict['position']}""")
+
+        connection.commit()
+        print(f"game_stats have been added to nfl_player_stats table.")
+
+
+    return f"nfl_weekly_rank has been updated ."
+
+@nfl.route('/nfl/team/starting_lineup_te', methods=['PUT'])
+def nfl_update_starting_lineup_te():
+    file = request.files['nfl_starting_lineup_te']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'player_id': int(row['player_id']),
+                     'team_id': int(row['team_id']),
+                     'position': f"'{row['position']}'"}
+
+        cursor.execute(f"""UPDATE nfl_starting_lineups 
+                SET player_id = {json_dict['player_id']}
+                WHERE nfl_starting_lineups.team_id = {json_dict['team_id']} AND 
+                nfl_starting_lineups.position = {json_dict['position']}""")
 
         connection.commit()
         print(f"game_stats have been added to nfl_player_stats table.")
