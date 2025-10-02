@@ -767,20 +767,6 @@ def nfl_team_stats():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
-
-    # # GET TEAM RED ZONE STATS - Create a query, cursor and result list. Loop through list and merge to create 'df_red_zone'
-    # connection = create_connection()
-    # cursor = connection.cursor()
-    # team_off_query = f'''SELECT id, team_id, year, games, rz_att, rz_td, rz_percentage FROM nfl_team_offense
-    #                      WHERE nfl_team_offense.team_id IN {player_teams}'''
-    #
-    # cursor.execute(team_off_query)
-    # results = list(cursor.fetchall())
-    #
-    # off_cols = ['id', 'team_id', 'year', 'games', 'rz_att', 'rz_td', 'rz_percentage']
-    # df_rz_team = pd.DataFrame(results, columns=off_cols).reset_index(drop=True)
-    # print(df_rz_team)
-
 @nfl.route('/nfl/team/results', methods=['GET'])
 def nfl_team_results():
     team_id = int(request.args.get('team_id', None))
@@ -1136,9 +1122,20 @@ def nfl_qb_breakdown():
     list_df = [current_test, prior_test, third_test, fourth_test]
     for i in range(len(list_df)):
         df = list_df[i]
+        print(df)
         year = year_dict[i]['json']
+        yearly_total_targets = df[limit_stat].sum()
+        yearly_total_stats = df[column_name].sum()
+
 
         df_rb = df[df['position'] == 'RB']
+        # GET YEARLY TOTAL DOWN
+        pos_yearly_targets = df_rb[limit_stat].sum()
+        pos_yearly_totals = df_rb[column_name].sum()
+        json_output.update({f"rb_limit_stat_percentage_{year}": round((pos_yearly_targets / yearly_total_targets) * 100, 1)})
+        json_output.update({f"rb_limit_stat_total_{year}": round((pos_yearly_totals / yearly_total_stats) * 100, 1)})
+
+        # GET WEEKLY BREAKDOWN
         rb_limit_stat_dict = dict(zip(df_rb['week'].values.tolist(), df_rb[limit_stat].values.tolist()))
         rb_target_percentage_dict = dict(zip(df_rb['week'].values.tolist(), df_rb['att_share_percentage'].values.tolist()))
         rb_stat_total_dict = dict(zip(df_rb['week'].values.tolist(), df_rb[column_name].values.tolist()))
@@ -1150,6 +1147,13 @@ def nfl_qb_breakdown():
         json_output.update({f"rb_stat_percentage_dict_{year}": rb_stat_percentage_dict})
 
         df_wr = df[df['position'] == 'WR']
+        # GET YEARLY TOTAL DOWN
+        pos_yearly_targets = df_wr[limit_stat].sum()
+        pos_yearly_totals = df_wr[column_name].sum()
+        json_output.update({f"wr_limit_stat_percentage_{year}": round((pos_yearly_targets / yearly_total_targets) * 100, 1)})
+        json_output.update({f"wr_limit_stat_total_{year}": round((pos_yearly_totals / yearly_total_stats) * 100, 1)})
+
+        # GET WEEKLY BREAKDOWN
         wr_limit_stat_dict = dict(zip(df_wr['week'].values.tolist(), df_wr['targets'].values.tolist()))
         wr_target_percentage_dict = dict(zip(df_wr['week'].values.tolist(), df_wr['att_share_percentage'].values.tolist()))
         wr_stat_total_dict = dict(zip(df_wr['week'].values.tolist(), df_wr[column_name].values.tolist()))
@@ -1161,6 +1165,13 @@ def nfl_qb_breakdown():
         json_output.update({f"wr_stat_percentage_dict_{year}": wr_stat_percentage_dict})
 
         df_te = df[df['position'] == 'TE']
+        # GET YEARLY TOTAL DOWN
+        pos_yearly_targets = df_te[limit_stat].sum()
+        pos_yearly_totals = df_te[column_name].sum()
+        json_output.update({f"te_limit_stat_percentage_{year}": round((pos_yearly_targets / yearly_total_targets) * 100, 1)})
+        json_output.update({f"te_limit_stat_total_{year}": round((pos_yearly_totals / yearly_total_stats) * 100, 1)})
+
+        # GET WEEKLY BREAKDOWN
         te_limit_stat_dict = dict(zip(df_te['week'].values.tolist(), df_te['targets'].values.tolist()))
         te_target_percentage_dict = dict(zip(df_te['week'].values.tolist(), df_te['att_share_percentage'].values.tolist()))
         te_stat_total_dict = dict(zip(df_te['week'].values.tolist(), df_te[column_name].values.tolist()))
