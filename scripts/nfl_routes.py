@@ -101,6 +101,8 @@ def nfl_player_game_logs():
         json_output.update({'third_bet_logs': df_logs.loc[
             (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] <= value)].to_json()})
 
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
 @nfl.route('/nfl/player/bet_occurrence_data', methods=['GET'])
@@ -360,8 +362,6 @@ def nfl_home_road_logs():
         {'home_bet_occurrences_fourth': round((len(home_bet_occurrences_fourth.index) / fourth_home_games) * 100, 1)})
     json_output.update(
         {'away_bet_occurrences_fourth': round((len(away_bet_occurrences_fourth.index) / fourth_away_games) * 100, 1)})
-
-
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -667,7 +667,6 @@ def stat_and_target_percentages():
         json_output.update(
                 {f"player_weekly_target_share_{year_name_dict[year]}": player_weekly_target_share})
 
-
     # Enable Access-Control-Allow-Origin
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -783,8 +782,6 @@ def nfl_team_results():
             'vegas_line_result', 'over_under', 'total_points', 'over_under_result']
     results = list(cursor.fetchall())
     df_results = pd.DataFrame(results, columns=cols).reset_index(drop=True)
-    print(df_results)
-
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -908,9 +905,6 @@ def nfl_opponent_information():
     json_output.update({'defense_int_percentage': int_percentage})
     json_output.update({'defense_ints': ints})
 
-
-
-
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
@@ -918,7 +912,7 @@ def nfl_opponent_information():
 
 
 
-@nfl.route('/nfl/rankings', methods=['GET'])
+@nfl.route('/nfl/team/defense_rankings', methods=['GET'])
 def nfl_get_rankings():
     column_name = request.args.get('stat', None)
     player_id = request.args.get('id', None)
@@ -1034,6 +1028,8 @@ def nfl_team_starting_qb():
     starting_qb = int(df_qb['player_id'].values[0])
     json_output.update({f"starting_qb": starting_qb})
 
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
 @nfl.route('/nfl/player/qb_breakdown', methods=['GET'])
