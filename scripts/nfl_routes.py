@@ -8,6 +8,7 @@ from flask import Blueprint, request, jsonify
 
 nfl = Blueprint("nfl", __name__)
 pd.set_option('display.max_columns', 100)
+pd.set_option('display.max_rows', 1000)
 
 nfl_fourth_year = 2022
 nfl_third_year = 2023
@@ -1024,95 +1025,158 @@ def nfl_get_rankings():
 # GET ROUTES - Team related bet data
 
 
+@nfl.route('/nfl/team/starting_qb', methods=['GET'])
+def nfl_team_starting_qb():
+    team_id = request.args.get('team_id', None)
+    json_output = {}
+
+    # GET DATA FROM DB WITH SQL QUERY AND MAKE DF OUT OF IT
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT team.name, team_id, player_id, position
+                    FROM
+                    nfl_starting_lineups
+                    JOIN
+                    team ON team.id = nfl_starting_lineups.team_id
+                    WHERE nfl_starting_lineups.team_id = {team_id} and nfl_starting_lineups.position = "QB"'''
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_columns = ['name', 'team_id', 'player_id', 'position']
+    df_qb = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+    starting_qb = int(df_qb['player_id'].values[0])
+    json_output.update({f"starting_qb": starting_qb})
+
+    return json_output
+
+@nfl.route('/nfl/player/qb_breakdown', methods=['GET'])
+def nfl_qb_breakdown():
+    qb_id = request.args.get('qb_id', None)
+    column_name = request.args.get('stat', None)
+    team_id = int(request.args.get('team_id', None))
+
+    json_output = {}
+
+    limit_stat = limit_stat_dict[column_name]
+    df_columns = ['name', 'year', 'week', 'position', 'player_id', 'team_id', 'game_id', column_name, limit_stat]
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                            player.position, player_id, team_id, game_id, {column_name}, {limit_stat}
+                        FROM
+                        nfl_player_stats
+                        JOIN
+                        player ON player.id = nfl_player_stats.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_stats.game_id
+                        WHERE nfl_games.year >=2022 AND nfl_player_stats.game_id IN 
+                        (select nfl_player_stats.game_id from nfl_player_stats where nfl_player_stats.player_id = {qb_id})'''
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # GET PLAYERS PREVIOUS TEAMS
+    try:
+        prior_team = int(np.unique(df_logs[(df_logs['year'] == nfl_prior_year) & (
+                                                    df_logs['player_id'] == int(qb_id))]['team_id'].values))
+    except ValueError:
+        prior_team = 0
+    try:
+        third_team = int(np.unique(df_logs[(df_logs['year'] == nfl_third_year) & (
+                                                    df_logs['player_id'] == int(qb_id))]['team_id'].values))
+    except ValueError:
+        third_team = 0
+    try:
+        fourth_team = int(np.unique(df_logs[(df_logs['year'] == nfl_fourth_year) & (
+                                                    df_logs['player_id'] == int(qb_id))]['team_id'].values))
+    except ValueError:
+        fourth_team = 0
+
+    player_teams = {
+        nfl_current_year: team_id,
+        nfl_prior_year: prior_team,
+        nfl_third_year: third_team,
+        nfl_fourth_year: fourth_team
+    }
+    year_dict = {
+        0: {'json': 'current', 'year': nfl_current_year},
+        1: {'json': 'prior', 'year': nfl_prior_year},
+        2: {'json': 'third', 'year': nfl_third_year},
+        3: {'json': 'fourth', 'year': nfl_fourth_year}
+    }
+
+    # CREATE LIST OF DATAFRAMES TO LOOP THROUGH
+    current_games = df_logs[(df_logs['year'] == nfl_current_year) & (df_logs['team_id'] == player_teams[nfl_current_year])]
+    prior_games = df_logs[(df_logs['year'] == nfl_prior_year) & (df_logs['team_id'] == player_teams[nfl_prior_year])]
+    third_games = df_logs[(df_logs['year'] == nfl_third_year) & (df_logs['team_id'] == player_teams[nfl_third_year])]
+    fourth_games = df_logs[(df_logs['year'] == nfl_fourth_year) & (df_logs['team_id'] == player_teams[nfl_fourth_year])]
+
+    # CREATE A DF OF TOTAL GAMES
+    total_games = pd.concat([current_games, prior_games])
+    total_games = pd.concat([total_games, third_games])
+    total_games = pd.concat([total_games, fourth_games])
+
+    # GROUP GAMES BY GAME_ID TO THEN APPLY PERCENTAGE MATH AND CREATE NEW COLUMNS
+    grouped_games = total_games.groupby(['game_id', 'week', 'year', 'position'])[[limit_stat, column_name]].sum()
+    grouped_games = grouped_games.reset_index()
+
+    game_group = grouped_games.groupby(['game_id'])[[limit_stat, column_name]].sum()
+    grouped_games['att_share_percentage'] = round((grouped_games[limit_stat] / game_group.loc[grouped_games['game_id'].values[0]][limit_stat]) * 100, 1)
+    grouped_games['percent_of_stat_total'] = round((grouped_games[column_name] / game_group.loc[grouped_games['game_id'].values[0]][column_name]) * 100, 1)
+
+    current_test = grouped_games[grouped_games['year'] == nfl_current_year]
+    prior_test = grouped_games[grouped_games['year'] == nfl_prior_year]
+    third_test = grouped_games[grouped_games['year'] == nfl_third_year]
+    fourth_test = grouped_games[grouped_games['year'] == nfl_fourth_year]
+
+    list_df = [current_test, prior_test, third_test, fourth_test]
+    for i in range(len(list_df)):
+        df = list_df[i]
+        year = year_dict[i]['json']
+
+        df_rb = df[df['position'] == 'RB']
+        rb_limit_stat_dict = dict(zip(df_rb['week'].values.tolist(), df_rb[limit_stat].values.tolist()))
+        rb_target_percentage_dict = dict(zip(df_rb['week'].values.tolist(), df_rb['att_share_percentage'].values.tolist()))
+        rb_stat_total_dict = dict(zip(df_rb['week'].values.tolist(), df_rb[column_name].values.tolist()))
+        rb_stat_percentage_dict = dict(zip(df_rb['week'].values.tolist(), df_rb['percent_of_stat_total'].values.tolist()))
+
+        json_output.update({f"rb_limit_stat_dict_{year}": rb_limit_stat_dict})
+        json_output.update({f"rb_att_share_percentage_dict_{year}": rb_target_percentage_dict})
+        json_output.update({f"rb_stat_total_dict_{year}": rb_stat_total_dict})
+        json_output.update({f"rb_stat_percentage_dict_{year}": rb_stat_percentage_dict})
+
+        df_wr = df[df['position'] == 'WR']
+        wr_limit_stat_dict = dict(zip(df_wr['week'].values.tolist(), df_wr['targets'].values.tolist()))
+        wr_target_percentage_dict = dict(zip(df_wr['week'].values.tolist(), df_wr['att_share_percentage'].values.tolist()))
+        wr_stat_total_dict = dict(zip(df_wr['week'].values.tolist(), df_wr[column_name].values.tolist()))
+        wr_stat_percentage_dict = dict(zip(df_wr['week'].values.tolist(), df_wr['percent_of_stat_total'].values.tolist()))
+
+        json_output.update({f"wr_limit_stat_dict_{year}": wr_limit_stat_dict})
+        json_output.update({f"wr_att_share_percentage_dict_{year}": wr_target_percentage_dict})
+        json_output.update({f"wr_stat_total_dict_{year}": wr_stat_total_dict})
+        json_output.update({f"wr_stat_percentage_dict_{year}": wr_stat_percentage_dict})
+
+        df_te = df[df['position'] == 'TE']
+        te_limit_stat_dict = dict(zip(df_te['week'].values.tolist(), df_te['targets'].values.tolist()))
+        te_target_percentage_dict = dict(zip(df_te['week'].values.tolist(), df_te['att_share_percentage'].values.tolist()))
+        te_stat_total_dict = dict(zip(df_te['week'].values.tolist(), df_te[column_name].values.tolist()))
+        te_stat_percentage_dict = dict(zip(df_te['week'].values.tolist(), df_te['percent_of_stat_total'].values.tolist()))
+
+        json_output.update({f"te_limit_stat_dict_{year}": te_limit_stat_dict})
+        json_output.update({f"te_att_share_percentage_dict_{year}": te_target_percentage_dict})
+        json_output.update({f"te_stat_total_dict_{year}": te_stat_total_dict})
+        json_output.update({f"te_stat_percentage_dict_{year}": te_stat_percentage_dict})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
 
 
 
-# potential new route - for rec stats, get QB's percentage/breakdown by position
-# @nfl.route('/nfl/player/qb_breakdowns', methods=['GET'])
-# def nfl_qb_breakdown():
-#     player_id = int(request.args.get('id', None))
-#     column_name = request.args.get('stat', None)
-#     # operator = request.args.get('operator', None)
-#     # value = int(request.args.get('value', None))
-#     json_output = {}
-#
-#     if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
-#         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
-#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
-#                       'pass_td', 'pass_comp', 'pass_longest']
-#     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-#         columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
-#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards',
-#                       'rush_td', 'rush_longest', 'fumbles']
-#     else:
-#         columns = 'rec, targets, rec_yards, rec_td, rec_longest'
-#         df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets',
-#                       'rec_yards', 'rec_td', 'rec_longest']
-#
-#     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
-#     connection = create_connection()
-#     cursor = connection.cursor()
-#
-#     player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-#                             player.position, game_id, player_id, team_id, opp_id, {columns}
-#                         FROM
-#                         nfl_player_stats
-#                         JOIN
-#                         player ON player.id = nfl_player_stats.player_id
-#                         JOIN
-#                         nfl_games on nfl_games.id = nfl_player_stats.game_id
-#                         WHERE nfl_games.year >=2022 AND nfl_player_stats.game_id IN
-#                         (select nfl_player_stats.game_id from nfl_player_stats where nfl_player_stats.player_id = {player_id})
-#                          '''
-#     cursor.execute(player_query)
-#
-#     results = list(cursor.fetchall())
-#     df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-#
-#     player_team_dict = {nfl_current_year: '', nfl_prior_year: '', nfl_third_year: '', nfl_fourth_year: ''}
-#     try:
-#         df_player_curr = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_current_year)]
-#         player_team_dict[nfl_current_year] = int(np.unique(df_player_curr['team_id'].values))
-#     except TypeError:
-#         player_team_dict[nfl_current_year] = 0
-#
-#     try:
-#         df_player_prior = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_prior_year)]
-#         player_team_dict[nfl_prior_year] = int(np.unique(df_player_prior['team_id'].values))
-#     except TypeError:
-#         player_team_dict[nfl_prior_year] = 0
-#
-#     try:
-#         df_player_third = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_third_year)]
-#         player_team_dict[nfl_third_year] = int(np.unique(df_player_third['team_id'].values))
-#     except TypeError:
-#         player_team_dict[nfl_third_year] = 0
-#
-#     try:
-#         df_player_fourth = df_logs[(df_logs['player_id'] == player_id) & (df_logs['year'] == nfl_fourth_year)]
-#         player_team_dict[nfl_fourth_year] = int(np.unique(df_player_fourth['team_id'].values))
-#     except TypeError:
-#         player_team_dict[nfl_fourth_year] = 0
-#
-#     print(player_team_dict)
-#     # GET PRIOR TEAM GAMES
-#     team_games_prior = df_logs[
-#         (df_logs['team_id'] == player_team_dict[nfl_prior_year]) & (df_logs['year'] == nfl_prior_year)]
-#     current_player_count = team_games_prior.groupby(['week', 'pos'])['targets'].sum().reset_index(name='targets')
-#     for week in np.unique(team_games_prior['week'].values):
-#         weekly_target_frame = current_player_count[current_player_count['week'] == week]
-#         weekly_total_targets = current_player_count[current_player_count['week'] == week]['targets'].sum()
-#         weekly_target_frame['percent_of_team_total'] = weekly_target_frame['targets'].apply(
-#             lambda x: round(((x / weekly_total_targets) * 100), 1))
-#         print(weekly_target_frame)
-#         print('-----------------------------------------------------')
-#
-#
-#     # print(current_player_count)
-#
-#
-#
-#     return json_output
 
 # UPLOAD/ADD ROUTES
 @nfl.route('/nfl/games', methods=['POST', 'PUT'])
