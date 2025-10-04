@@ -1,7 +1,7 @@
 Full stack application for analytics across 5 major sports. Data can be searched either by individual players or entire teams.
 
 Tech Stack (front to back)
-1. Solid.js
+1. HTML/CSS/JS
 2. Nginx Reverse Proxy Server
 3. Gunicorn / WSGI Webserver
 4. Python (Flask) REST API
