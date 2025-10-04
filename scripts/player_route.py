@@ -67,12 +67,13 @@ def get_player_dropdown():
 
     result_list = []
     for result in results:
-        player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1], 'position': result[3], 'team': result[4]}
+        player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1], 'position': result[3], 'team': result[4],
+                       'full_name': f"{result[1]} {result[2]}"}
         result_list.append(player_dict)
 
     # Enable Access-Control-Allow-Origin
+    sorted(result_list)
     result_list = jsonify(result_list)
-    print(result_list)
     result_list.headers.add("Access-Control-Allow-Origin", "*")
     return result_list
 
