@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="./index.css" />
+  </head>
+  <body>
+    <form action="" id="playerSearch">
+      <div>
+        <label for="id">Player Name</label>
+        <input
+          id="id"
+          type="text"
+          name="id"
+          list="playerList"
+          oninput="handleInput()"
+        />
+        <datalist name="playerList" id="playerList"> </datalist>
+      </div>
+      <div>
+        <label for="team">Team</label>
+        <input type="text" name="team" id="team" value="" />
+      </div>
+      <div>
+        <label for="stat">Stat</label>
+        <input type="text" name="stat" list="statList" />
+        <datalist name="statList" id="statList"> </datalist>
+      </div>
+      <div>
+        <label for="operator">Over/Under</label>
+        <input type="text" name="operator" list="operatorList" />
+        <datalist name="operatorList" id="operatorList">
+          <option value="over">Over</option>
+          <option value="under">Under</option>
+        </datalist>
+      </div>
+      <div>
+        <label for="amount">Amount</label>
+        <input type="number" name="amount" min="0" />
+      </div>
+
+      <button type="submit">Search</button>
+    </form>
+  </body>
+</html>
+
+<script>
+  //get player list
+  async function fetchPlayers() {
+    const res = await fetch("http://129.80.84.210/api/players?sport_id=1");
+
+    const data = await res.json();
+
+    let playerList = document.querySelector("#playerList");
+
+    for (let elements of data) {
+      let option = document.createElement("option");
+      option.innerText = elements.full_name;
+      option.value = elements.id;
+      option.dataset.team = elements.team;
+      playerList.appendChild(option);
+    }
+  }
+  //stats to load
+  function loadFootballStats() {
+    let statList = document.querySelector("#statList");
+
+    for (let elements of footballStats) {
+      let option = document.createElement("option");
+      option.innerText = elements.name;
+      option.value = elements.value;
+      statList.appendChild(option);
+    }
+  }
+  //autofill team based on player select
+
+  function handleInput() {
+    const team = document.querySelector("#team");
+    const player = document.querySelector("#id");
+    const selected = player.value;
+
+    const dataListPlayers = document.querySelector("#playerList");
+    let selectedOption = null;
+
+    for (const option of dataListPlayers.options) {
+      if (option.value == selected) {
+        selectedOption = option;
+        break;
+      }
+    }
+    team.value = selectedOption.dataset.team;
+  }
+
+  //submit logic
+  const playerSearch = document.querySelector("#playerSearch");
+
+  playerSearch.addEventListener("submit", PlayerSearch);
+
+  function PlayerSearch(event) {
+    event.preventDefault();
+
+    const formData = new FormData(playerSearch);
+    const data = [...formData.entries()];
+
+    const queryString = new URLSearchParams(data).toString();
+
+    window.location.replace("searchresults.html?" + queryString);
+  }
+
+  const footballStats = [
+    {
+      value: "pass_att",
+      name: "Passing Attempts",
+    },
+    {
+      value: "pass_comp",
+      name: "Passing Completions",
+    },
+    {
+      value: "pass_yards",
+      name: "Passing Yards",
+    },
+    {
+      value: "pass_td",
+      name: "Passing TDs",
+    },
+    {
+      value: "pass_longest",
+      name: "Longest Pass",
+    },
+    {
+      value: "ints",
+      name: "Interceptions",
+    },
+    {
+      value: "sacks",
+      name: "Sacks",
+    },
+    {
+      value: "rush_att",
+      name: "Rush Attempts",
+    },
+    {
+      value: "rush_yards",
+      name: "Rush Yards",
+    },
+    {
+      value: "rush_td",
+      name: "Rush TDs",
+    },
+    {
+      value: "rush_longest",
+      name: "Longest Rush",
+    },
+    {
+      value: "targets",
+      name: "Targets",
+    },
+    {
+      value: "rec",
+      name: "Receptions",
+    },
+    {
+      value: "rec_yards",
+      name: "Receiving Yards",
+    },
+    {
+      value: "rec_td",
+      name: "Receiving TDs",
+    },
+    {
+      value: "rec_longest",
+      name: "Longest Reception",
+    },
+    {
+      value: "fumbles",
+      name: "Fumbles",
+    },
+  ];
+
+  loadFootballStats();
+  fetchPlayers();
+</script>

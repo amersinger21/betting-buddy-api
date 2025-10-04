@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body></body>
+</html>
+
+<script>
+  let params = new URLSearchParams(document.location.search);
+  const id = params.get("id");
+  const stat = params.get("stat");
+  const operator = params.get("operator");
+  const value = params.get("value");
+  let data;
+
+  const statName = document.querySelector("#statName");
+  const statResult = document.querySelector("#statResult");
+
+  async function playerResults(sportID) {
+    const response = await fetch(
+      `http://129.80.84.210/api/nfl/team/starting_qb?team_id=4`
+    );
+
+    const json = await response.json();
+
+    data = json;
+
+    console.log(data);
+  }
+
+  playerResults();
+</script>
