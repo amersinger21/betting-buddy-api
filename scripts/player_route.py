@@ -4,6 +4,10 @@ import pandas as pd
 
 player = Blueprint("player", __name__)
 
+nfl_team_dict = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
+                 'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
+                 'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
+                 'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
 
 @player.route('/player', methods=['POST'])
 def add_player():
@@ -58,21 +62,19 @@ def get_player_dropdown():
     cursor = connection.cursor()
 
     # execute the query getting the nfl players
-    cursor.execute('''
-                SELECT player.id, player.first_name, player.last_name, player.position, player.current_team
+    cursor.execute(f'''SELECT player.id, player.first_name, player.last_name, player.position, player.current_team
                     FROM player
-                    WHERE player.sport_id = %s and player.currently_playing = %s''',
-                   [sport_id,'Y'])
+                    WHERE player.sport_id = {sport_id} and player.currently_playing = Y
+                    ''')
     results = list(cursor.fetchall())
 
     result_list = []
     for result in results:
         player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1], 'position': result[3], 'team': result[4],
-                       'full_name': f"{result[1]} {result[2]}"}
+                       'full_name': f"{result[1]} {result[2]}", 'team_id': nfl_team_dict[result[4]]}
         result_list.append(player_dict)
 
     # Enable Access-Control-Allow-Origin
-    # result_list = result_list.sort()
     result_list = jsonify(result_list)
     result_list.headers.add("Access-Control-Allow-Origin", "*")
     return result_list
