@@ -64,12 +64,13 @@ def get_player_dropdown():
     # execute the query getting the nfl players
     cursor.execute(f'''SELECT player.id, player.first_name, player.last_name, player.position, player.current_team
                     FROM player
-                    WHERE player.sport_id = {sport_id} and player.currently_playing = Y
+                    WHERE player.sport_id = {sport_id} and player.currently_playing = 'Y'
                     ''')
     results = list(cursor.fetchall())
 
     result_list = []
     for result in results:
+        print(result)
         player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1], 'position': result[3], 'team': result[4],
                        'full_name': f"{result[1]} {result[2]}", 'team_id': nfl_team_dict[result[4]]}
         result_list.append(player_dict)
