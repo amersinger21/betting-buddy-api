@@ -590,9 +590,13 @@ def nfl_opponent_logs_and_occurrences():
         vs_player_bet_occurrences = opp_logs_vs_player[opp_logs_vs_player[column_name] > value]
     else:
         vs_player_bet_occurrences = opp_logs_vs_player[opp_logs_vs_player[column_name] <= value]
-    json_output.update({'vs_player_bet_occurrences': round(
-        (len(vs_player_bet_occurrences.index) / opp_games_vs_player_count) * 100, 1)})
-    json_output.update({'vs_player_game_logs': opp_logs_vs_player.to_json()})
+    try:
+        json_output.update({'vs_player_bet_occurrences': round(
+            (len(vs_player_bet_occurrences.index) / opp_games_vs_player_count) * 100, 1)})
+        json_output.update({'vs_player_game_logs': opp_logs_vs_player.to_json()})
+    except ZeroDivisionError:
+        json_output.update({'vs_player_bet_occurrences': 0})
+        json_output.update({'vs_player_game_logs': 0})
 
 
     json_output = jsonify(json_output)
