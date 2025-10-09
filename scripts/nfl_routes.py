@@ -321,9 +321,11 @@ def nfl_home_road_logs():
 
     total_home_games = len(df_home.index)
     total_away_games = len(df_away.index)
+    current_home_games = len(df_home[df_home['year'] == nfl_current_year].index)
     prior_home_games = len(df_home[df_home['year'] == nfl_prior_year].index)
     third_home_games = len(df_home[df_home['year'] == nfl_third_year].index)
     fourth_home_games = len(df_home[df_home['year'] == nfl_fourth_year].index)
+    current_away_games = len(df_away[df_away['year'] == nfl_current_year].index)
     prior_away_games = len(df_away[df_away['year'] == nfl_prior_year].index)
     third_away_games = len(df_away[df_away['year'] == nfl_third_year].index)
     fourth_away_games = len(df_away[df_away['year'] == nfl_fourth_year].index)
@@ -331,6 +333,8 @@ def nfl_home_road_logs():
     if operator == 'over':
         home_bet_occurrences = df_home[df_home[column_name] > value]
         away_bet_occurrences = df_away[df_away[column_name] > value]
+        home_bet_occurrences_current = df_home[(df_home['year'] == nfl_current_year) & (df_home[column_name] > value)]
+        away_bet_occurrences_current = df_away[(df_away['year'] == nfl_current_year) & (df_away[column_name] > value)]
         home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] > value)]
         away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] > value)]
         home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] > value)]
@@ -340,6 +344,8 @@ def nfl_home_road_logs():
     else:
         home_bet_occurrences = df_home[df_home[column_name] <= value]
         away_bet_occurrences = df_away[df_away[column_name] <= value]
+        home_bet_occurrences_current = df_home[(df_home['year'] == nfl_current_year) & (df_home[column_name] <= value)]
+        away_bet_occurrences_current = df_away[(df_away['year'] == nfl_current_year) & (df_away[column_name] <= value)]
         home_bet_occurrences_prior = df_home[(df_home['year'] == nfl_prior_year) & (df_home[column_name] <= value)]
         away_bet_occurrences_prior = df_away[(df_away['year'] == nfl_prior_year) & (df_away[column_name] <= value)]
         home_bet_occurrences_third = df_home[(df_home['year'] == nfl_third_year) & (df_home[column_name] <= value)]
@@ -350,6 +356,12 @@ def nfl_home_road_logs():
         {'home_game_bet_occurrence': round((len(home_bet_occurrences.index) / total_home_games) * 100, 1)})
     json_output.update(
         {'away_game_bet_occurrence': round((len(away_bet_occurrences.index) / total_away_games) * 100, 1)})
+    json_output.update(
+        {'home_bet_occurrences_current': round((len(home_bet_occurrences_current.index) / current_home_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_current': round((len(away_bet_occurrences_current.index) / current_away_games) * 100, 1)})
+    json_output.update(
+        {'away_bet_occurrences_prior': round((len(away_bet_occurrences_prior.index) / prior_away_games) * 100, 1)})
     json_output.update(
         {'home_bet_occurrences_prior': round((len(home_bet_occurrences_prior.index) / prior_home_games) * 100, 1)})
     json_output.update(
