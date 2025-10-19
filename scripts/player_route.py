@@ -62,9 +62,11 @@ def get_player_dropdown():
     cursor = connection.cursor()
 
     # execute the query getting the nfl players
-    cursor.execute(f'''SELECT player.id, player.first_name, player.last_name, player.position, player.current_team
+    cursor.execute(f'''SELECT player.id, player.first_name, player.last_name, player.position, player.current_team, team.id
                     FROM player
-                    WHERE player.sport_id = {sport_id} and player.currently_playing = 'Y'
+                    JOIN
+                    team ON team.name = player.current_team
+                    WHERE player.sport_id = {sport_id} and team.sport_id = {sport_id} and player.currently_playing = 'Y'
                     ''')
     results = list(cursor.fetchall())
 
@@ -72,7 +74,7 @@ def get_player_dropdown():
     for result in results:
         print(result)
         player_dict = {'id': result[0], 'last_name': result[2], 'first_name': result[1], 'position': result[3], 'team': result[4],
-                       'full_name': f"{result[1]} {result[2]}"}
+                       'full_name': f"{result[1]} {result[2]}", 'team_id': result[5]}
         result_list.append(player_dict)
 
     # Enable Access-Control-Allow-Origin
