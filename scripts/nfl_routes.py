@@ -14,6 +14,7 @@ nfl_fourth_year = 2022
 nfl_third_year = 2023
 nfl_prior_year = 2024
 nfl_current_year = 2025
+nfl_current_week = 18
 
 year_name_dict = {2019: 'six_years_ago', 2020: 'five_years_ago' , 2021: 'four_years_ago',
                   2022: 'fourth', 2023: 'third', 2024: 'prior', 2025: 'current'}
@@ -81,6 +82,7 @@ def nfl_player_game_logs():
     json_output.update({'fourth_game_logs': df_logs[df_logs['year'] == nfl_fourth_year].to_json()})
     json_output.update({'last_four_game_logs': df_logs.tail(4).to_json()})
     json_output.update({'last_eight_game_logs': df_logs.tail(8).to_json()})
+
 
     if operator == 'over':
         json_output.update({'current_bet_logs': df_logs[
@@ -1369,6 +1371,7 @@ def nfl_team_offense():
     df = pd.read_csv(file)
 
     for ind, row in df.iterrows():
+        print(row)
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -1489,7 +1492,7 @@ def nfl_team_offense():
                     pass_td = %s, pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
                     passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s, rush_att = %s, rush_yards = %s, 
                     rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s, points_per_game = %s,
-                    total_points = %s,, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
+                    total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
                     yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
                     fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
                     WHERE nfl_team_offense.team_id = %s AND nfl_team_offense.year = %s""",(values))
@@ -1752,6 +1755,7 @@ def nfl_weekly_ranks():
                      'pass_td_rank': int(row['pass_td_rank']),
                      'rush_td_rank': int(row['rush_td_rank']),
                      'rec_td_rank': int(row['rec_td_rank']),
+                     'pass_att_rank': int(row['pass_att_rank']),
                      'pass_comp_rank': int(row['pass_comp_rank']),
                      'rush_att_rank': int(row['rush_att_rank']),
                      'rec_rank': int(row['rec_rank']),
@@ -1763,9 +1767,9 @@ def nfl_weekly_ranks():
         cursor.execute("""INSERT INTO nfl_weekly_rank (team_id, year, week, pass_att, pass_comp, pass_yards,
          pass_td, rush_att, rush_yards, rush_td, targets, rec, rec_yards, rec_td, pyards_per_att, 
          ryards_per_att, ryards_per_recs, pass_yards_rank, rush_yards_rank, rec_yards_rank, pass_td_rank, rush_td_rank,
-         rec_td_rank, pass_comp_rank, rush_att_rank, rec_rank, pass_yards_per_att_rank, rush_yards_per_att_rank, rec_yards_per_rec_rank) 
+         rec_td_rank, pass_att_rank, pass_comp_rank, rush_att_rank, rec_rank, pass_yards_per_att_rank, rush_yards_per_att_rank, rec_yards_per_rec_rank) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-             %s, %s, %s, %s, %s, %s, %s)""",
+             %s, %s, %s, %s, %s, %s, %s, %s)""",
            (values))
 
         connection.commit()
@@ -1881,3 +1885,279 @@ def nfl_update_starting_lineup_te():
 
 
     return f"nfl_weekly_rank has been updated ."
+
+
+
+# SUMMARY SECTION ROUTES
+@nfl.route('/nfl/player/player_info', methods=['GET'])
+def nfl_player_info():
+    player_id = int(request.args.get('id', None))
+    json_output = {}
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT player.id, CONCAT(player.first_name, ' ', player.last_name) AS player_name, player.position,
+                    player.image, player.current_team, team.id FROM player
+                    JOIN 
+                    team ON team.name = player.current_team
+                    WHERE player.id = {player_id} and team.sport_id = 1'''
+    cursor.execute(player_query)
+    results = cursor.fetchone()
+
+    # Add player data to JSON output
+    json_output.update({'player_position': str(results[2])})
+    json_output.update({'player_name': str(results[1])})
+    json_output.update({'player_team_name': str(results[4])})
+    json_output.update({'player_team_id': int(results[5])})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/team/team_summary', methods=['GET'])
+def nfl_team_summary():
+    team_id = int(request.args.get('team_id', None))
+    column_name = request.args.get('stat', None)
+    json_output = {}
+
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td, 
+                    nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
+    else:
+        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
+                    nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
+
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT nfl_team_offense.year, nfl_team_offense.team_id, {columns}, team.id, team.name
+                    FROM nfl_team_offense
+                    JOIN 
+                    team ON team.id = nfl_team_offense.team_id
+                    WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_prior_year} and team.sport_id = 1'''
+    cursor.execute(player_query)
+    results = cursor.fetchone()
+
+    # Add player data to JSON output
+    json_output.update({'team_name': str(results[8])})
+    json_output.update({'team_stat': int(results[3])})
+    json_output.update({'team_stat_per_att': float(results[5])})
+    json_output.update({'team_stat_per_game': float(results[6])})
+    json_output.update({'team_touchdowns': int(results[4])})
+    json_output.update({'team_attempts': int(results[2])})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/team/team_rank_summary', methods=['GET'])
+def nfl_team_rank_summary():
+    team_id = int(request.args.get('team_id', None))
+    column_name = request.args.get('stat', None)
+    json_output = {}
+
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td,
+                    nfl_team_offense.rush_yards_per_att, nfl_team_offense.rush_yards_per_game'''
+    else:
+        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
+                    nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
+    cols = ['year', 'team_id', 'limit_stat', 'stat_total', 'td', 'yards_per_att', 'yards_per_game']
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT nfl_team_offense.year, nfl_team_offense.team_id, {columns}
+                    FROM nfl_team_offense
+                    WHERE nfl_team_offense.year = {2024}'''
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
+
+    # Rank columns
+    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=False)
+    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=False)
+    df_teams['td_rank'] = df_teams['td'].rank(ascending=False)
+    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=False)
+    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=False)
+
+    # Filter to get team ranks
+    df_team = df_teams[df_teams['team_id'] == team_id]
+
+    # Add player data to JSON output
+    json_output.update({'limit_stat_rank': df_team['limit_stat_rank'].values[0]})
+    json_output.update({'stat_total_rank': df_team['stat_total_rank'].values[0]})
+    json_output.update({'td_rank': df_team['td_rank'].values[0]})
+    json_output.update({'yards_per_att_rank': df_team['yards_per_att_rank'].values[0]})
+    json_output.update({'yards_per_game_rank': df_team['yards_per_game_rank'].values[0]})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/team/opponent_summary', methods=['GET'])
+def nfl_opponent_summary():
+    opp_id = int(request.args.get('opp_id', None))
+    column_name = request.args.get('stat', None)
+    json_output = {}
+
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = '''nfl_team_defense.rush_att, nfl_team_defense.rush_yards, nfl_team_defense.rush_td,
+                    nfl_team_defense.rush_yards_per_att, nfl_team_defense.rush_yards_per_game'''
+    else:
+        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
+                    nfl_team_defense.yards_per_att, nfl_team_defense.pass_yards_per_game'''
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT nfl_team_defense.year, nfl_team_defense.team_id, {columns}, team.id, team.name
+                    FROM nfl_team_defense
+                    JOIN 
+                    team ON team.id = nfl_team_defense.team_id
+                    WHERE nfl_team_defense.team_id = {opp_id} and nfl_team_defense.year = {2024} and team.sport_id = 1'''
+    cursor.execute(player_query)
+    results = cursor.fetchone()
+
+    # Add player data to JSON output
+    json_output.update({'team_name': str(results[-1])})
+    json_output.update({'team_stat': int(results[3])})
+    json_output.update({'team_stat_per_att': float(results[5])})
+    json_output.update({'team_stat_per_game': float(results[6])})
+    json_output.update({'team_touchdowns': int(results[4])})
+    json_output.update({'team_attempts': int(results[2])})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/team/opponent_rank_summary', methods=['GET'])
+def nfl_opponent_rank_summary():
+    opp_id = int(request.args.get('opp_id', None))
+    column_name = request.args.get('stat', None)
+    json_output = {}
+
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = '''nfl_team_defense.rush_att, nfl_team_defense.rush_yards, nfl_team_defense.rush_td,
+                    nfl_team_defense.rush_yards_per_att, nfl_team_defense.rush_yards_per_game'''
+    else:
+        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
+                    nfl_team_defense.yards_per_att, nfl_team_defense.pass_yards_per_game'''
+    cols = ['year', 'team_id', 'limit_stat', 'stat_total', 'td', 'yards_per_att', 'yards_per_game']
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT nfl_team_defense.year, nfl_team_defense.team_id, {columns}
+                    FROM nfl_team_defense
+                    WHERE nfl_team_defense.year = {2024}'''
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
+
+    # Rank columns
+    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=False)
+    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=False)
+    df_teams['td_rank'] = df_teams['td'].rank(ascending=False)
+    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=False)
+    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=False)
+
+    # Filter to get team ranks
+    df_team = df_teams[df_teams['team_id'] == opp_id]
+
+    # Add player data to JSON output
+    json_output.update({'limit_stat_rank': df_team['limit_stat_rank'].values[0]})
+    json_output.update({'stat_total_rank': df_team['stat_total_rank'].values[0]})
+    json_output.update({'td_rank': df_team['td_rank'].values[0]})
+    json_output.update({'yards_per_att_rank': df_team['yards_per_att_rank'].values[0]})
+    json_output.update({'yards_per_game_rank': df_team['yards_per_game_rank'].values[0]})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/player/game_logs_summary', methods=['GET'])
+def nfl_game_log_summary():
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    json_output = {}
+
+    if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
+        columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
+                      'pass_td', 'pass_comp', 'pass_longest']
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards',
+                      'rush_td', 'rush_longest', 'fumbles']
+    else:
+        columns = 'rec, targets, rec_yards, rec_td, rec_longest'
+        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets',
+                      'rec_yards', 'rec_td', 'rec_longest']
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id, {columns}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= {nfl_current_year} AND nfl_player_stats.player_id = %s'''
+    values = [player_id]
+    cursor.execute(player_query, values)
+
+    results = list(cursor.fetchall())
+
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # This block gets players most recent information
+    df_player_info = df_logs.tail(1)
+    player_pos = df_player_info['pos'].values.tolist()[0]
+
+    json_output.update({'player_position': player_pos})
+    json_output.update({'player_name': df_player_info['name'].values.tolist()[0]})
+    json_output.update({'player_team': df_player_info['team_id'].values.tolist()[0]})
+
+    # PLAYER GAME LOG INFORMATION
+    json_output.update({'current_game_logs': df_logs[ df_logs['year'] == nfl_current_year].to_json()})
+    json_output.update({'prior_game_logs': df_logs[df_logs['year'] == nfl_prior_year].to_json()})
+    json_output.update({'third_game_logs': df_logs[df_logs['year'] == nfl_third_year].to_json()})
+    json_output.update({'fourth_game_logs': df_logs[df_logs['year'] == nfl_fourth_year].to_json()})
+    json_output.update({'last_four_game_logs': df_logs.tail(4).to_json()})
+    json_output.update({'last_eight_game_logs': df_logs.tail(8).to_json()})
+
+
+    if operator == 'over':
+        json_output.update({'current_bet_logs': df_logs[
+            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'prior_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] > value)].to_json()})
+        json_output.update({'fourth_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] > value)].to_json()})
+    else:
+        json_output.update({'current_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'prior_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] <= value)].to_json()})
+        json_output.update({'third_bet_logs': df_logs.loc[
+            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] <= value)].to_json()})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output

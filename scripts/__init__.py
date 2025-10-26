@@ -1,6 +1,9 @@
 from flask import Flask
+import os
 
 from . import db
+
+log_path = os.getenv("LOG_PATH")
 
 # Non-Pushing Script
 # def create_app():
