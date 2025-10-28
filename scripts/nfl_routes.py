@@ -1888,6 +1888,7 @@ def nfl_update_starting_lineup_te():
 
 
 
+
 # SUMMARY SECTION ROUTES
 @nfl.route('/nfl/player/player_info', methods=['GET'])
 def nfl_player_info():
@@ -2084,22 +2085,20 @@ def nfl_opponent_rank_summary():
 def nfl_game_log_summary():
     player_id = int(request.args.get('id', None))
     column_name = request.args.get('stat', None)
-    operator = request.args.get('operator', None)
-    value = int(request.args.get('value', None))
     json_output = {}
 
     if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
-        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
-                      'pass_td', 'pass_comp', 'pass_longest']
+        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
+                    'opp_id': '', 'pass_att': '', 'pass_yards': '', 'pass_td': '', 'pass_comp': '', 'pass_longest': ''}
     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
-        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards',
-                      'rush_td', 'rush_longest', 'fumbles']
+        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
+                    'opp_id': '', 'rush_att': '', 'rush_yards': '', 'rush_td': '', 'rush_longest': '', 'fumbles': ''}
     else:
         columns = 'rec, targets, rec_yards, rec_td, rec_longest'
-        df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets',
-                      'rec_yards', 'rec_td', 'rec_longest']
+        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
+                    'opp_id': '', 'rec': '', 'targets': '', 'rec_yards': '', 'rec_td': '', 'rec_longest': ''}
 
     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
     connection = create_connection()
@@ -2114,49 +2113,22 @@ def nfl_game_log_summary():
                     player ON player.id = nfl_player_stats.player_id
                     JOIN
                     nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= {nfl_current_year} AND nfl_player_stats.player_id = %s'''
-    values = [player_id]
-    cursor.execute(player_query, values)
+                    WHERE nfl_games.year >= {nfl_current_year} AND nfl_player_stats.player_id = {player_id}'''
+    cursor.execute(player_query)
 
-    results = list(cursor.fetchall())
+    raw_results = list(cursor.fetchall())
+    results = raw_results[(len(raw_results) - 5):]
 
-    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
-    # This block gets players most recent information
-    df_player_info = df_logs.tail(1)
-    player_pos = df_player_info['pos'].values.tolist()[0]
-
-    json_output.update({'player_position': player_pos})
-    json_output.update({'player_name': df_player_info['name'].values.tolist()[0]})
-    json_output.update({'player_team': df_player_info['team_id'].values.tolist()[0]})
-
-    # PLAYER GAME LOG INFORMATION
-    json_output.update({'current_game_logs': df_logs[ df_logs['year'] == nfl_current_year].to_json()})
-    json_output.update({'prior_game_logs': df_logs[df_logs['year'] == nfl_prior_year].to_json()})
-    json_output.update({'third_game_logs': df_logs[df_logs['year'] == nfl_third_year].to_json()})
-    json_output.update({'fourth_game_logs': df_logs[df_logs['year'] == nfl_fourth_year].to_json()})
-    json_output.update({'last_four_game_logs': df_logs.tail(4).to_json()})
-    json_output.update({'last_eight_game_logs': df_logs.tail(8).to_json()})
-
-
-    if operator == 'over':
-        json_output.update({'current_bet_logs': df_logs[
-            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] > value)].to_json()})
-        json_output.update({'prior_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] > value)].to_json()})
-        json_output.update({'third_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] > value)].to_json()})
-        json_output.update({'fourth_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] > value)].to_json()})
-    else:
-        json_output.update({'current_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_current_year) & (df_logs[column_name] <= value)].to_json()})
-        json_output.update({'prior_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_prior_year) & (df_logs[column_name] <= value)].to_json()})
-        json_output.update({'third_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_third_year) & (df_logs[column_name] <= value)].to_json()})
-        json_output.update({'third_bet_logs': df_logs.loc[
-            (df_logs['year'] == nfl_fourth_year) & (df_logs[column_name] <= value)].to_json()})
+    # Build table data in JSON format
+    row_indicator = 1
+    for tup in results:
+        index = 0
+        row_dict = row_dict_temp
+        for key in row_dict_temp.keys():
+            row_dict[key] = tup[index]
+            index +=1
+        json_output[row_indicator] = row_dict
+        row_indicator += 1
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
