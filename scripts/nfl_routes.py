@@ -2133,3 +2133,112 @@ def nfl_game_log_summary():
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
+
+@nfl.route('/nfl/player/bet_occurrence_summary', methods=['GET'])
+def nfl_bet_occurrence_summary():
+    # Initialize variables
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    operator = request.args.get('operator', None)
+    value = int(request.args.get('value', None))
+    opp_id = int(request.args.get('opp_id', None))
+    location = request.args.get('loc', None)
+    json_output = {}
+
+    # Set home/away variable
+    if location == 'home':
+        loc_id = 'home_id'
+    else:
+        loc_id = 'away_id'
+
+    limit_stat = limit_stat_dict[column_name]
+    columns = f'''{limit_stat}, {column_name}'''
+    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'home_id', 'away_id',
+                  limit_stat, column_name]
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id, nfl_games.home_id, nfl_games.away_id, {columns}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = {player_id}'''
+
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    # Create game log from returned sql query
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    # Create a dictionary of games played each year
+    df_log_years = df_logs.groupby(by=['year']).count()['week'].reset_index()
+    games_dict = dict(zip(df_log_years['year'].values.tolist(), df_log_years['week'].values.tolist()))
+
+    # Game logs versus opponents
+    df_opponent = df_logs[df_logs['opp_id'] == opp_id].reset_index(drop=True)
+
+    # Bet occurrences at home/away depending on if player is away or home
+    df_loc = df_logs[df_logs[loc_id] == df_logs['team_id'].values[0]].reset_index(drop=True)
+    df_loc_years = df_loc.groupby(by=['year']).count()['week'].reset_index()
+    loc_games_dict = dict(zip(df_loc_years['year'].values.tolist(), df_loc_years['week'].values.tolist()))
+
+
+    if operator == 'over':
+        df_bet = df_logs[df_logs[column_name] > value]
+        vs_opponent = df_opponent[df_opponent[column_name] > value]
+        df_bet_loc = df_loc[df_logs[column_name] > value]
+    else:
+        df_bet = df_logs[df_logs[column_name] <= value]
+        vs_opponent = df_opponent[df_opponent[column_name] > value]
+        df_bet_loc = df_loc[df_logs[column_name] <= value]
+
+    # Create a dictionary of number of times bet hit each year
+    df_bet_years = df_bet.groupby(by=['year']).count()['week'].reset_index()
+    bet_dict = dict(zip(df_bet_years['year'].values.tolist(), df_bet_years['week'].values.tolist()))
+
+    # Create a dictionary of games played each year for location (home/away)
+    df_bet_loc_years = df_bet_loc.groupby(by=['year']).count()['week'].reset_index()
+    bet_loc_dict = dict(zip(df_bet_loc_years['year'].values.tolist(), df_bet_loc_years['week'].values.tolist()))
+
+    try:
+        json_output.update({'current': round((bet_dict[nfl_current_year] / games_dict[nfl_current_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'current': 0.0})
+    try:
+        json_output.update({'prior': round((bet_dict[nfl_prior_year] / games_dict[nfl_prior_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'prior': 0.0})
+    try:
+        json_output.update({'third': round((bet_dict[nfl_third_year] / games_dict[nfl_third_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'third': 0.0})
+    try:
+        json_output.update({'vs_opponent': round((len(vs_opponent) / len(df_opponent)) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'vs_opponent': 0.0})
+    try:
+        json_output.update({'loc_current': round(
+            (bet_loc_dict[nfl_current_year] / loc_games_dict[nfl_current_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_current': 0.0})
+    try:
+        json_output.update({'loc_prior': round(
+            (bet_loc_dict[nfl_prior_year] / loc_games_dict[nfl_prior_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_prior': 0.0})
+    try:
+        json_output.update({'loc_third': round(
+            (bet_loc_dict[nfl_third_year] / loc_games_dict[nfl_third_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_third': 0.0})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
