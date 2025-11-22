@@ -5,31 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
   </head>
-  <body></body>
+  <body>
+    <h1>BING</h1>
+    <div id="test">
+    </div>
+  </body>
 </html>
 
 <script>
+
+  nfl_teams = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
+                 'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
+                 'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
+                 'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
   let params = new URLSearchParams(document.location.search);
+  console.log(params)
+  console.log(params.toString())
+
   const id = params.get("id");
   const stat = params.get("stat");
+  const team = params.get('team')
   const operator = params.get("operator");
-  const value = params.get("value");
+  const amount = params.get("amount");
   let data;
 
+  console.log(id)
+  console.log(stat)
+  console.log(team)
+  console.log(operator)
+  console.log(amount)
+
+  // What is this referencing? Are they just not built yet?
   const statName = document.querySelector("#statName");
   const statResult = document.querySelector("#statResult");
 
-  async function playerResults(sportID) {
-    const response = await fetch(
-      `http://129.80.84.210/api/nfl/team/starting_qb?team_id=4`
+  console.log(statName)
+  console.log(statResult)
+
+  // console.log(nfl_teams[team])
+  // let startQB = {};
+  async function playerResults(team_id) {
+    // const response = await fetch(
+    //   `http://129.80.84.210/api/nfl/team/starting_qb?team_id=${team_id}`
+    // );
+
+    // const json = await response.json();
+
+    // data = json;
+    // startQB = data['starting_qb']
+    // divTest = document.getElementById('test');
+
+    // let pTag = document.createElement("p");
+    // divTest.appendChild(pTag);
+    // divTest.innerText = `Starting QB: ${startQB}`;
+
+    // Get player information
+    const playerInfoResponse = await fetch(
+      `http://129.80.84.210/api/nfl/summary/player_info?id=${id}`
     );
+    const playerInfoData = await playerInfoResponse.json();
 
-    const json = await response.json();
+    // located body tag and create div element and then two p elements and pupulate with name / pos / team
+    bodyTag = document.querySelector('body')
+    let divTag = document.createElement("div");
+    divTag.id = 'player-info'. // add id to div tag
+    bodyTag.appendChild(divTag)
 
-    data = json;
+    let playerNameTag = document.createElement("p");
+    playerNameTag.classList.add("info-class")
+    playerNameTag.innerHTML = `Name: ${playerInfoData['player_name']}`
+    divTag.appendChild(playerNameTag)
 
-    console.log(data);
+    let playerPosTag = document.createElement("p");
+    playerNameTag.classList.add("info-class")
+    playerPosTag.innerHTML = `Pos: ${playerInfoData['player_position']}`
+    divTag.appendChild(playerPosTag)
+
+    let playerTeamTag = document.createElement("p");
+    playerTeamTag.classList.add("info-class")
+    playerTeamTag.innerHTML = `Team: ${playerInfoData['player_team_name']}`
+    divTag.appendChild(playerTeamTag)
+
+
+
+
+    console.log(playerInfoData)
+    return data
   }
 
-  playerResults();
+  playerResults(nfl_teams[team])
 </script>
+

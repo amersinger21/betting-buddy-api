@@ -1809,7 +1809,7 @@ def nfl_player_info():
     json_output.update({'player_team_id': int(results[5])})
 
     json_output = jsonify(json_output)
-    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    json_output.headers.add("Access-Control-Allow-Origin", "http://127.0.0.1:5500/")
     return json_output
 @nfl.route('/nfl/summary/team_summary', methods=['GET'])
 def nfl_team_summary():

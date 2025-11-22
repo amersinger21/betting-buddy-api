@@ -8,39 +8,40 @@
   </head>
   <body>
     <form action="" id="playerSearch">
-      <div>
-        <label for="id">Player Name</label>
-        <input
-          id="id"
-          type="text"
-          name="id"
-          list="playerList"
-          oninput="handleInput()"
-        />
-        <datalist name="playerList" id="playerList"> </datalist>
+      <div id="user-entry">
+        <div class="input-field">
+          <label for="id">Player Name</label>
+          <input
+            id="id"
+            type="text"
+            name="id"
+            list="playerList"
+            oninput="handleInput()"
+            class="input-class"/>
+          <datalist name="playerList" id="playerList"> </datalist>
+        </div>
+        <div class="input-field">
+          <label for="team">Team</label>
+          <input type="text" name="team" id="team" value="" class="input-class" />
+        </div>
+        <div class="input-field">
+          <label for="stat">Stat</label>
+          <input type="text" name="stat" list="statList" class="input-class"/>
+          <datalist name="statList" id="statList"> </datalist>
+        </div>
+        <div class="input-field">
+          <label for="operator">Over/Under</label>
+          <input type="text" name="operator" id='operator' list="operatorList" class="input-class"/>
+          <datalist name="operatorList" id="operatorList">
+            <option value="over">Over</option>
+            <option value="under">Under</option>
+          </datalist>
+        </div>
+        <div class="input-field">
+          <label for="amount">Amount</label>
+          <input type="number" name="amount" min="0" class="input-class"/>
+        </div>
       </div>
-      <div>
-        <label for="team">Team</label>
-        <input type="text" name="team" id="team" value="" />
-      </div>
-      <div>
-        <label for="stat">Stat</label>
-        <input type="text" name="stat" list="statList" />
-        <datalist name="statList" id="statList"> </datalist>
-      </div>
-      <div>
-        <label for="operator">Over/Under</label>
-        <input type="text" name="operator" list="operatorList" />
-        <datalist name="operatorList" id="operatorList">
-          <option value="over">Over</option>
-          <option value="under">Under</option>
-        </datalist>
-      </div>
-      <div>
-        <label for="amount">Amount</label>
-        <input type="number" name="amount" min="0" />
-      </div>
-
       <button type="submit">Search</button>
     </form>
   </body>
@@ -103,6 +104,7 @@
 
     const formData = new FormData(playerSearch);
     const data = [...formData.entries()];
+    console.log(data)
 
     const queryString = new URLSearchParams(data).toString();
 
