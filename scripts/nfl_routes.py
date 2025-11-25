@@ -2102,6 +2102,10 @@ def nfl_bet_occurrence_summary():
     df_bet_loc_years = df_bet_loc.groupby(by=['year']).count()['week'].reset_index()
     bet_loc_dict = dict(zip(df_bet_loc_years['year'].values.tolist(), df_bet_loc_years['week'].values.tolist()))
 
+    json_output.update({'player_total_games': games_dict})
+    json_output.update({'player_total_hits': bet_dict})
+    json_output.update({'player_hits_location': bet_dict})
+
     try:
         json_output.update({'current': round((bet_dict[nfl_current_year] / games_dict[nfl_current_year]) * 100, 1)})
     except ZeroDivisionError:
