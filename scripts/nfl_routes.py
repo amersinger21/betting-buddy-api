@@ -2064,7 +2064,7 @@ def nfl_bet_occurrence_summary():
                     player ON player.id = nfl_player_stats.player_id
                     JOIN
                     nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = {player_id}'''
+                    WHERE nfl_games.year >= 2020 AND nfl_player_stats.player_id = {player_id}'''
 
     cursor.execute(player_query)
     results = list(cursor.fetchall())
