@@ -10,6 +10,7 @@ nfl = Blueprint("nfl", __name__)
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.max_rows', 1000)
 
+nfl_fifth_year = 2021
 nfl_fourth_year = 2022
 nfl_third_year = 2023
 nfl_prior_year = 2024
@@ -2079,7 +2080,7 @@ def nfl_bet_occurrence_summary():
     df_opponent = df_logs[df_logs['opp_id'] == opp_id].reset_index(drop=True)
 
     # Bet occurrences at home/away depending on if player is away or home
-    df_loc = df_logs[df_logs[loc_id] == df_logs['team_id'].values[0]].reset_index(drop=True)
+    df_loc = df_logs[df_logs[loc_id].isin(df_logs['team_id'].values.tolist())].reset_index(drop=True)
     df_loc_years = df_loc.groupby(by=['year']).count()['week'].reset_index()
     loc_games_dict = dict(zip(df_loc_years['year'].values.tolist(), df_loc_years['week'].values.tolist()))
 
@@ -2114,6 +2115,14 @@ def nfl_bet_occurrence_summary():
     except ZeroDivisionError:
         json_output.update({'third': 0.0})
     try:
+        json_output.update({'fourth': round((bet_dict[nfl_fourth_year] / games_dict[nfl_fourth_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'fourth': 0.0})
+    try:
+        json_output.update({'fifth': round((bet_dict[nfl_fifth_year] / games_dict[nfl_fifth_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'fifth': 0.0})
+    try:
         json_output.update({'vs_opponent': round((len(vs_opponent) / len(df_opponent)) * 100, 1)})
     except ZeroDivisionError:
         json_output.update({'vs_opponent': 0.0})
@@ -2132,6 +2141,16 @@ def nfl_bet_occurrence_summary():
             (bet_loc_dict[nfl_third_year] / loc_games_dict[nfl_third_year]) * 100, 1)})
     except ZeroDivisionError:
         json_output.update({'loc_third': 0.0})
+    try:
+        json_output.update({'loc_fourth': round(
+            (bet_loc_dict[nfl_fourth_year] / loc_games_dict[nfl_fourth_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_fourth': 0.0})
+    try:
+        json_output.update({'loc_fifth': round(
+            (bet_loc_dict[nfl_fifth_year] / loc_games_dict[nfl_fifth_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_fifth': 0.0})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
