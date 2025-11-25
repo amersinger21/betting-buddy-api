@@ -10,13 +10,14 @@ nfl = Blueprint("nfl", __name__)
 pd.set_option('display.max_columns', 100)
 pd.set_option('display.max_rows', 1000)
 
+nfl_fifth_year = 2021
 nfl_fourth_year = 2022
 nfl_third_year = 2023
 nfl_prior_year = 2024
 nfl_current_year = 2025
 nfl_current_week = 18
 
-year_name_dict = {2019: 'six_years_ago', 2020: 'five_years_ago' , 2021: 'four_years_ago',
+year_name_dict = {2019: 'six_years_ago', 2020: 'five_years_ago' , 2021: 'fifth',
                   2022: 'fourth', 2023: 'third', 2024: 'prior', 2025: 'current'}
 limit_stat_dict = {'pass_att': 'pass_att', 'pass_yards': 'pass_att', 'pass_td': 'pass_att', 'pass_comp': 'pass_att',
                    'pass_longest': 'pass_att',
@@ -2063,7 +2064,7 @@ def nfl_bet_occurrence_summary():
                     player ON player.id = nfl_player_stats.player_id
                     JOIN
                     nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2022 AND nfl_player_stats.player_id = {player_id}'''
+                    WHERE nfl_games.year >= 2020 AND nfl_player_stats.player_id = {player_id}'''
 
     cursor.execute(player_query)
     results = list(cursor.fetchall())
@@ -2073,13 +2074,14 @@ def nfl_bet_occurrence_summary():
 
     # Create a dictionary of games played each year
     df_log_years = df_logs.groupby(by=['year']).count()['week'].reset_index()
+    print(df_log_years)
     games_dict = dict(zip(df_log_years['year'].values.tolist(), df_log_years['week'].values.tolist()))
 
     # Game logs versus opponents
     df_opponent = df_logs[df_logs['opp_id'] == opp_id].reset_index(drop=True)
 
     # Bet occurrences at home/away depending on if player is away or home
-    df_loc = df_logs[df_logs[loc_id] == df_logs['team_id'].values[0]].reset_index(drop=True)
+    df_loc = df_logs[df_logs[loc_id].isin(df_logs['team_id'].values.tolist())].reset_index(drop=True)
     df_loc_years = df_loc.groupby(by=['year']).count()['week'].reset_index()
     loc_games_dict = dict(zip(df_loc_years['year'].values.tolist(), df_loc_years['week'].values.tolist()))
 
@@ -2092,7 +2094,7 @@ def nfl_bet_occurrence_summary():
         df_bet = df_logs[df_logs[column_name] <= value]
         vs_opponent = df_opponent[df_opponent[column_name] > value]
         df_bet_loc = df_loc[df_logs[column_name] <= value]
-
+    print(df_bet_loc)
     # Create a dictionary of number of times bet hit each year
     df_bet_years = df_bet.groupby(by=['year']).count()['week'].reset_index()
     bet_dict = dict(zip(df_bet_years['year'].values.tolist(), df_bet_years['week'].values.tolist()))
@@ -2114,6 +2116,10 @@ def nfl_bet_occurrence_summary():
     except ZeroDivisionError:
         json_output.update({'third': 0.0})
     try:
+        json_output.update({'fourth': round((bet_dict[nfl_fourth_year] / games_dict[nfl_fourth_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'fourth': 0.0})
+    try:
         json_output.update({'vs_opponent': round((len(vs_opponent) / len(df_opponent)) * 100, 1)})
     except ZeroDivisionError:
         json_output.update({'vs_opponent': 0.0})
@@ -2132,6 +2138,11 @@ def nfl_bet_occurrence_summary():
             (bet_loc_dict[nfl_third_year] / loc_games_dict[nfl_third_year]) * 100, 1)})
     except ZeroDivisionError:
         json_output.update({'loc_third': 0.0})
+    try:
+        json_output.update({'loc_fourth': round(
+            (bet_loc_dict[nfl_third_year] / loc_games_dict[nfl_third_year]) * 100, 1)})
+    except ZeroDivisionError:
+        json_output.update({'loc_fourth': 0.0})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")

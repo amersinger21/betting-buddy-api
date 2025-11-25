@@ -4,32 +4,156 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
+    <link rel="stylesheet" href="./results.css" />
   </head>
-  <body></body>
+  <body>
+    <h1>Betting Buddy Results Page</h1>
+    <div id="summary">
+      </div>
+    </div>
+  </body>
 </html>
 
 <script>
+
+  nfl_teams = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
+                 'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
+                 'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
+                 'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
+  yearArray = {
+    'current': 2025,
+    'prior': 2024,
+    'third': 2023,
+    'fourth': 2022,
+    'fifth': 2021
+  }
   let params = new URLSearchParams(document.location.search);
+  console.log(params)
+  console.log(params.toString())
+
   const id = params.get("id");
   const stat = params.get("stat");
+  const team = params.get('team')
   const operator = params.get("operator");
-  const value = params.get("value");
+  const amount = params.get("amount");
   let data;
 
+  console.log(id)
+  console.log(stat)
+  console.log(team)
+  console.log(operator)
+  console.log(amount)
+
+  // What is this referencing? Are they just not built yet?
   const statName = document.querySelector("#statName");
   const statResult = document.querySelector("#statResult");
 
-  async function playerResults(sportID) {
-    const response = await fetch(
-      `http://129.80.84.210/api/nfl/team/starting_qb?team_id=4`
+  console.log(statName)
+  console.log(statResult)
+
+  // console.log(nfl_teams[team])
+  async function playerResults(team_id) {
+    // other data we will need, opponent and location of next game for player
+
+    // Get player information
+    const playerInfoResponse = await fetch(
+      `http://129.80.84.210/api/nfl/summary/player_info?id=${id}`
     );
+    const playerInfoData = await playerInfoResponse.json();
 
-    const json = await response.json();
+    // Get bet-occurrence summary info
+    const betSummaryRequest = await fetch(
+      `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=home`
+    );
+    const betOccurrenceData = await betSummaryRequest.json();
 
-    data = json;
 
-    console.log(data);
+    // locate the summary section and populate with summay data
+    let summaryTag = document.getElementById('summary')
+
+    // Create div tags for info section and add class/id attributes
+    let playerImageSection = document.createElement("div");
+    playerImageSection.classList.add("first-level")
+    playerImageSection.id = "player-img";
+
+    let playerInfoSection = document.createElement("div")
+    playerInfoSection.classList.add("first-level")
+    playerInfoSection.id = "player-info";
+    
+    let betSummarySection = document.createElement("div")
+    betSummarySection.classList.add("first-level")
+    betSummarySection.id = "bet-occurrence";
+    
+
+    // Append player/team/image sections to summary element
+    summaryTag.appendChild(playerImageSection)
+    summaryTag.appendChild(playerInfoSection)
+    summaryTag.appendChild(betSummarySection)
+
+    // Add player image
+    let imageTag = document.createElement('img')
+
+    // Populate the player-info section
+    let playerNameTag = document.createElement("p");
+    playerNameTag.classList.add("info-class")
+    playerNameTag.innerHTML = `Name: ${playerInfoData['player_name']}`
+    playerInfoSection.appendChild(playerNameTag)
+
+    let playerPosTag = document.createElement("p");
+    playerPosTag.classList.add("info-class")
+    playerPosTag.innerHTML = `Pos: ${playerInfoData['player_position']}`
+    playerInfoSection.appendChild(playerPosTag)
+
+    let playerTeamTag = document.createElement("p");
+    playerTeamTag.classList.add("info-class")
+    playerTeamTag.innerHTML = `Team: ${playerInfoData['player_team_name']}`
+    playerInfoSection.appendChild(playerTeamTag)
+
+
+    // let playerInfoTag = document.getElementById('player-info')
+    let betSummaryHeader = document.createElement("h4")
+    betSummaryHeader.textContent = `Bet Occurrence Summary`
+    betSummarySection.append(betSummaryHeader)
+
+    let betCurrentOccurSummary = document.createElement('p')
+    let currSumText = `${yearArray['current']}: ${betOccurrenceData['current']}% (X of Y)`
+    betCurrentOccurSummary.innerText = currSumText
+    betSummarySection.append(betCurrentOccurSummary)
+
+    let betPriorOccurSummary = document.createElement('p')
+    const priorSumText = `${yearArray['prior']}: ${betOccurrenceData['prior']}% (X of Y)`
+    betPriorOccurSummary.innerText = priorSumText
+    betSummarySection.append(betPriorOccurSummary)
+  
+    let betThirdOccurSummary = document.createElement('p')
+    const thirdSumText = `${yearArray['third']}: ${betOccurrenceData['third']}% (X of Y)`
+    betThirdOccurSummary.innerText = thirdSumText 
+    betSummarySection.append(betThirdOccurSummary)
+  
+    // betSummaryHeader.innterHTML = `${yearArray['current']}: ${betOccurrenceData['current']}`
+
+
+
+
+    // Create the team/opponent info data section
+    // let teamSummarySec = document.createElement("p");
+    // playerTeamTag.classList.add("info-class")
+    // playerTeamTag.innerHTML = `Team: ${playerInfoData['player_team_name']}`
+    // divTag.appendChild(playerTeamTag)
+
+
+    // let phiaTag = document.createElement("p");
+    // phiaTag.classList.add("sophia=the-first")
+    // phiaTag.innerHTML = `Hello Sophia McG`
+    // divTag.appendChild(phiaTag)
+
+
+
+
+    console.log(playerInfoData)
+    return data
   }
 
-  playerResults();
+  playerResults(nfl_teams[team])
 </script>
+

@@ -1,0 +1,42 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+
+#player-info {
+    /* border: 2px solid black; */
+    display: flex;
+    flex-direction: column;
+    border-width: 2px;
+    border-style: solid; /* This is crucial */
+    border-color: black;
+}
+
+#summary {
+    display: flex;
+    /* justify-content: ; */
+    border-width: 2px;
+    border-style: solid; /* This is crucial */
+    border-color: red;
+}
+
+.first-level {
+    border-width: 2px;
+    border-style: solid; /* This is crucial */
+    border-color: BLACK;
+}
+
+#bet-occurrence {
+    margin-left: auto;
+}
+
+
+
+
+/* .player-info {
+    border-width: 2px;
+    border-style: solid; /* This is crucial */
+    /* border-color: red; */
+/* } */
