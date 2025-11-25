@@ -30,6 +30,8 @@
 
 #bet-occurrence {
     margin-left: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 

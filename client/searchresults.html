@@ -129,6 +129,11 @@
     const thirdSumText = `${yearArray['third']}: ${betOccurrenceData['third']}% (X of Y)`
     betThirdOccurSummary.innerText = thirdSumText 
     betSummarySection.append(betThirdOccurSummary)
+    
+    let betFourthOccurSummary = document.createElement('p')
+    const fourthSumText = `${yearArray['fourth']}: ${betOccurrenceData['fourth']}% (X of Y)`
+    betFourthOccurSummary.innerText = fourthSumText 
+    betSummarySection.append(betFourthOccurSummary)
   
     // betSummaryHeader.innterHTML = `${yearArray['current']}: ${betOccurrenceData['current']}`
 
