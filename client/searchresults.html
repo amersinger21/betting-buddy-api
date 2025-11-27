@@ -110,31 +110,69 @@
     playerInfoSection.appendChild(playerTeamTag)
 
 
-    // let playerInfoTag = document.getElementById('player-info')
-    let betSummaryHeader = document.createElement("h4")
-    betSummaryHeader.textContent = `Bet Occurrence Summary`
-    betSummarySection.append(betSummaryHeader)
+    // Bet Summary Yearly
+    let betOccurDiv = document.createElement("div")
+    betOccurDiv.classList.add("bet-summary")
+    betSummarySection.append(betOccurDiv)
 
-    let betCurrentOccurSummary = document.createElement('p')
-    let currSumText = `${yearArray['current']}: ${betOccurrenceData['current']}% (X of Y)`
-    betCurrentOccurSummary.innerText = currSumText
-    betSummarySection.append(betCurrentOccurSummary)
+    // Bet Summary Home/Away
+    let betLocDiv = document.createElement("div")
+    betLocDiv.classList.add("bet-summary")
+    betSummarySection.append(betLocDiv)
 
-    let betPriorOccurSummary = document.createElement('p')
-    const priorSumText = `${yearArray['prior']}: ${betOccurrenceData['prior']}% (X of Y)`
-    betPriorOccurSummary.innerText = priorSumText
-    betSummarySection.append(betPriorOccurSummary)
+    // Bet Summary Misc 
+    let betMiscDiv = document.createElement("div")
+    betMiscDiv.classList.add("bet-summary")
+    betSummarySection.append(betMiscDiv)
+
   
-    let betThirdOccurSummary = document.createElement('p')
-    const thirdSumText = `${yearArray['third']}: ${betOccurrenceData['third']}% (X of Y)`
-    betThirdOccurSummary.innerText = thirdSumText 
-    betSummarySection.append(betThirdOccurSummary)
+    // Add column headers
+    const occurSpan = document.createElement('span')
+    occurSpan.innerHTML = '<strong>Bet Summary</strong>'
+    betOccurDiv.append(occurSpan)
+
+    const occurLocSpan = document.createElement('span')
+    occurLocSpan.innerHTML = '<strong>Bet Summary Home</strong>'
+    betLocDiv.append(occurLocSpan)
+
+    const occurMiscSpan = document.createElement('span')
+    occurMiscSpan.innerHTML = '<strong>Bet Summary Misc</strong>'
+    betMiscDiv.append(occurMiscSpan)
     
-    let betFourthOccurSummary = document.createElement('p')
-    const fourthSumText = `${yearArray['fourth']}: ${betOccurrenceData['fourth']}% (X of Y)`
-    betFourthOccurSummary.innerText = fourthSumText 
-    betSummarySection.append(betFourthOccurSummary)
-  
+
+    arrayList = ['current', 'prior', 'third']
+    for (const element of arrayList) {
+      // Initialize variables
+      const year = yearArray[element]
+      const totalGames = betOccurrenceData['player_total_games'][yearArray[element]]
+      const totalHits = betOccurrenceData['player_total_hits'][yearArray[element]]
+      const totalLocHits = betOccurrenceData[`loc_${element}`]
+      const betSummaryText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalHits} of ${totalGames})`
+      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalLocHits} of ${'Y'})`
+
+      // Create element and populate with text and add to HTML parent element
+      let betSummaryElement = document.createElement('p')
+      betSummaryElement.innerText = betSummaryText
+      betOccurDiv.append(betSummaryElement)
+
+      // Home/Away Summary Data
+      let betLocSummaryElement = document.createElement('p')
+      betLocSummaryElement.innerText = betSummaryLocText
+      betLocDiv.append(betLocSummaryElement)
+    }
+   
+    // Populate the Bet-Summary-Misc div
+    arrayList2 = ['vs_opponent']
+    for (const element of arrayList2) {
+      const betVsOpponentText = `Vs Opponent: ${betOccurrenceData[element]}% (${'X'} of ${'Y'})`
+
+      let betMiscSummary = document.createElement('p')
+      betMiscSummary.innerText = betVsOpponentText
+      betMiscDiv.append(betMiscSummary)
+    }
+
+
+
     // betSummaryHeader.innterHTML = `${yearArray['current']}: ${betOccurrenceData['current']}`
 
 

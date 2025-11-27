@@ -30,10 +30,32 @@
 
 #bet-occurrence {
     margin-left: auto;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    flex-direction: row;
+    gap: 10px;
 }
 
+#bet-occurrence-sum{
+    border-width: 2px;
+    border-style: solid; /* This is crucial */
+    border-color: BLACK;
+    display: grid;
+    place-self: center;
+    margin-bottom: 2%;
+}
+
+.bet-summary {
+    border-style: solid; /* This is crucial */
+    /* border-color: blue; */
+    align-items: center;
+}
+
+.bet-summary span{
+    display: grid;
+    place-self: center;
+    margin-bottom: 2%;
+}
 
 
 
