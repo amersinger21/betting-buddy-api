@@ -2109,8 +2109,8 @@ def nfl_bet_occurrence_summary():
     json_output.update({'player_total_games': games_dict})
     json_output.update({'player_total_hits': bet_dict})
     json_output.update({'player_hits_location': bet_dict})
-    json_output.update({'player_games_vs_opp': vs_opp_games})
-    json_output.update({'player_hits_vs_opp': vs_opp_hits})
+    json_output.update({'vs_opponent_games': vs_opp_games})
+    json_output.update({'vs_opponent_hits': vs_opp_hits})
 
     try:
         json_output.update({'current': round((bet_dict[nfl_current_year] / games_dict[nfl_current_year]) * 100, 1)})
