@@ -2102,9 +2102,15 @@ def nfl_bet_occurrence_summary():
     df_bet_loc_years = df_bet_loc.groupby(by=['year']).count()['week'].reset_index()
     bet_loc_dict = dict(zip(df_bet_loc_years['year'].values.tolist(), df_bet_loc_years['week'].values.tolist()))
 
+    # Get the total numner of games vs opponent
+    vs_opp_games = len(df_opponent)
+    vs_opp_hits = len(vs_opponent)
+
     json_output.update({'player_total_games': games_dict})
     json_output.update({'player_total_hits': bet_dict})
     json_output.update({'player_hits_location': bet_dict})
+    json_output.update({'player_games_vs_opp': vs_opp_games})
+    json_output.update({'player_hits_vs_opp': vs_opp_hits})
 
     try:
         json_output.update({'current': round((bet_dict[nfl_current_year] / games_dict[nfl_current_year]) * 100, 1)})
