@@ -2114,11 +2114,11 @@ def nfl_bet_occurrence_summary():
     if operator == 'over':
         df_bet = df_logs[df_logs[column_name] > value]
         vs_opponent = df_opponent[df_opponent[column_name] > value]
-        df_bet_loc = df_loc[df_logs[column_name] > value]
+        df_bet_loc = df_loc[df_loc[column_name] > value]
     else:
         df_bet = df_logs[df_logs[column_name] <= value]
-        vs_opponent = df_opponent[df_opponent[column_name] > value]
-        df_bet_loc = df_loc[df_logs[column_name] <= value]
+        vs_opponent = df_opponent[df_opponent[column_name] <= value]
+        df_bet_loc = df_loc[df_loc[column_name] <= value]
 
     # Create a dictionary of number of times bet hit each year
     df_bet_years = df_bet.groupby(by=['year']).count()['week'].reset_index()
