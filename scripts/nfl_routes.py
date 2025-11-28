@@ -2134,7 +2134,8 @@ def nfl_bet_occurrence_summary():
 
     json_output.update({'player_total_games': games_dict})
     json_output.update({'player_total_hits': bet_dict})
-    json_output.update({'player_hits_location': bet_dict})
+    json_output.update({'player_total_loc_games': loc_games_dict})
+    json_output.update({'player_hits_location': bet_loc_dict})
     json_output.update({'vs_opponent_games': vs_opp_games})
     json_output.update({'vs_opponent_hits': vs_opp_hits})
 
