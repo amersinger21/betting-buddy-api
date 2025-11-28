@@ -15,7 +15,8 @@ nfl_fourth_year = 2022
 nfl_third_year = 2023
 nfl_prior_year = 2024
 nfl_current_year = 2025
-nfl_current_week = 18
+nfl_current_week = 11
+nfl_next_week = nfl_current_week + 1
 
 year_name_dict = {2019: 'six_years_ago', 2020: 'five_years_ago' , 2021: 'four_years_ago',
                   2022: 'fourth', 2023: 'third', 2024: 'prior', 2025: 'current'}
