@@ -1783,6 +1783,31 @@ def nfl_update_starting_lineup_te():
     return f"nfl_weekly_rank has been updated ."
 
 
+@nfl.route('/nfl/player/next_game', methods=['GET'])
+def nfl_player_next_game():
+    team_id = int(request.args.get('team_id', None))
+    json_output = {}
+
+    # SQL Query that returns the player information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT id, week, year, home_id, away_id FROM nfl_games 
+                        WHERE (home_id ={team_id} OR away_id = {team_id}) AND week = {nfl_next_week}
+                        AND year = {nfl_current_year}'''
+    cursor.execute(player_query)
+    results = cursor.fetchone()
+
+    home_id = results[3]
+    if home_id == team_id:
+        json_output.update({'next_game_loc': 'home'})
+    else:
+        json_output.update({'next_game_loc': 'away'})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
 
 
 # SUMMARY SECTION ROUTES
