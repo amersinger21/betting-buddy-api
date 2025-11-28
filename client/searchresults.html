@@ -62,8 +62,15 @@
     const playerInfoData = await playerInfoResponse.json();
 
     // Get bet-occurrence summary info
+    const nextGameRequest = await fetch(
+      `http://129.80.84.210/api/nfl/player/next_game?team_id=${team_id}`
+    );
+    const nextGameData = await nextGameRequest.json();
+    const location = nextGameData['next_game_loc']
+
+    // Get bet-occurrence summary info
     const betSummaryRequest = await fetch(
-      `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=home`
+      `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=${location}`
     );
     const betOccurrenceData = await betSummaryRequest.json();
 
@@ -142,13 +149,15 @@
 
     arrayList = ['current', 'prior', 'third']
     for (const element of arrayList) {
+      console.log(betOccurrenceData[`loc_${element}`])
       // Initialize variables
       const year = yearArray[element]
       const totalGames = betOccurrenceData['player_total_games'][yearArray[element]]
       const totalHits = betOccurrenceData['player_total_hits'][yearArray[element]]
-      const totalLocHits = betOccurrenceData[`loc_${element}`]
+      const totalLocHits = betOccurrenceData[`player_hits_location`][yearArray[element]]
       const betSummaryText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalHits} of ${totalGames})`
-      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalLocHits} of ${'Y'})`
+      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${'Y'})`
+      // const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${'Y'})`
 
       // Create element and populate with text and add to HTML parent element
       let betSummaryElement = document.createElement('p')
