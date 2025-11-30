@@ -61,6 +61,14 @@
     );
     const playerInfoData = await playerInfoResponse.json();
 
+    // Get player information 
+    const startQbRequest = await fetch(
+      `http://129.80.84.210/api/nfl/team/starting_qb?team_id=${team_id}`
+    );
+    const startQbData = await startQbRequest.json();
+    const startingQB = startQbData['starting_qb']
+    console.log(startingQB)
+
     // Get bet-occurrence summary info
     const nextGameRequest = await fetch(
       `http://129.80.84.210/api/nfl/player/next_game?team_id=${team_id}`
@@ -68,12 +76,18 @@
     const nextGameData = await nextGameRequest.json();
     const location = nextGameData['next_game_loc']
 
-    // Get bet-occurrence summary info
+    // Call bet-occurrence summary route
     const betSummaryRequest = await fetch(
       `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=${location}`
     );
     const betOccurrenceData = await betSummaryRequest.json();
 
+
+    // Capitalize location variable
+    const firstLetter = location.charAt(0)
+    const firstLetterCap = firstLetter.toUpperCase()
+    const remainingLetters = location.slice(1)
+    const capitalizedWord = firstLetterCap + remainingLetters
 
     // locate the summary section and populate with summay data
     let summaryTag = document.getElementById('summary')
@@ -139,13 +153,13 @@
     betOccurDiv.append(occurSpan)
 
     const occurLocSpan = document.createElement('span')
-    occurLocSpan.innerHTML = '<strong>Bet Summary Home</strong>'
+    occurLocSpan.innerHTML = `<strong>Bet Summary ${capitalizedWord}</strong>`
     betLocDiv.append(occurLocSpan)
 
     const occurMiscSpan = document.createElement('span')
     occurMiscSpan.innerHTML = '<strong>Bet Summary Misc</strong>'
     betMiscDiv.append(occurMiscSpan)
-    
+
 
     arrayList = ['current', 'prior', 'third']
     for (const element of arrayList) {
@@ -154,10 +168,10 @@
       const year = yearArray[element]
       const totalGames = betOccurrenceData['player_total_games'][yearArray[element]]
       const totalHits = betOccurrenceData['player_total_hits'][yearArray[element]]
+      const locGames = betOccurrenceData['player_total_loc_games'][yearArray[element]]
       const totalLocHits = betOccurrenceData[`player_hits_location`][yearArray[element]]
       const betSummaryText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalHits} of ${totalGames})`
-      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${'Y'})`
-      // const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${'Y'})`
+      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${locGames})`
 
       // Create element and populate with text and add to HTML parent element
       let betSummaryElement = document.createElement('p')
@@ -173,7 +187,9 @@
     // Populate the Bet-Summary-Misc div
     arrayList2 = ['vs_opponent']
     for (const element of arrayList2) {
-      const betVsOpponentText = `Vs Opponent: ${betOccurrenceData[element]}% (${'X'} of ${'Y'})`
+      const gamesVsOpp = betOccurrenceData['vs_opponent_games']
+      const hitsVsOpp = betOccurrenceData['vs_opponent_hits']
+      const betVsOpponentText = `Vs Opponent: ${betOccurrenceData[element]}% (${hitsVsOpp} of ${gamesVsOpp})`
 
       let betMiscSummary = document.createElement('p')
       betMiscSummary.innerText = betVsOpponentText
