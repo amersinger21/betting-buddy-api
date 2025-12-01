@@ -84,7 +84,7 @@ def get_player_dropdown():
 
 
 @player.route('/players', methods=['PUT'])
-def update_player_status(json_dict):
+def update_player_status():
     file = request.files['player_template']
 
     # Read CSV data
