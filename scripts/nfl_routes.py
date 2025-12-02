@@ -1876,11 +1876,11 @@ def nfl_team_rank_summary():
     df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
 
     # Rank columns
-    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=False)
-    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=False)
-    df_teams['td_rank'] = df_teams['td'].rank(ascending=False)
-    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=False)
-    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=False)
+    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=True)
+    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=True)
+    df_teams['td_rank'] = df_teams['td'].rank(ascending=True)
+    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=True)
+    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=True)
 
     # Filter to get team ranks
     df_team = df_teams[df_teams['team_id'] == team_id]

@@ -5,26 +5,33 @@
 }
 
 
-#player-info {
-    /* border: 2px solid black; */
+
+/* #player-info {
     display: flex;
     flex-direction: column;
     border-width: 2px;
-    border-style: solid; /* This is crucial */
+    border-style: solid; 
     border-color: black;
-}
+} */
 
 #summary {
-    display: flex;
-    /* justify-content: ; */
+    display: grid;
     border-width: 2px;
-    border-style: solid; /* This is crucial */
+    border-style: solid;
     border-color: red;
+}
+
+#first-row {
+   display: flex; 
+   justify-content: space-between;
+    border-width: 2px;
+    border-style: solid;
+    border-color: purple;
 }
 
 .first-level {
     border-width: 2px;
-    border-style: solid; /* This is crucial */
+    border-style: solid; 
     border-color: BLACK;
 }
 
@@ -36,20 +43,20 @@
     gap: 10px;
 }
 
-#bet-occurrence-sum{
+/* #bet-occurrence-sum{
     border-width: 2px;
-    border-style: solid; /* This is crucial */
+    border-style: solid;
     border-color: BLACK;
     display: grid;
     place-self: center;
     margin-bottom: 2%;
-}
+} */
 
-.bet-summary {
-    border-style: solid; /* This is crucial */
-    /* border-color: blue; */
+/* .bet-summary {
+    border-style: solid; 
+    border-color: blue;
     align-items: center;
-}
+} */
 
 .bet-summary span{
     display: grid;
