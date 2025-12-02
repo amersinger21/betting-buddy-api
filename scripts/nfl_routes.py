@@ -1861,10 +1861,10 @@ def nfl_team_summary():
                     FROM nfl_team_offense
                     JOIN 
                     team ON team.id = nfl_team_offense.team_id
-                    WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_prior_year} and team.sport_id = 1'''
+                    WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
-
+    print(results)
     # Add player data to JSON output
     json_output.update({'team_name': str(results[8])})
     json_output.update({'team_stat': int(results[3])})
