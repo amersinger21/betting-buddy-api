@@ -72,8 +72,17 @@
     const betOccurrenceData = await betSummaryRequest.json();
 
     //=========================================TEAM SECTION===============================================// 
-    const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_rank_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
+    const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
     const teamSummaryData = await teamSummaryRequest.json();
+
+    const teamRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_rank_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
+    const teamRankSummaryData = await teamRankSummaryRequest.json();
+
+    const oppSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_summary?opp_id=4&stat=${stat}`);
+    const oppSummaryData = await oppSummaryRequest.json();
+
+    const oppRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_rank_summary?opp_id=4&stat=${stat}`);
+    const oppRankSummaryData = await oppRankSummaryRequest.json();
 
 
      //=========================================PLAYER SECTION===============================================// 
@@ -236,23 +245,23 @@
     teamSummaryElement.append(teamSpan)
 
     const teamStatRank = document.createElement('p')
-    teamStatRank.innerText = `Stat Rank: xxxx (${teamSummaryData['stat_total_rank']}th)`
+    teamStatRank.innerText = `Stat Total: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
     teamSummaryElement.append(teamStatRank)
 
     const teamLimitStatRank = document.createElement('p')
-    teamLimitStatRank.innerText = `Limit Stat Rank: xxxx (${teamSummaryData['limit_stat_rank']}th)`
+    teamLimitStatRank.innerText = `Limit Stat Total: ${teamSummaryData['team_attempts']} (${teamRankSummaryData['limit_stat_rank']}th)`
     teamSummaryElement.append(teamLimitStatRank)
 
     const teamTdRank = document.createElement('p')
-    teamTdRank.innerText = `Team TD Rank: xxxx (${teamSummaryData['td_rank']}th)`
+    teamTdRank.innerText = `Team TD Total: ${teamSummaryData['team_touchdowns']} (${teamRankSummaryData['td_rank']}th)`
     teamSummaryElement.append(teamTdRank)
 
     const teamYdsPerAttRank = document.createElement('p')
-    teamYdsPerAttRank.innerText = `Yards per Att Rank: xxxx (${teamSummaryData['yards_per_att_rank']}th)`
+    teamYdsPerAttRank.innerText = `Yards per Att: ${teamSummaryData['team_stat_per_att']} (${teamRankSummaryData['yards_per_att_rank']}th)`
     teamSummaryElement.append(teamYdsPerAttRank)
 
     const teamYdsPerGameRank = document.createElement('p')
-    teamYdsPerGameRank.innerText = `Yards per Game Rank: xxxx (${teamSummaryData['yards_per_game_rank']}th)`
+    teamYdsPerGameRank.innerText = `Yards per Game: ${teamSummaryData['team_stat_per_game']} (${teamRankSummaryData['yards_per_game_rank']}th)`
     teamSummaryElement.append(teamYdsPerGameRank)
 
 
@@ -260,6 +269,30 @@
     let oppSummaryElement = document.createElement('div')
     oppSummaryElement.id = "opp-summary";
     secondRow.appendChild(oppSummaryElement)
+
+    const oppSpan = document.createElement('span')
+    oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
+    oppSummaryElement.append(oppSpan)
+
+    const oppStatRank = document.createElement('p')
+    oppStatRank.innerText = `Stat Total: ${oppSummaryData['team_stat']} (${oppRankSummaryData['stat_total_rank']}th)`
+    oppSummaryElement.append(oppStatRank)
+
+    const oppLimitStatRank = document.createElement('p')
+    oppLimitStatRank.innerText = `Limit Stat Total: ${oppSummaryData['team_attempts']} (${oppRankSummaryData['limit_stat_rank']}th)`
+    oppSummaryElement.append(oppLimitStatRank)
+
+    const oppTdRank = document.createElement('p')
+    oppTdRank.innerText = `Team TD Total: ${oppSummaryData['team_touchdowns']} (${oppRankSummaryData['td_rank']}th)`
+    oppSummaryElement.append(oppTdRank)
+
+    const oppYdsPerAttRank = document.createElement('p')
+    oppYdsPerAttRank.innerText = `Yards per Att: ${oppSummaryData['team_stat_per_att']} (${oppRankSummaryData['yards_per_att_rank']}th)`
+    oppSummaryElement.append(oppYdsPerAttRank)
+
+    const oppYdsPerGameRank = document.createElement('p')
+    oppYdsPerGameRank.innerText = `Yards per Game: ${oppSummaryData['team_stat_per_game']} (${oppRankSummaryData['yards_per_game_rank']}th)`
+    oppSummaryElement.append(oppYdsPerGameRank)
 
 
 
