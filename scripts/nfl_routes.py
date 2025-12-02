@@ -1896,7 +1896,7 @@ def nfl_team_rank_summary():
 
     player_query = f'''SELECT nfl_team_offense.year, nfl_team_offense.team_id, {columns}
                     FROM nfl_team_offense
-                    WHERE nfl_team_offense.year = {2024}'''
+                    WHERE nfl_team_offense.year = {nfl_current_year}'''
     cursor.execute(player_query)
     results = list(cursor.fetchall())
 
@@ -1943,7 +1943,7 @@ def nfl_opponent_summary():
                     FROM nfl_team_defense
                     JOIN 
                     team ON team.id = nfl_team_defense.team_id
-                    WHERE nfl_team_defense.team_id = {opp_id} and nfl_team_defense.year = {2024} and team.sport_id = 1'''
+                    WHERE nfl_team_defense.team_id = {opp_id} and nfl_team_defense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
 
