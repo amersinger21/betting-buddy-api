@@ -1803,8 +1803,11 @@ def nfl_player_next_game():
     home_id = results[3]
     if home_id == team_id:
         json_output.update({'next_game_loc': 'home'})
+        json_output.update({'next_opp': results[-1]})
     else:
         json_output.update({'next_game_loc': 'away'})
+        json_output.update({'next_opp': home_id})
+
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -1849,7 +1852,7 @@ def nfl_team_summary():
         columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td, 
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
     else:
-        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
+        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_comp, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
 
 
@@ -1864,13 +1867,13 @@ def nfl_team_summary():
                     WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
-    print(results)
+
     # Add player data to JSON output
-    json_output.update({'team_name': str(results[8])})
+    json_output.update({'team_name': str(results[9])})
     json_output.update({'team_stat': int(results[3])})
-    json_output.update({'team_stat_per_att': float(results[5])})
-    json_output.update({'team_stat_per_game': float(results[6])})
-    json_output.update({'team_touchdowns': int(results[4])})
+    json_output.update({'team_stat_per_att': float(results[6])})
+    json_output.update({'team_stat_per_game': float(results[7])})
+    json_output.update({'team_touchdowns': int(results[5])})
     json_output.update({'team_attempts': int(results[2])})
 
     json_output = jsonify(json_output)
@@ -1885,10 +1888,18 @@ def nfl_team_rank_summary():
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td,
                     nfl_team_offense.rush_yards_per_att, nfl_team_offense.rush_yards_per_game'''
+        cols = ['year', 'team_id', 'rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
+        rank_cols = ['rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
     else:
-        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
+        columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_comp, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
-    cols = ['year', 'team_id', 'limit_stat', 'stat_total', 'td', 'yards_per_att', 'yards_per_game']
+        cols = ['year', 'team_id', 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att',
+                'pass_yards_per_game']
+        rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
+        if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
+            cols = ['year', 'team_id', 'targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att',
+                    'pass_yards_per_game']
+            rank_cols = ['targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att', 'pass_yards_per_game']
 
     # SQL Query that returns the player information
     connection = create_connection()
@@ -1901,23 +1912,13 @@ def nfl_team_rank_summary():
     results = list(cursor.fetchall())
 
     df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
+    for rank_col in rank_cols:
+        df_teams[f'{rank_col}_rank'] = df_teams[rank_col].rank(ascending=True)
 
-    # Rank columns
-    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=True)
-    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=True)
-    df_teams['td_rank'] = df_teams['td'].rank(ascending=True)
-    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=True)
-    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=True)
-
-    # Filter to get team ranks
+    # # Filter to get team ranks
     df_team = df_teams[df_teams['team_id'] == team_id]
-
-    # Add player data to JSON output
-    json_output.update({'limit_stat_rank': df_team['limit_stat_rank'].values[0]})
-    json_output.update({'stat_total_rank': df_team['stat_total_rank'].values[0]})
-    json_output.update({'td_rank': df_team['td_rank'].values[0]})
-    json_output.update({'yards_per_att_rank': df_team['yards_per_att_rank'].values[0]})
-    json_output.update({'yards_per_game_rank': df_team['yards_per_game_rank'].values[0]})
+    for rank_col in rank_cols:
+        json_output.update({f"{rank_col}_rank": df_team[f"{rank_col}_rank"].values[0]})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -1932,7 +1933,7 @@ def nfl_opponent_summary():
         columns = '''nfl_team_defense.rush_att, nfl_team_defense.rush_yards, nfl_team_defense.rush_td,
                     nfl_team_defense.rush_yards_per_att, nfl_team_defense.rush_yards_per_game'''
     else:
-        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
+        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_comp, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
                     nfl_team_defense.yards_per_att, nfl_team_defense.pass_yards_per_game'''
 
     # SQL Query that returns the player information
@@ -1950,9 +1951,9 @@ def nfl_opponent_summary():
     # Add player data to JSON output
     json_output.update({'team_name': str(results[-1])})
     json_output.update({'team_stat': int(results[3])})
-    json_output.update({'team_stat_per_att': float(results[5])})
-    json_output.update({'team_stat_per_game': float(results[6])})
-    json_output.update({'team_touchdowns': int(results[4])})
+    json_output.update({'team_stat_per_att': float(results[6    ])})
+    json_output.update({'team_stat_per_game': float(results[7])})
+    json_output.update({'team_touchdowns': int(results[5])})
     json_output.update({'team_attempts': int(results[2])})
 
     json_output = jsonify(json_output)
@@ -1967,10 +1968,18 @@ def nfl_opponent_rank_summary():
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = '''nfl_team_defense.rush_att, nfl_team_defense.rush_yards, nfl_team_defense.rush_td,
                     nfl_team_defense.rush_yards_per_att, nfl_team_defense.rush_yards_per_game'''
+        cols = ['year', 'team_id', 'rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
+        rank_cols = ['rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
     else:
-        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
+        columns = '''nfl_team_defense.pass_att, nfl_team_defense.pass_comp, nfl_team_defense.pass_yards, nfl_team_defense.pass_td, 
                     nfl_team_defense.yards_per_att, nfl_team_defense.pass_yards_per_game'''
-    cols = ['year', 'team_id', 'limit_stat', 'stat_total', 'td', 'yards_per_att', 'yards_per_game']
+        cols = ['year', 'team_id', 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att',
+                'pass_yards_per_game']
+        rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
+        if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
+            cols = ['year', 'team_id', 'targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att',
+                    'pass_yards_per_game']
+            rank_cols = ['targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att', 'pass_yards_per_game']
 
     # SQL Query that returns the player information
     connection = create_connection()
@@ -1978,28 +1987,18 @@ def nfl_opponent_rank_summary():
 
     player_query = f'''SELECT nfl_team_defense.year, nfl_team_defense.team_id, {columns}
                     FROM nfl_team_defense
-                    WHERE nfl_team_defense.year = {2024}'''
+                    WHERE nfl_team_defense.year = {nfl_current_year}'''
     cursor.execute(player_query)
     results = list(cursor.fetchall())
 
     df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
+    for rank_col in rank_cols:
+        df_teams[f'{rank_col}_rank'] = df_teams[rank_col].rank(ascending=True)
 
-    # Rank columns
-    df_teams['limit_stat_rank'] = df_teams['limit_stat'].rank(ascending=False)
-    df_teams['stat_total_rank'] = df_teams['stat_total'].rank(ascending=False)
-    df_teams['td_rank'] = df_teams['td'].rank(ascending=False)
-    df_teams['yards_per_att_rank'] = df_teams['yards_per_att'].rank(ascending=False)
-    df_teams['yards_per_game_rank'] = df_teams['yards_per_game'].rank(ascending=False)
-
-    # Filter to get team ranks
+    # # Filter to get team ranks
     df_team = df_teams[df_teams['team_id'] == opp_id]
-
-    # Add player data to JSON output
-    json_output.update({'limit_stat_rank': df_team['limit_stat_rank'].values[0]})
-    json_output.update({'stat_total_rank': df_team['stat_total_rank'].values[0]})
-    json_output.update({'td_rank': df_team['td_rank'].values[0]})
-    json_output.update({'yards_per_att_rank': df_team['yards_per_att_rank'].values[0]})
-    json_output.update({'yards_per_game_rank': df_team['yards_per_game_rank'].values[0]})
+    for rank_col in rank_cols:
+        json_output.update({f"{rank_col}_rank": df_team[f"{rank_col}_rank"].values[0]})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
