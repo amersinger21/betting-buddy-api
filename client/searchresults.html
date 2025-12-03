@@ -26,6 +26,16 @@
   rushArray = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
   recArray = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
 
+  statDict = {
+    'pass_att': 'Pass Att', 'pass_yards': 'Pass Yard', 'pass_td': 'Pass TD', 'pass_comp': 'Pass Completions', 'pass_longest': 'Longest Pass', 
+    'rush_att': 'Rush Att','rush_yards': 'Rush Yard', 'rush_td': 'Rush TD', 'rush_longest': 'Longest Rush',
+    'rec': 'Receptions', 'targets': 'Targets', 'rec_yards': 'Rec Yard', 'rec_td': 'Rec TD', 'rec_longest': 'Longest Catch'}
+
+  statLimitDict = {
+    'pass_att': 'Pass Att', 'pass_yards': 'Pass Att', 'pass_td': 'Pass Att', 'pass_comp': 'Pass Att', 'pass_longest': 'Pass Att', 
+    'rush_att': 'Rush Att','rush_yards': 'Rush Att', 'rush_td': 'Rush Att', 'rush_longest': 'Rush Att',
+    'rec': 'Targets', 'targets': 'Targets', 'rec_yards': 'Targets', 'rec_td': 'Targets', 'rec_longest': 'Targets'}
+
   yearArray = {
     'current': 2025,
     'prior': 2024,
@@ -40,6 +50,8 @@
   const team = params.get('team')
   const operator = params.get("operator");
   const amount = params.get("amount");
+  const limitStat = statLimitDict[stat]
+  console.log(limitStat)
   let data;
 
   console.log(id)
@@ -245,7 +257,7 @@
     teamSummaryElement.append(teamSpan)
 
     const teamStatRank = document.createElement('p')
-    teamStatRank.innerText = `Stat Total: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
+    teamStatRank.innerText = `Total ${statDict[stat]}: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
     teamSummaryElement.append(teamStatRank)
 
     const teamLimitStatRank = document.createElement('p')

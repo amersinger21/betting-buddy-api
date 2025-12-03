@@ -51,6 +51,19 @@
     flex-direction: row;
 }
 
+#team-summary {
+    border-width: 2px;
+    border-style: solid; 
+    border-color: BLACK;
+    padding-right: 25%;
+}
+
+#opp-summary {
+    border-width: 2px;
+    border-style: solid; 
+    border-color: BLACK;
+    padding-right: 25%;
+}
 /* #bet-occurrence-sum{
     border-width: 2px;
     border-style: solid;
