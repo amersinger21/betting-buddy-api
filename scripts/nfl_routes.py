@@ -1907,10 +1907,6 @@ def nfl_team_rank_summary():
         cols = ['year', 'team_id', 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att',
                 'pass_yards_per_game']
         rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
-        if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
-            cols = ['year', 'team_id', 'targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att',
-                    'pass_yards_per_game']
-            rank_cols = ['targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att', 'pass_yards_per_game']
 
     # SQL Query that returns the player information
     connection = create_connection()
@@ -1999,10 +1995,6 @@ def nfl_opponent_rank_summary():
         cols = ['year', 'team_id', 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att',
                 'pass_yards_per_game']
         rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
-        if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
-            cols = ['year', 'team_id', 'targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att',
-                    'pass_yards_per_game']
-            rank_cols = ['targets', 'rec', 'rec_yards', 'rec_td', 'yards_per_att', 'pass_yards_per_game']
 
     # SQL Query that returns the player information
     connection = create_connection()
