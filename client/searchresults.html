@@ -25,7 +25,7 @@
   passArray = ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']
   rushArray = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
   recArray = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
-
+  
   statDict = {
     'pass_att': 'Pass Att', 'pass_yards': 'Pass Yard', 'pass_td': 'Pass TD', 'pass_comp': 'Pass Completions', 'pass_longest': 'Longest Pass', 
     'rush_att': 'Rush Att','rush_yards': 'Rush Yard', 'rush_td': 'Rush TD', 'rush_longest': 'Longest Rush',
@@ -54,6 +54,7 @@
   console.log(limitStat)
   let data;
 
+
   console.log(id)
   console.log(stat)
   console.log(team)
@@ -66,6 +67,27 @@
 
   // console.log(nfl_teams[team])
   async function summarySection(team_id) {
+    // Initialize function variables
+    if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
+        loopCols = ['rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
+        rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
+        teamStatConv = {'rush_att': 'Rush Att', 
+                        'rush_yards': 'Rush Yards', 
+                        'pass_yards': 'Pass Yards',
+                        'pass_td': 'Pass TD',
+                        'yards_per_att': 'Yards Per Att', 
+                        'pass_yards_per_game': 'Yards per Game'}(stat in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest'])}
+    else {
+        loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
+        rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
+        teamStatConv = {'pass_att': 'Pass Att', 
+                        'pass_comp': 'Pass Comp', 
+                        'pass_yards': 'Pass Yards',
+                        'pass_td': 'Pass TD',
+                        'yards_per_att': 'Yards Per Att', 
+                        'pass_yards_per_game': 'Yards per Game'}
+    }
+
     //=========================================PLAYER SECTION===============================================// 
     
     const playerInfoResponse = await fetch(`http://129.80.84.210/api/nfl/summary/player_info?id=${id}`);
@@ -256,55 +278,66 @@
     teamSpan.innerHTML = `<strong>${team} Summary</strong>`
     teamSummaryElement.append(teamSpan)
 
-    const teamStatRank = document.createElement('p')
-    teamStatRank.innerText = `Total ${statDict[stat]}: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
-    teamSummaryElement.append(teamStatRank)
+    console.log(loopCols)
+    for (element in loopCols) {
+      const statTotal = teamSummaryData[`team_${loopCols[element]}`]
+      const statText = teamStatConv[loopCols[element]]
+      const statRank = teamRankSummaryData[`${loopCols[element]}_rank`]
+      console.log(loopCols[element])
 
-    const teamLimitStatRank = document.createElement('p')
-    teamLimitStatRank.innerText = `Limit Stat Total: ${teamSummaryData['team_attempts']} (${teamRankSummaryData['limit_stat_rank']}th)`
-    teamSummaryElement.append(teamLimitStatRank)
+      const teamStatElement = document.createElement('p')
+      teamStatElement.innerText = `${statText}: ${statTotal} (${statRank}th)`
+      teamSummaryElement.append(teamStatElement)
+    }
+    // const teamStatRank = document.createElement('p')
+    // teamStatRank.innerText = `Total ${statDict[stat]}: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
+    // teamSummaryElement.append(teamStatRank)
 
-    const teamTdRank = document.createElement('p')
-    teamTdRank.innerText = `Team TD Total: ${teamSummaryData['team_touchdowns']} (${teamRankSummaryData['td_rank']}th)`
-    teamSummaryElement.append(teamTdRank)
+    // const teamLimitStatRank = document.createElement('p')
+    // teamLimitStatRank.innerText = `Limit Stat Total: ${teamSummaryData['team_attempts']} (${teamRankSummaryData['limit_stat_rank']}th)`
+    // teamSummaryElement.append(teamLimitStatRank)
 
-    const teamYdsPerAttRank = document.createElement('p')
-    teamYdsPerAttRank.innerText = `Yards per Att: ${teamSummaryData['team_stat_per_att']} (${teamRankSummaryData['yards_per_att_rank']}th)`
-    teamSummaryElement.append(teamYdsPerAttRank)
+    // const teamTdRank = document.createElement('p')
+    // teamTdRank.innerText = `Team TD Total: ${teamSummaryData['team_touchdowns']} (${teamRankSummaryData['td_rank']}th)`
+    // teamSummaryElement.append(teamTdRank)
 
-    const teamYdsPerGameRank = document.createElement('p')
-    teamYdsPerGameRank.innerText = `Yards per Game: ${teamSummaryData['team_stat_per_game']} (${teamRankSummaryData['yards_per_game_rank']}th)`
-    teamSummaryElement.append(teamYdsPerGameRank)
+    // const teamYdsPerAttRank = document.createElement('p')
+    // teamYdsPerAttRank.innerText = `Yards per Att: ${teamSummaryData['team_stat_per_att']} (${teamRankSummaryData['yards_per_att_rank']}th)`
+    // teamSummaryElement.append(teamYdsPerAttRank)
+
+    // const teamYdsPerGameRank = document.createElement('p')
+    // teamYdsPerGameRank.innerText = `Yards per Game: ${teamSummaryData['team_stat_per_game']} (${teamRankSummaryData['yards_per_game_rank']}th)`
+    // teamSummaryElement.append(teamYdsPerGameRank)
 
 
 
-    let oppSummaryElement = document.createElement('div')
-    oppSummaryElement.id = "opp-summary";
-    secondRow.appendChild(oppSummaryElement)
+    // let oppSummaryElement = document.createElement('div')
+    // oppSummaryElement.id = "opp-summary";
+    // secondRow.appendChild(oppSummaryElement)
 
-    const oppSpan = document.createElement('span')
-    oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
-    oppSummaryElement.append(oppSpan)
+    // const oppSpan = document.createElement('span')
+    // oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
+    // oppSummaryElement.append(oppSpan)
 
-    const oppStatRank = document.createElement('p')
-    oppStatRank.innerText = `Stat Total: ${oppSummaryData['team_stat']} (${oppRankSummaryData['stat_total_rank']}th)`
-    oppSummaryElement.append(oppStatRank)
+    // const oppStatRank = document.createElement('p')
+    // oppStatRank.innerText = `Stat Total: ${oppSummaryData['team_stat']} (${oppRankSummaryData['stat_total_rank']}th)`
+    // oppSummaryElement.append(oppStatRank)
 
-    const oppLimitStatRank = document.createElement('p')
-    oppLimitStatRank.innerText = `Limit Stat Total: ${oppSummaryData['team_attempts']} (${oppRankSummaryData['limit_stat_rank']}th)`
-    oppSummaryElement.append(oppLimitStatRank)
+    // const oppLimitStatRank = document.createElement('p')
+    // oppLimitStatRank.innerText = `Limit Stat Total: ${oppSummaryData['team_attempts']} (${oppRankSummaryData['limit_stat_rank']}th)`
+    // oppSummaryElement.append(oppLimitStatRank)
 
-    const oppTdRank = document.createElement('p')
-    oppTdRank.innerText = `Team TD Total: ${oppSummaryData['team_touchdowns']} (${oppRankSummaryData['td_rank']}th)`
-    oppSummaryElement.append(oppTdRank)
+    // const oppTdRank = document.createElement('p')
+    // oppTdRank.innerText = `Team TD Total: ${oppSummaryData['team_touchdowns']} (${oppRankSummaryData['td_rank']}th)`
+    // oppSummaryElement.append(oppTdRank)
 
-    const oppYdsPerAttRank = document.createElement('p')
-    oppYdsPerAttRank.innerText = `Yards per Att: ${oppSummaryData['team_stat_per_att']} (${oppRankSummaryData['yards_per_att_rank']}th)`
-    oppSummaryElement.append(oppYdsPerAttRank)
+    // const oppYdsPerAttRank = document.createElement('p')
+    // oppYdsPerAttRank.innerText = `Yards per Att: ${oppSummaryData['team_stat_per_att']} (${oppRankSummaryData['yards_per_att_rank']}th)`
+    // oppSummaryElement.append(oppYdsPerAttRank)
 
-    const oppYdsPerGameRank = document.createElement('p')
-    oppYdsPerGameRank.innerText = `Yards per Game: ${oppSummaryData['team_stat_per_game']} (${oppRankSummaryData['yards_per_game_rank']}th)`
-    oppSummaryElement.append(oppYdsPerGameRank)
+    // const oppYdsPerGameRank = document.createElement('p')
+    // oppYdsPerGameRank.innerText = `Yards per Game: ${oppSummaryData['team_stat_per_game']} (${oppRankSummaryData['yards_per_game_rank']}th)`
+    // oppSummaryElement.append(oppYdsPerGameRank)
 
 
 
