@@ -1850,7 +1850,7 @@ def nfl_team_summary():
 
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td, 
-                    nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
+                    nfl_team_offense.rush_yards_per_att, nfl_team_offense.rush_yards_per_game'''
     else:
         columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_comp, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
