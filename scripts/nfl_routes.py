@@ -1867,14 +1867,25 @@ def nfl_team_summary():
                     WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
+    print(results)
 
-    # Add player data to JSON output
-    json_output.update({'team_name': str(results[9])})
-    json_output.update({'team_stat': int(results[3])})
-    json_output.update({'team_stat_per_att': float(results[6])})
-    json_output.update({'team_stat_per_game': float(results[7])})
-    json_output.update({'team_touchdowns': int(results[5])})
-    json_output.update({'team_attempts': int(results[2])})
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        # Add player data to JSON output
+        json_output.update({'team_name': str(results[-1])})
+        json_output.update({'team_rush_yards': int(results[3])})
+        json_output.update({'team_rush_att': int(results[2])})
+        json_output.update({'team_touchdowns': int(results[4])})
+        json_output.update({'team_rush_yards_per_att': float(results[5])})
+        json_output.update({'team_rush_yards_per_game': float(results[6])})
+    else:
+        # Add player data to JSON output
+        json_output.update({'team_name': str(results[-1])})
+        json_output.update({'team_pass_att': int(results[2])})
+        json_output.update({'team_pass_comp': int(results[3])})
+        json_output.update({'team_pass_yards': int(results[4])})
+        json_output.update({'team_pass_td': int(results[5])})
+        json_output.update({'team_pass_yards_per_att': float(results[6])})
+        json_output.update({'team_pass_yards_per_game': float(results[7])})
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -1947,14 +1958,26 @@ def nfl_opponent_summary():
                     WHERE nfl_team_defense.team_id = {opp_id} and nfl_team_defense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
+    print(results)
 
-    # Add player data to JSON output
-    json_output.update({'team_name': str(results[-1])})
-    json_output.update({'team_stat': int(results[3])})
-    json_output.update({'team_stat_per_att': float(results[6    ])})
-    json_output.update({'team_stat_per_game': float(results[7])})
-    json_output.update({'team_touchdowns': int(results[5])})
-    json_output.update({'team_attempts': int(results[2])})
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        # Add player data to JSON output
+        json_output.update({'team_name': str(results[-1])})
+        json_output.update({'team_rush_yards': int(results[3])})
+        json_output.update({'team_rush_att': int(results[2])})
+        json_output.update({'team_touchdowns': int(results[4])})
+        json_output.update({'team_rush_yards_per_att': float(results[5])})
+        json_output.update({'team_rush_yards_per_game': float(results[6])})
+    else:
+        # Add player data to JSON output
+        json_output.update({'team_name': str(results[-1])})
+        json_output.update({'team_pass_att': int(results[2])})
+        json_output.update({'team_pass_comp': int(results[3])})
+        json_output.update({'team_pass_yards': int(results[4])})
+        json_output.update({'team_pass_td': int(results[5])})
+        json_output.update({'team_pass_yards_per_att': float(results[6])})
+        json_output.update({'team_pass_yards_per_game': float(results[7])})
+
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
