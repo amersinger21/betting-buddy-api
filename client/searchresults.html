@@ -268,15 +268,32 @@
 
     //=========================================TEAM SECTION===============================================// 
     let secondRow = document.getElementById("second-row")
-    teamSummaryElement = document.createElement('div')
 
+    let playerSummaryElement = document.createElement('div')
+    playerSummaryElement.id = "opp-summary";
+    secondRow.appendChild(playerSummaryElement)
 
+    const playerSpan = document.createElement('span')
+    playerSpan.innerHTML = `<strong>Player Summary</strong>`
+    playerSummaryElement.append(playerSpan)
+
+    let teamSummaryElement = document.createElement('div')
     teamSummaryElement.id = "team-summary";
     secondRow.appendChild(teamSummaryElement)
 
     const teamSpan = document.createElement('span')
     teamSpan.innerHTML = `<strong>${team} Summary</strong>`
     teamSummaryElement.append(teamSpan)
+
+
+    let oppSummaryElement = document.createElement('div')
+    oppSummaryElement.id = "opp-summary";
+    secondRow.appendChild(oppSummaryElement)
+
+    const oppSpan = document.createElement('span')
+    oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
+    oppSummaryElement.append(oppSpan)
+
 
     console.log(loopCols)
     for (element in loopCols) {
@@ -286,38 +303,22 @@
       console.log(loopCols[element])
 
       const teamStatElement = document.createElement('p')
-      teamStatElement.innerText = `${statText}: ${statTotal} (${statRank}th)`
+      teamStatElement.innerText = `${statText}: ${statTotal}  (${statRank}th)`
       teamSummaryElement.append(teamStatElement)
+
+
+      const statTotalOpp = oppSummaryData[`team_${loopCols[element]}`]
+      const statTextOpp = teamStatConv[loopCols[element]]
+      const statRankOpp = oppRankSummaryData[`${loopCols[element]}_rank`]
+
+      const oppStatElement = document.createElement('p')
+      oppStatElement.innerText = `${statTextOpp}: ${statTotalOpp}  (${statRankOpp}th)`
+      oppSummaryElement.append(oppStatElement)
     }
-    // const teamStatRank = document.createElement('p')
-    // teamStatRank.innerText = `Total ${statDict[stat]}: ${teamSummaryData['team_stat']} (${teamRankSummaryData['stat_total_rank']}th)`
-    // teamSummaryElement.append(teamStatRank)
-
-    // const teamLimitStatRank = document.createElement('p')
-    // teamLimitStatRank.innerText = `Limit Stat Total: ${teamSummaryData['team_attempts']} (${teamRankSummaryData['limit_stat_rank']}th)`
-    // teamSummaryElement.append(teamLimitStatRank)
-
-    // const teamTdRank = document.createElement('p')
-    // teamTdRank.innerText = `Team TD Total: ${teamSummaryData['team_touchdowns']} (${teamRankSummaryData['td_rank']}th)`
-    // teamSummaryElement.append(teamTdRank)
-
-    // const teamYdsPerAttRank = document.createElement('p')
-    // teamYdsPerAttRank.innerText = `Yards per Att: ${teamSummaryData['team_stat_per_att']} (${teamRankSummaryData['yards_per_att_rank']}th)`
-    // teamSummaryElement.append(teamYdsPerAttRank)
-
-    // const teamYdsPerGameRank = document.createElement('p')
-    // teamYdsPerGameRank.innerText = `Yards per Game: ${teamSummaryData['team_stat_per_game']} (${teamRankSummaryData['yards_per_game_rank']}th)`
-    // teamSummaryElement.append(teamYdsPerGameRank)
 
 
 
-    // let oppSummaryElement = document.createElement('div')
-    // oppSummaryElement.id = "opp-summary";
-    // secondRow.appendChild(oppSummaryElement)
-
-    // const oppSpan = document.createElement('span')
-    // oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
-    // oppSummaryElement.append(oppSpan)
+    // 
 
     // const oppStatRank = document.createElement('p')
     // oppStatRank.innerText = `Stat Total: ${oppSummaryData['team_stat']} (${oppRankSummaryData['stat_total_rank']}th)`
