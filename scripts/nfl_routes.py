@@ -2230,6 +2230,107 @@ def nfl_bet_occurrence_summary():
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
 
+@nfl.route('/nfl/summary/player_summary', methods=['GET'])
+def nfl_player_stat_summary():
+    # Initialize variables
+    player_id = int(request.args.get('id', None))
+    column_name = request.args.get('stat', None)
+    opp_id = int(request.args.get('opp_id', None))
+    json_output = {}
+
+    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        query_cols = 'rush_att, rush_yards, rush_td, rush_longest'
+        cols =  ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
+    elif column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']:
+        query_cols = 'pass_att, pass_comp, pass_yards, pass_td, pass_longest'
+        cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
+    else:
+        query_cols = 'rec, targets, rec_yards, rec_td, rec_longest'
+        cols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
+
+    limit_stat = limit_stat_dict[column_name]
+
+    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'home_id', 'away_id'] + cols
+
+    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT
+                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+                    player.position, game_id, player_id, team_id, opp_id, nfl_games.home_id, nfl_games.away_id, {query_cols}
+                    FROM
+                    nfl_player_stats
+                    JOIN
+                    player ON player.id = nfl_player_stats.player_id
+                    JOIN
+                    nfl_games on nfl_games.id = nfl_player_stats.game_id
+                    WHERE nfl_games.year >= 2025 AND nfl_player_stats.player_id = {player_id}'''
+
+    cursor.execute(player_query)
+    results = list(cursor.fetchall())
+
+    # Create game log from returned sql query
+    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+
+    df_home = df_logs[df_logs['home_id'].isin(df_logs['team_id'].values.tolist())]
+    df_away = df_logs[df_logs['away_id'].isin(df_logs['team_id'].values.tolist())]
+
+    if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
+        stat_avg_dict = {'avg_rec': round(df_logs['rec'].mean(),1),
+                         'avg_targets': round(df_logs['targets'].mean(), 1),
+                         'avg_rec_yards': round(df_logs['rec_yards'].mean(),1),
+                         'avg_rec_td': round(df_logs['rec_td'].mean(), 1),
+                         'avg_rec_longest': round(df_logs['rec_longest'].mean(), 1)}
+        stat_home_dict = {'home_rec': round(df_home['rec'].mean(),1),
+                         'home_targets': round(df_home['targets'].mean(), 1),
+                         'home_rec_yards': round(df_home['rec_yards'].mean(),1),
+                         'home_rec_td': round(df_home['rec_td'].mean(), 1),
+                         'home_rec_longest': round(df_home['rec_longest'].mean(), 1)}
+        stat_away_dict = {'away_rec': round(df_away['rec'].mean(),1),
+                         'away_targets': round(df_away['targets'].mean(), 1),
+                         'away_rec_yards': round(df_away['rec_yards'].mean(),1),
+                         'away_rec_td': round(df_away['rec_td'].mean(), 1),
+                         'away_rec_longest': round(df_away['rec_longest'].mean(), 1)}
+    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+        stat_avg_dict = {'avg_rush_att': round(df_logs['rush_att'].mean(), 1),
+                         'avg_rush_yards': round(df_logs['rush_yards'].mean(), 1),
+                         'avg_rush_td': round(df_logs['rush_td'].mean(), 1),
+                         'avg_rush_longest': round(df_logs['rush_longest'].mean(), 1)}
+        stat_home_dict = {'home_rush_att': round(df_home['pass_att'].mean(),1),
+                         'home_rush_yards': round(df_home['pass_yards'].mean(),1),
+                         'home_rush_td': round(df_home['pass_td'].mean(), 1),
+                         'home_rush_longest': round(df_home['pass_longest'].mean(), 1)}
+        stat_away_dict = {'away_rush_att': round(df_away['pass_att'].mean(),1),
+                         'away_rush_yards': round(df_away['pass_yards'].mean(),1),
+                         'away_rush_td': round(df_away['pass_td'].mean(), 1),
+                         'away_rush_longest': round(df_away['pass_longest'].mean(), 1)}
+    else:
+        stat_avg_dict = {'avg_pass_att': round(df_logs['pass_att'].mean(),1),
+                         'avg_pass_comp': round(df_logs['pass_comp'].mean(), 1),
+                         'avg_pass_yards': round(df_logs['pass_yards'].mean(),1),
+                         'avg_pass_td': round(df_logs['pass_td'].mean(), 1),
+                         'avg_pass_longest': round(df_logs['pass_longest'].mean(), 1)}
+        stat_home_dict = {'home_pass_att': round(df_home['pass_att'].mean(),1),
+                         'home_pass_comp': round(df_home['pass_comp'].mean(), 1),
+                         'home_pass_yards': round(df_home['pass_yards'].mean(),1),
+                         'home_pass_td': round(df_home['pass_td'].mean(), 1),
+                         'home_pass_longest': round(df_home['pass_longest'].mean(), 1)}
+        stat_away_dict = {'away_pass_att': round(df_away['pass_att'].mean(),1),
+                         'away_pass_comp': round(df_away['pass_comp'].mean(), 1),
+                         'away_pass_yards': round(df_away['pass_yards'].mean(),1),
+                         'away_pass_td': round(df_away['pass_td'].mean(), 1),
+                         'away_pass_longest': round(df_away['pass_longest'].mean(), 1)}
+
+    json_output.update({'player_avg_stats': stat_avg_dict})
+    json_output.update({'player_home_avg': stat_home_dict})
+    json_output.update({'player_away_avgs': stat_away_dict})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
+
 
 
 # PLAYER SECTION ROUTES
