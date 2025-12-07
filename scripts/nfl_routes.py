@@ -1900,13 +1900,13 @@ def nfl_team_rank_summary():
         columns = '''nfl_team_offense.rush_att, nfl_team_offense.rush_yards, nfl_team_offense.rush_td,
                     nfl_team_offense.rush_yards_per_att, nfl_team_offense.rush_yards_per_game'''
         cols = ['year', 'team_id', 'rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
-        rank_cols = ['rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
+        rank_cols = ['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game']
     else:
         columns = '''nfl_team_offense.pass_att, nfl_team_offense.pass_comp, nfl_team_offense.pass_yards, nfl_team_offense.pass_td, 
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
         cols = ['year', 'team_id', 'pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att',
                 'pass_yards_per_game']
-        rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
+        rank_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game']
 
     # SQL Query that returns the player information
     connection = create_connection()
