@@ -67,27 +67,6 @@
 
   // console.log(nfl_teams[team])
   async function summarySection(team_id) {
-    // Initialize function variables
-    if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
-        loopCols = ['rush_att', 'rush_yards', 'rush_td', 'yards_per_att', 'yards_per_game']
-        rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
-        teamStatConv = {'rush_att': 'Rush Att', 
-                        'rush_yards': 'Rush Yards', 
-                        'pass_yards': 'Pass Yards',
-                        'pass_td': 'Pass TD',
-                        'yards_per_att': 'Yards Per Att', 
-                        'pass_yards_per_game': 'Yards per Game'}(stat in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest'])}
-    else {
-        loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'yards_per_att', 'pass_yards_per_game']
-        rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
-        teamStatConv = {'pass_att': 'Pass Att', 
-                        'pass_comp': 'Pass Comp', 
-                        'pass_yards': 'Pass Yards',
-                        'pass_td': 'Pass TD',
-                        'yards_per_att': 'Yards Per Att', 
-                        'pass_yards_per_game': 'Yards per Game'}
-    }
-
     //=========================================PLAYER SECTION===============================================// 
     
     const playerInfoResponse = await fetch(`http://129.80.84.210/api/nfl/summary/player_info?id=${id}`);
@@ -105,6 +84,11 @@
       `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=${location}&qb=${startingQB}`);
     const betOccurrenceData = await betSummaryRequest.json();
 
+    const playerAvgRequest = await fetch(
+      `http://129.80.84.210/api/nfl/summary/player_summary?id=${id}&stat=${stat}&opp_id=4`);
+    const playerAvgData = await playerAvgRequest.json();
+    console.log(playerAvgData)
+
     //=========================================TEAM SECTION===============================================// 
     const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
     const teamSummaryData = await teamSummaryRequest.json();
@@ -117,6 +101,53 @@
 
     const oppRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_rank_summary?opp_id=4&stat=${stat}`);
     const oppRankSummaryData = await oppRankSummaryRequest.json();
+
+    // Initialize function variables
+    if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
+        loopCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game']
+        rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
+        teamStatConv = {'rush_att': 'Rush Att', 
+                        'rush_yards': 'Rush Yards', 
+                        'rush_td': 'Rush TD',
+                        'yards_per_att': 'Yards Per Att', 
+                        'yards_per_game': 'Yards per Game'}
+        avg_cols = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
+        avgColConv = {'rush_att': 'Rush Att', 
+                      'rush_yards': 'Rush Yds', 
+                      'rush_td': 'Rec TD',
+                      'rush_longest': 'Longest Rec'}}
+    else {
+        loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game']
+        rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
+        if (playerInfoData['player_position'] == 'WR') {
+          avg_cols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
+          avgColConv = {'rec': 'Rec', 
+                        'targets': 'Tgts', 
+                        'rec_yards': 'Rec Ydds',
+                        'rec_td': 'Rec TD',
+                        'rec_longest': 'Longest Rec'}
+          teamStatConv = {'pass_att': 'Targets', 
+                          'pass_comp': 'Rec', 
+                          'pass_yards': 'Rec Yards',
+                          'pass_td': 'Rec TD',
+                          'pass_yards_per_att': 'Yards Per Rec', 
+                          'pass_yards_per_game': 'Rec Yds per Game'}
+        }
+        else {
+          avg_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
+          avgColConv = {'pass_att': 'Pass Att', 
+                        'pass_comp': 'Completions', 
+                        'pass_yards': 'Pass Yds',
+                        'pass_td': 'Pass TD',
+                        'pass_longest': 'Longest Pass'}
+          teamStatConv = {'pass_att': 'Pass Att', 
+                          'pass_comp': 'Pass Comp', 
+                          'pass_yards': 'Pass Yards',
+                          'pass_td': 'Pass TD',
+                          'yards_per_att': 'Yards Per Att', 
+                          'pass_yards_per_game': 'Yards per Game'}
+        }
+    }
 
 
      //=========================================PLAYER SECTION===============================================// 
@@ -276,6 +307,14 @@
     const playerSpan = document.createElement('span')
     playerSpan.innerHTML = `<strong>Player Summary</strong>`
     playerSummaryElement.append(playerSpan)
+    
+    playerStatContainer = document.createElement('div')
+    let plyrTotalDiv = document.createElement('div')
+    let plyrHomeDiv = document.createElement('div')
+    let plyrAwayDiv = document.createElement('div')
+    playerStatContainer.append(plyrTotalDiv)
+    playerStatContainer.append(plyrHomeDiv)
+    playerStatContainer.append(plyrAwayDiv)
 
     let teamSummaryElement = document.createElement('div')
     teamSummaryElement.id = "team-summary";
@@ -316,29 +355,31 @@
       oppSummaryElement.append(oppStatElement)
     }
 
+    // Populate player stat summary section
+
+    playerAvgArray = [playerAvgData['player_avg_stats'], playerAvgData['player_home_avg'], playerAvgData['player_away_avgs']]
+    for (lst in playerAvgArray) {
+      loopArray = playerAvgArray[lst]
+      let plyrStatDiv = document.createElement('div')
+      
+      for (const col in avg_cols) {
+        const playerStatText = `Vs Opponent: ${betOccurrenceData[element]}% (${hitsVsOpp} of ${gamesVsOpp})`
+      }
+
+      // Create divs
+      if (lst == 0) {
+        plyrTotalDiv.append(plyrStatDiv)
+      }
+      else if (lst == 1) {
+        plyrHomeDiv.append(plyrStatDiv)
+      }
+      else {
+        plyrAwayDiv.append(plyrStatDiv)
+      }
+    }
 
 
     // 
-
-    // const oppStatRank = document.createElement('p')
-    // oppStatRank.innerText = `Stat Total: ${oppSummaryData['team_stat']} (${oppRankSummaryData['stat_total_rank']}th)`
-    // oppSummaryElement.append(oppStatRank)
-
-    // const oppLimitStatRank = document.createElement('p')
-    // oppLimitStatRank.innerText = `Limit Stat Total: ${oppSummaryData['team_attempts']} (${oppRankSummaryData['limit_stat_rank']}th)`
-    // oppSummaryElement.append(oppLimitStatRank)
-
-    // const oppTdRank = document.createElement('p')
-    // oppTdRank.innerText = `Team TD Total: ${oppSummaryData['team_touchdowns']} (${oppRankSummaryData['td_rank']}th)`
-    // oppSummaryElement.append(oppTdRank)
-
-    // const oppYdsPerAttRank = document.createElement('p')
-    // oppYdsPerAttRank.innerText = `Yards per Att: ${oppSummaryData['team_stat_per_att']} (${oppRankSummaryData['yards_per_att_rank']}th)`
-    // oppSummaryElement.append(oppYdsPerAttRank)
-
-    // const oppYdsPerGameRank = document.createElement('p')
-    // oppYdsPerGameRank.innerText = `Yards per Game: ${oppSummaryData['team_stat_per_game']} (${oppRankSummaryData['yards_per_game_rank']}th)`
-    // oppSummaryElement.append(oppYdsPerGameRank)
 
 
 
