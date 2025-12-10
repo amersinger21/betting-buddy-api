@@ -31,11 +31,17 @@
 }
 
 #second-row {
-   display: flex; 
-   justify-content: space-between;
+    display: flex; 
+    justify-content: space-between;
     border-width: 2px;
     border-style: solid;
     border-color: purple;
+}
+
+#second-row .second {
+    border-width: 2px;
+    border-style: solid;
+    border-color: green;
 }
 
 .first-level {
@@ -44,7 +50,7 @@
     border-color: BLACK;
 }
 
-#bet-occurrence {
+#bet-summary-occur {
     margin-left: auto;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -64,6 +70,25 @@
     border-color: BLACK;
     /* padding-right: 25%; */
 }
+
+#player-sum-container {
+    border-width: 2px;
+    border-style: solid; 
+    border-color: green;
+    display: flex;
+    flex-direction: row;
+    gap: 2%;
+}
+
+
+.player-stat-sum {
+    width: 33%;
+    padding-right: 5%;
+    border-width: 2px;
+    border-style: solid; 
+    border-color: hotpink;
+
+}
 /* #bet-occurrence-sum{
     border-width: 2px;
     border-style: solid;
@@ -79,13 +104,29 @@
     align-items: center;
 } */
 
-.bet-summary span{
+/* .bet-summary span{
     display: grid;
     place-self: center;
     margin-bottom: 2%;
 }
 
+.player-stat-sum span{
+    display: grid;
+    place-self: center;
+    margin-bottom: 2%;
+} */
 
+span {
+    display: grid;
+    place-self: center;
+    margin-bottom: 2%;
+}
+
+.player-stat-sum p{
+    border-width: 2px;
+    border-style: solid;
+    border-color: BLACK;
+}
 
 /* .player-info {
     border-width: 2px;

@@ -9,8 +9,30 @@
   <body>
     <h1>Betting Buddy Results Page</h1>
     <div id="summary">
-      <div id="first-row"></div>
-      <data id="second-row"></data>
+      <div id="first-row">
+        <div id="player-image" class="first-level"></div>
+        <div id="player-info" class="first-level">
+          <p id="name"><strong>Name: </strong></p>
+          <p id="pos"><strong>Pos: </strong></p>
+          <p id="team"><strong>Team: </strong></p>
+        </div>
+        <div id="bet-summary-occur" class="first-level">
+          <div id="total-sum" class="bet-summary"><span><strong>Bet Summary</strong></span></div>
+          <div id="loc-sum" class="bet-summary"><span><strong>Location Summary</strong></span></div>
+          <div id="misc-sum" class="bet-summary"><span><strong>Misc Summary</strong></span></div>
+        </div>
+      </div>
+      <div id="second-row">
+          <div class="second">
+            <span><strong>Player Summary</strong></span>
+            <div id="player-sum-container">
+            <div id="sum-avg" class="player-stat-sum"><span><strong>Total</strong></span></div>
+            <div id="sum-home" class="player-stat-sum"><span><strong>Home</strong></span></div>
+            <div id="sum-away" class="player-stat-sum"><span><strong>Away</strong></span></div>
+            </div>
+          </div>
+          <div id="team-sum" class="second"><span><strong>Team Summary</strong></span></div>
+          <div id="opp-sum" class="second"><span><strong>Opponent Summary</strong></span></div>
       </div>
     </div>
   </body>
@@ -103,6 +125,7 @@
     const oppRankSummaryData = await oppRankSummaryRequest.json();
 
     // Initialize function variables
+    let loopCols;
     if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
         loopCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game']
         rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
@@ -111,7 +134,7 @@
                         'rush_td': 'Rush TD',
                         'yards_per_att': 'Yards Per Att', 
                         'yards_per_game': 'Yards per Game'}
-        avg_cols = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
+        avgCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
         avgColConv = {'rush_att': 'Rush Att', 
                       'rush_yards': 'Rush Yds', 
                       'rush_td': 'Rec TD',
@@ -120,10 +143,10 @@
         loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game']
         rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
         if (playerInfoData['player_position'] == 'WR') {
-          avg_cols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
+          avgCols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
           avgColConv = {'rec': 'Rec', 
                         'targets': 'Tgts', 
-                        'rec_yards': 'Rec Ydds',
+                        'rec_yards': 'Rec Yds',
                         'rec_td': 'Rec TD',
                         'rec_longest': 'Longest Rec'}
           teamStatConv = {'pass_att': 'Targets', 
@@ -144,7 +167,7 @@
                           'pass_comp': 'Pass Comp', 
                           'pass_yards': 'Pass Yards',
                           'pass_td': 'Pass TD',
-                          'yards_per_att': 'Yards Per Att', 
+                          'pass_yards_per_att': 'Yards Per Att', 
                           'pass_yards_per_game': 'Yards per Game'}
         }
     }
@@ -160,191 +183,101 @@
     // locate the summary section and populate with summay data
     let summaryTag = document.getElementById('summary')
     let firstRow = document.getElementById('first-row')
-
-    // Create div tags for info section and add class/id attributes
-    let playerImageSection = document.createElement("div");
-    playerImageSection.classList.add("first-level")
-    playerImageSection.id = "player-img";
-
-    let playerInfoSection = document.createElement("div")
-    playerInfoSection.classList.add("first-level")
-    playerInfoSection.id = "player-info";
+    let playerImageSection = document.getElementById('player-image')
+    let playerInfoSection = document.getElementById('player-info')
+    let betSummarySection = document.getElementById('bet-occurrence')
     
-    let betSummarySection = document.createElement("div")
-    betSummarySection.classList.add("first-level")
-    betSummarySection.id = "bet-occurrence";
-    
-
-    // Append player/team/image sections to summary element
-    firstRow.appendChild(playerImageSection)
-    firstRow.appendChild(playerInfoSection)
-    firstRow.appendChild(betSummarySection)
-
     // Add player image
     let imageTag = document.createElement('img')
 
-    // Populate the player-info section
-    let playerNameTag = document.createElement("p");
-    playerNameTag.classList.add("info-class")
-    playerNameTag.innerHTML = `Name: ${playerInfoData['player_name']}`
-    playerInfoSection.appendChild(playerNameTag)
+    const playerInfoArray = ['player_name', 'player_position', 'player_team_name']
+    for (key in playerInfoArray) {
+      let val = playerInfoArray[key]
+      playerInfoElement = playerInfoData[val]
 
-    let playerPosTag = document.createElement("p");
-    playerPosTag.classList.add("info-class")
-    playerPosTag.innerHTML = `Pos: ${playerInfoData['player_position']}`
-    playerInfoSection.appendChild(playerPosTag)
+      let pTag;
+      if (key == 0) {
+        pTag = document.getElementById('name')
+      }
+      else if (key == 1) {
+        pTag = document.getElementById('pos')
+      }
+      else {
+        pTag = document.getElementById('team')
+      }
+      pTag.append(playerInfoElement)
+    }
 
-    let playerTeamTag = document.createElement("p");
-    playerTeamTag.classList.add("info-class")
-    playerTeamTag.innerHTML = `Team: ${playerInfoData['player_team_name']}`
-    playerInfoSection.appendChild(playerTeamTag)
-
-
-    // Bet Summary By Year
-    let betOccurDiv = document.createElement("div")
-    betOccurDiv.classList.add("bet-summary")
-    betSummarySection.append(betOccurDiv)
-
-    // Bet Summary Home/Away
-    let betLocDiv = document.createElement("div")
-    betLocDiv.classList.add("bet-summary")
-    betSummarySection.append(betLocDiv)
-
-    // Bet Summary Misc 
-    let betMiscDiv = document.createElement("div")
-    betMiscDiv.classList.add("bet-summary")
-    betSummarySection.append(betMiscDiv)
-
-  
-    // Add column headers
-    const occurSpan = document.createElement('span')
-    occurSpan.innerHTML = '<strong>Bet Summary</strong>'
-    betOccurDiv.append(occurSpan)
-
-    const occurLocSpan = document.createElement('span')
-    occurLocSpan.innerHTML = `<strong>Bet Summary ${capitalizedWord}</strong>`
-    betLocDiv.append(occurLocSpan)
-
-    const occurMiscSpan = document.createElement('span')
-    occurMiscSpan.innerHTML = '<strong>Bet Summary Misc</strong>'
-    betMiscDiv.append(occurMiscSpan)
+    // Find bet summary sections by id
+    let betOccurSum = document.getElementById('total-sum')
+    let betLocSum = document.getElementById('loc-sum')
+    let betMiscSum = document.getElementById('misc-sum')
 
     // Populate the bet summary by year and by location sections
-    arrayList = ['current', 'prior', 'third']
-    for (const element of arrayList) {
+    periodArray = ['current', 'prior', 'third']
+    let miscElementText;
+    for (element of periodArray) {
       // Initialize variables
       const year = yearArray[element]
-      const totalGames = betOccurrenceData['player_total_games'][yearArray[element]]
-      const totalHits = betOccurrenceData['player_total_hits'][yearArray[element]]
-      const locGames = betOccurrenceData['player_total_loc_games'][yearArray[element]]
-      const totalLocHits = betOccurrenceData[`player_hits_location`][yearArray[element]]
-      const betSummaryText = `${yearArray[element]}: ${betOccurrenceData[element]}% (${totalHits} of ${totalGames})`
-      const betSummaryLocText = `${yearArray[element]}: ${betOccurrenceData[`loc_${element}`]}% (${totalLocHits} of ${locGames})`
 
-      // Create element and populate with text and add to HTML parent element
+      // pupulate total section
+      const betSummaryText = `${year}: ${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})`
       let betSummaryElement = document.createElement('p')
       betSummaryElement.innerText = betSummaryText
-      betOccurDiv.append(betSummaryElement)
+      betOccurSum.appendChild(betSummaryElement)
 
-      // Home/Away Summary Data
+      // populate loc section
+      const betSummaryLocText = `${year}: ${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})`
       let betLocSummaryElement = document.createElement('p')
       betLocSummaryElement.innerText = betSummaryLocText
-      betLocDiv.append(betLocSummaryElement)
+      betLocSum.appendChild(betLocSummaryElement)
     }
    
     // Populate the Bet-Summary-Misc div
-    arrayList2 = ['vs_opponent', 'current_avg_limit', 'qb_player_data']
-    for (const element of arrayList2) {
-      
+    miscSummaryArray = ['vs_opponent', 'current_avg_limit', 'qb_player_data']
+    for (const element of miscSummaryArray) {
+      let betMiscElement = document.createElement('p')
+      let miscElementText;
       if (element == 'vs_opponent') {
-        const gamesVsOpp = betOccurrenceData['vs_opponent_games']
-        const hitsVsOpp = betOccurrenceData['vs_opponent_hits']
-        const betVsOpponentText = `Vs Opponent: ${betOccurrenceData[element]}% (${hitsVsOpp} of ${gamesVsOpp})`
-
-        let betMiscSummary = document.createElement('p')
-        betMiscSummary.innerText = betVsOpponentText
-        betMiscDiv.append(betMiscSummary)
+        miscElementText = `Vs Opponent: ${betOccurrenceData['vs_opponent']}% (${betOccurrenceData['vs_opponent_hits']} of ${betOccurrenceData['vs_opponent_games']})`
       }
-
       else if (element == 'current_avg_limit') {
         let limitStatAvgText;
-        const limitStatAvg = betOccurrenceData['current_avg_limit']
+        const limitStatAvg = betOccurrenceData['current_avg_limit'].toFixed(2)
         if (passArray.includes(stat)) {
-          limitStatAvgText = `Avg Pass Att: ${limitStatAvg}`
+          miscElementText = `Avg Pass Att: ${limitStatAvg}`
         }
         else if (rushArray.includes(stat)) {
-          limitStatAvgText = `Avg Rush Att ${limitStatAvg}`
+          miscElementText = `Avg Rush Att ${limitStatAvg}`
         }
         else {
-          limitStatAvgText = `Avg Tgts: ${limitStatAvg}`
-        }
-
-        let limitAvgSummary = document.createElement('p')
-        limitAvgSummary.innerText = limitStatAvgText
-        betMiscDiv.append(limitAvgSummary)
+          miscElementText = `Avg Tgts: ${limitStatAvg}`
+        }  
       }
       else {
         if (playerInfoData['player_position'] == 'WR') {
-          const gamesWithQb = betOccurrenceData['start_qb_games']
-          const hitsWithQb = betOccurrenceData['start_qb_hits']
-          const betWithQbText = `With QB: ${betOccurrenceData['qb_player_data']}% (${hitsWithQb} of ${gamesWithQb})`
-
-          let betWithQb = document.createElement('p')
-          betWithQb.innerText = betWithQbText
-          betMiscDiv.append(betWithQb)
-        }
+          miscElementText = `With QB: ${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})`
       }
     }
-
-
-    //=========================================TEAM SECTION===============================================// 
-    let secondRow = document.getElementById("second-row")
-
-    let playerSummaryElement = document.createElement('div')
-    playerSummaryElement.id = "opp-summary";
-    secondRow.appendChild(playerSummaryElement)
-
-    const playerSpan = document.createElement('span')
-    playerSpan.innerHTML = `<strong>Player Summary</strong>`
-    playerSummaryElement.append(playerSpan)
+    betMiscElement.innerText = miscElementText
+       
+    betMiscSum.appendChild(betMiscElement)
+  }
     
-    playerStatContainer = document.createElement('div')
-    let plyrTotalDiv = document.createElement('div')
-    let plyrHomeDiv = document.createElement('div')
-    let plyrAwayDiv = document.createElement('div')
-    playerStatContainer.append(plyrTotalDiv)
-    playerStatContainer.append(plyrHomeDiv)
-    playerStatContainer.append(plyrAwayDiv)
+  //=========================================TEAM SECTION===============================================// 
+    playerStatContainer = document.getElementById('player-summary')
+    teamSumContainer = document.getElementById('team-sum')
+    oppSumContainer = document.getElementById('opp-sum')
 
-    let teamSummaryElement = document.createElement('div')
-    teamSummaryElement.id = "team-summary";
-    secondRow.appendChild(teamSummaryElement)
-
-    const teamSpan = document.createElement('span')
-    teamSpan.innerHTML = `<strong>${team} Summary</strong>`
-    teamSummaryElement.append(teamSpan)
-
-
-    let oppSummaryElement = document.createElement('div')
-    oppSummaryElement.id = "opp-summary";
-    secondRow.appendChild(oppSummaryElement)
-
-    const oppSpan = document.createElement('span')
-    oppSpan.innerHTML = `<strong>${'BUF'} Summary</strong>`
-    oppSummaryElement.append(oppSpan)
-
-
-    console.log(loopCols)
+    // Populate team and opponent summary sections
     for (element in loopCols) {
       const statTotal = teamSummaryData[`team_${loopCols[element]}`]
       const statText = teamStatConv[loopCols[element]]
       const statRank = teamRankSummaryData[`${loopCols[element]}_rank`]
-      console.log(loopCols[element])
 
       const teamStatElement = document.createElement('p')
       teamStatElement.innerText = `${statText}: ${statTotal}  (${statRank}th)`
-      teamSummaryElement.append(teamStatElement)
-
+      teamSumContainer.append(teamStatElement)
 
       const statTotalOpp = oppSummaryData[`team_${loopCols[element]}`]
       const statTextOpp = teamStatConv[loopCols[element]]
@@ -352,41 +285,47 @@
 
       const oppStatElement = document.createElement('p')
       oppStatElement.innerText = `${statTextOpp}: ${statTotalOpp}  (${statRankOpp}th)`
-      oppSummaryElement.append(oppStatElement)
+      oppSumContainer.append(oppStatElement)
     }
 
     // Populate player stat summary section
-
     playerAvgArray = [playerAvgData['player_avg_stats'], playerAvgData['player_home_avg'], playerAvgData['player_away_avgs']]
     for (lst in playerAvgArray) {
       loopArray = playerAvgArray[lst]
-      let plyrStatDiv = document.createElement('div')
-      
-      for (const col in avg_cols) {
-        const playerStatText = `Vs Opponent: ${betOccurrenceData[element]}% (${hitsVsOpp} of ${gamesVsOpp})`
-      }
+      console.log(lst)
 
-      // Create divs
+      // set textSeg variable
+      let textSeg;
       if (lst == 0) {
-        plyrTotalDiv.append(plyrStatDiv)
+        textSeg = 'avg'
       }
       else if (lst == 1) {
-        plyrHomeDiv.append(plyrStatDiv)
+        textSeg = 'home'
       }
       else {
-        plyrAwayDiv.append(plyrStatDiv)
+        textSeg = 'away'
+      }
+      
+      for (const col in avgCols) {
+        let playerPTag = document.createElement('p')
+        const plyrElementText = `${avgColConv[avgCols[col]]}: ${loopArray[`${textSeg}_${avgCols[col]}`]}`
+        playerPTag.innerText = plyrElementText
+
+        if (lst == 0) {
+          sumSection = document.getElementById('sum-avg')
+          sumSection.appendChild(playerPTag)
+          }
+        else if (lst == 1) {
+          sumSection = document.getElementById('sum-home')
+          sumSection.append(playerPTag)
+          } 
+        else {
+          sumSection = document.getElementById('sum-away')
+          sumSection.append(playerPTag)
+        }
       }
     }
-
-
-    // 
-
-
-
-    console.log(playerInfoData)
-    return data
   }
 
   summarySection(nfl_teams[team])
 </script>
-
