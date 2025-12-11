@@ -2026,16 +2026,11 @@ def nfl_game_log_summary():
 
     if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
-        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
-                    'opp_id': '', 'pass_att': '', 'pass_yards': '', 'pass_td': '', 'pass_comp': '', 'pass_longest': ''}
     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
-        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
-                    'opp_id': '', 'rush_att': '', 'rush_yards': '', 'rush_td': '', 'rush_longest': '', 'fumbles': ''}
     else:
         columns = 'rec, targets, rec_yards, rec_td, rec_longest'
-        row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
-                    'opp_id': '', 'rec': '', 'targets': '', 'rec_yards': '', 'rec_td': '', 'rec_longest': ''}
+
 
     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
     connection = create_connection()
@@ -2059,9 +2054,21 @@ def nfl_game_log_summary():
     # Build table data in JSON format
     row_indicator = 1
     for tup in results:
+        if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
+            row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '',
+                             'team_id': '', 'opp_id': '', 'pass_att': '', 'pass_yards': '', 'pass_td': '', 'pass_comp': '',
+                             'pass_longest': ''}
+        elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+            row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '',
+                             'team_id': '', 'opp_id': '', 'rush_att': '', 'rush_yards': '', 'rush_td': '',
+                             'rush_longest': '', 'fumbles': ''}
+        else:
+            row_dict_temp = {'name': '', 'year': '', 'week': '', 'pos': '', 'game_id': '', 'player_id': '', 'team_id': '',
+                             'opp_id': '', 'rec': '', 'targets': '', 'rec_yards': '', 'rec_td': '', 'rec_longest': ''}
         index = 0
         row_dict = row_dict_temp
-        for key in row_dict_temp.keys():
+
+        for key in row_dict.keys():
             row_dict[key] = tup[index]
             index +=1
         json_output[row_indicator] = row_dict
