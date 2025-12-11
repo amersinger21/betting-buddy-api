@@ -39,7 +39,6 @@
 </html>
 
 <script>
-
   nfl_teams = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
                  'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
                  'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
@@ -65,6 +64,7 @@
     'fourth': 2022,
     'fifth': 2021
   }
+  
   let params = new URLSearchParams(document.location.search);
 
   const id = params.get("id");
@@ -73,15 +73,7 @@
   const operator = params.get("operator");
   const amount = params.get("amount");
   const limitStat = statLimitDict[stat]
-  console.log(limitStat)
   let data;
-
-
-  console.log(id)
-  console.log(stat)
-  console.log(team)
-  console.log(operator)
-  console.log(amount)
 
   // What is this referencing? Are they just not built yet?
   const statName = document.querySelector("#statName");
@@ -269,6 +261,13 @@
     teamSumContainer = document.getElementById('team-sum')
     oppSumContainer = document.getElementById('opp-sum')
 
+    // Update team / opponent names in span element
+    spans = document.querySelectorAll('span')
+    teamSpan = spans[7]
+    teamSpan.innerHTML = `<strong>${team} Summary<span>`
+    oppSpan = spans[8]
+    oppSpan.innerHTML = `<strong>${'BUF'} Summary<span>`
+
     // Populate team and opponent summary sections
     for (element in loopCols) {
       const statTotal = teamSummaryData[`team_${loopCols[element]}`]
@@ -326,6 +325,7 @@
       }
     }
   }
+
 
   summarySection(nfl_teams[team])
 </script>
