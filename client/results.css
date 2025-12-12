@@ -22,13 +22,34 @@
     border-color: red;
 }
 
+/* First row css player image, info and bet summary */
 #first-row {
    display: flex; 
    justify-content: space-between;
+
+}
+
+#bet-summary-occur {
+    margin-left: auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    flex-direction: row;
+    gap: 10px;
+}
+
+
+.bet-summary, #player-image {
     border-width: 2px;
     border-style: solid;
-    border-color: purple;
+    border-color: black;
 }
+
+#player-image {
+    margin-right: 10px;
+}
+
+
+
 
 #second-row {
     display: flex; 
@@ -44,18 +65,9 @@
     border-color: green;
 }
 
-.first-level {
-    border-width: 2px;
-    border-style: solid; 
-    border-color: BLACK;
-}
 
-#bet-summary-occur {
-    margin-left: auto;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    flex-direction: row;
-}
+
+
 
 #team-summary {
     border-width: 2px;
@@ -89,6 +101,52 @@
     border-color: hotpink;
 
 }
+
+
+
+
+
+.paddingBetweenCols {
+  border-spacing: 0;
+}
+
+.paddingBetweenCols thead th{
+  padding: 0 5px;
+}
+
+.center {
+    text-align: center;
+}
+
+.paddingBetweenCols thead th {
+    border-width: 1px;
+    border-style: solid; 
+    border-color: black;
+    background-color: aqua;
+}
+
+td, tr th {
+    border-width: 1px;
+    border-style: solid; 
+    border-color: black;
+}
+
+/* Third row CSS - Play game log section */
+
+#third-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px
+}
+
+#third-row h3{
+    margin-right: auto;
+    border-width: 1px;
+    border-style: solid; 
+    border-color: gray;
+    background-color: lightgray;
+}
+
 /* #bet-occurrence-sum{
     border-width: 2px;
     border-style: solid;

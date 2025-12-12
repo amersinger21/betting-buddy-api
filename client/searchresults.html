@@ -10,16 +10,16 @@
     <h1>Betting Buddy Results Page</h1>
     <div id="summary">
       <div id="first-row">
-        <div id="player-image" class="first-level"></div>
+        <div id="player-image" class="first-level"><h2>TO BE ADDED</h2></div>
         <div id="player-info" class="first-level">
           <p id="name"><strong>Name: </strong></p>
           <p id="pos"><strong>Pos: </strong></p>
           <p id="team"><strong>Team: </strong></p>
         </div>
         <div id="bet-summary-occur" class="first-level">
-          <div id="total-sum" class="bet-summary"><span><strong>Bet Summary</strong></span></div>
-          <div id="loc-sum" class="bet-summary"><span><strong>Location Summary</strong></span></div>
-          <div id="misc-sum" class="bet-summary"><span><strong>Misc Summary</strong></span></div>
+          <div id="total-sum" class="bet-summary"><span><h3>Bet Summary</h3></span></div>
+          <div id="loc-sum" class="bet-summary"><span><h3>Location Summary</h3></span></div>
+          <div id="misc-sum" class="bet-summary"><span><h3>Misc Summary</h3></span></div>
         </div>
       </div>
       <div id="second-row">
@@ -35,7 +35,8 @@
           <div id="opp-sum" class="second"><span><strong>Opponent Summary</strong></span></div>
       </div>
       <div id="third-row">
-        <table id="summary-logs">
+        <h3>Last 5 Games</h3>
+        <table id="summary-logs" class="paddingBetweenCols">
         </table>
       </div>
     </div>
@@ -47,6 +48,10 @@
                  'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
                  'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
                  'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
+  let nflIdArray = {1: 'ARI', 2: 'ATL', 3: 'BAL', 4: 'BUF', 5: 'CAR', 6: 'CHI', 7: 'CIN', 8: 'CLE', 9: 'DAL', 10: 'DEN', 
+    11: 'DET', 12: 'GB', 13: 'HOU', 14: 'IND', 15: 'JAX', 16: 'KC', 17: 'LAC', 18: 'LAR', 19: 'LV', 20: 'MIA', 21: 'MIN', 
+    22: 'NE', 23: 'NO', 24: 'NYG', 25: 'NYJ', 26: 'PHI', 27: 'PIT', 28: 'SEA', 29: 'SF', 30: 'TB', 31: 'TEN', 32: 'WAS'}
+
   passArray = ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']
   rushArray = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
   recArray = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
@@ -164,9 +169,9 @@
                           'pass_td': 'Rec TD',
                           'pass_yards_per_att': 'Yards Per Rec', 
                           'pass_yards_per_game': 'Rec Yds per Game'}
-          sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Rec', 'Tgt', 'Rec Yds', 'Rec TD',
+          sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rec', 'Tgt', 'Rec Yds', 'Rec TD',
                           'Longest Rec']
-          statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets', 'rec_yards',
+          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rec', 'targets', 'rec_yards',
                          'rec_td', 'rec_longest']
         }
         else {
@@ -238,15 +243,15 @@
       const year = yearArray[element]
 
       // pupulate total section
-      const betSummaryText = `${year}: ${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})`
+      const betSummaryText = `<strong>${year}</strong>: ${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})`
       let betSummaryElement = document.createElement('p')
-      betSummaryElement.innerText = betSummaryText
+      betSummaryElement.innerHTML = betSummaryText
       betOccurSum.appendChild(betSummaryElement)
 
       // populate loc section
-      const betSummaryLocText = `${year}: ${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})`
+      const betSummaryLocText = `<strong>${year}</strong>: ${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})`
       let betLocSummaryElement = document.createElement('p')
-      betLocSummaryElement.innerText = betSummaryLocText
+      betLocSummaryElement.innerHTML = betSummaryLocText
       betLocSum.appendChild(betLocSummaryElement)
     }
    
@@ -256,27 +261,27 @@
       let betMiscElement = document.createElement('p')
       let miscElementText;
       if (element == 'vs_opponent') {
-        miscElementText = `Vs Opponent: ${betOccurrenceData['vs_opponent']}% (${betOccurrenceData['vs_opponent_hits']} of ${betOccurrenceData['vs_opponent_games']})`
+        miscElementText = `<strong>Vs Opponent</strong>: ${betOccurrenceData['vs_opponent']}% (${betOccurrenceData['vs_opponent_hits']} of ${betOccurrenceData['vs_opponent_games']})`
       }
       else if (element == 'current_avg_limit') {
         let limitStatAvgText;
         const limitStatAvg = betOccurrenceData['current_avg_limit'].toFixed(2)
         if (passArray.includes(stat)) {
-          miscElementText = `Avg Pass Att: ${limitStatAvg}`
+          miscElementText = `<strong>Avg Pass Att:</strong> ${limitStatAvg}`
         }
         else if (rushArray.includes(stat)) {
-          miscElementText = `Avg Rush Att ${limitStatAvg}`
+          miscElementText = `<strong>Avg Rush Att:</strong> ${limitStatAvg}`
         }
         else {
-          miscElementText = `Avg Tgts: ${limitStatAvg}`
+          miscElementText = `<strong>Avg Tgts:</strong> ${limitStatAvg}`
         }  
       }
       else {
         if (playerInfoData['player_position'] == 'WR') {
-          miscElementText = `With QB: ${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})`
+          miscElementText = `<strong>With QB:</strong> ${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})`
       }
     }
-    betMiscElement.innerText = miscElementText
+    betMiscElement.innerHTML = miscElementText
        
     betMiscSum.appendChild(betMiscElement)
   }
@@ -349,18 +354,14 @@
       }
     }
 
-
-    // for (let i = 0; i < Object.keys(logSummaryData).length; i++) {
-
-    //   }
-    // populate table headers and colgroup
+    // Populate table headers and colgroup
     logTable = document.getElementById('summary-logs')
 
     colGroup = document.createElement('colgroup')
     logTable.appendChild(colGroup)
 
 
-    for (let i = 0; i < 13; i++) {
+    for (let i = 0; i < 11; i++) {
       column = document.createElement('col')
       colGroup.appendChild(column)
       }
@@ -371,9 +372,8 @@
 
     let tHeadRow = document.createElement('tr')
     theadSum.appendChild(tHeadRow)
-    
-
-    for (let i = 0; i < 13; i++) {
+  
+    for (let i = 0; i < 11; i++) {
       th = document.createElement('th')
       th.innerText = sumLogHeader[i]
       th.setAttribute("scope", "col")
@@ -381,24 +381,37 @@
       tHeadRow.appendChild(th)
       }
     
-    // Create table body element
+    // Create table body element and populate table with rows and data
     tableBody = document.createElement('tbody')
     logTable.appendChild(tableBody)
     
     for  (let i = 1; i <= Object.keys(logSummaryData).length; i++) {
+      const loopObj = logSummaryData[i]
+
       const tableRow = document.createElement('tr')
       const rowHeader = document.createElement('th')
 
+      rowHeader.innerText = loopObj['game_id']
       tableRow.append(rowHeader)
 
 
-      for (let element in logSummaryData[i]) {
-        console.log(element)
-        // console.log(logSummaryData[i])
+      for (let i = 1; i < Object.keys(loopObj).length - 2; i++) {
+        let statVal = loopObj[statDataAtt[i]]
+
+        if ((i == 4) || (i == 5)) {
+          console.log(statVal)
+          statVal = nflIdArray[statVal]
+        }
+
+
         const rowData = document.createElement('td')
-        rowData.innerText = logSummaryData[i][element]
-        rowData.setAttribute("data-stat", statDataAtt[element])
+        
+        rowData.setAttribute("data-stat", statDataAtt[i])
+
+        rowData.classList.add('center')
+        rowData.innerText = statVal
         tableRow.append(rowData)
+
       }
 
       tableBody.appendChild(tableRow)
