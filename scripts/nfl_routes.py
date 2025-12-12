@@ -2014,7 +2014,7 @@ def nfl_game_log_summary():
 
     raw_results = list(cursor.fetchall())
     results = raw_results[(len(raw_results) - 5):]
-
+    print(results)
     # Build table data in JSON format
     row_indicator = 1
     for tup in results:
@@ -2025,6 +2025,8 @@ def nfl_game_log_summary():
             index +=1
         json_output[row_indicator] = row_dict
         row_indicator += 1
+
+    print(json_output)
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")

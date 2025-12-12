@@ -34,6 +34,10 @@
           <div id="team-sum" class="second"><span><strong>Team Summary</strong></span></div>
           <div id="opp-sum" class="second"><span><strong>Opponent Summary</strong></span></div>
       </div>
+      <div id="third-row">
+        <table id="summary-logs">
+        </table>
+      </div>
     </div>
   </body>
 </html>
@@ -116,8 +120,16 @@
     const oppRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_rank_summary?opp_id=4&stat=${stat}`);
     const oppRankSummaryData = await oppRankSummaryRequest.json();
 
+    const logSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/game_logs_summary?id=${id}&stat=${stat}`);
+    const logSummaryData = await logSummaryRequest.json();
+    console.log(logSummaryData)
+
     // Initialize function variables
     let loopCols;
+    let rankCols;
+    let avgCols;
+    let teamStatConv;
+    let sumLogHeader;
     if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
         loopCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game']
         rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
@@ -130,7 +142,12 @@
         avgColConv = {'rush_att': 'Rush Att', 
                       'rush_yards': 'Rush Yds', 
                       'rush_td': 'Rec TD',
-                      'rush_longest': 'Longest Rec'}}
+                      'rush_longest': 'Longest Rec'}
+        sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Rush Att', 'Rush Yards', 'Rush TD', 
+                        'Longest Rush', 'Fumbles']
+        statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards', 'rush_td', 
+                       'rush_longest', 'fumbles']
+                    }
     else {
         loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game']
         rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
@@ -147,6 +164,10 @@
                           'pass_td': 'Rec TD',
                           'pass_yards_per_att': 'Yards Per Rec', 
                           'pass_yards_per_game': 'Rec Yds per Game'}
+          sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Rec', 'Tgt', 'Rec Yds', 'Rec TD',
+                          'Longest Rec']
+          statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rec', 'targets', 'rec_yards',
+                         'rec_td', 'rec_longest']
         }
         else {
           avg_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
@@ -161,6 +182,10 @@
                           'pass_td': 'Pass TD',
                           'pass_yards_per_att': 'Yards Per Att', 
                           'pass_yards_per_game': 'Yards per Game'}
+          sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 
+                          'Longest Pass']
+          statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
+                         'pass_td', 'pass_comp', 'pass_longest']
         }
     }
 
@@ -291,7 +316,6 @@
     playerAvgArray = [playerAvgData['player_avg_stats'], playerAvgData['player_home_avg'], playerAvgData['player_away_avgs']]
     for (lst in playerAvgArray) {
       loopArray = playerAvgArray[lst]
-      console.log(lst)
 
       // set textSeg variable
       let textSeg;
@@ -324,7 +348,70 @@
         }
       }
     }
+
+
+    // for (let i = 0; i < Object.keys(logSummaryData).length; i++) {
+
+    //   }
+    // populate table headers and colgroup
+    logTable = document.getElementById('summary-logs')
+
+    colGroup = document.createElement('colgroup')
+    logTable.appendChild(colGroup)
+
+
+    for (let i = 0; i < 13; i++) {
+      column = document.createElement('col')
+      colGroup.appendChild(column)
+      }
+    
+    // Create and populate thead element
+    let theadSum = document.createElement('thead')
+    logTable.appendChild(theadSum)
+
+    let tHeadRow = document.createElement('tr')
+    theadSum.appendChild(tHeadRow)
+    
+
+    for (let i = 0; i < 13; i++) {
+      th = document.createElement('th')
+      th.innerText = sumLogHeader[i]
+      th.setAttribute("scope", "col")
+      th.setAttribute("data-stat", statDataAtt[i])
+      tHeadRow.appendChild(th)
+      }
+    
+    // Create table body element
+    tableBody = document.createElement('tbody')
+    logTable.appendChild(tableBody)
+    
+    for  (let i = 1; i <= Object.keys(logSummaryData).length; i++) {
+      const tableRow = document.createElement('tr')
+      const rowHeader = document.createElement('th')
+
+      tableRow.append(rowHeader)
+
+
+      for (let element in logSummaryData[i]) {
+        console.log(element)
+        // console.log(logSummaryData[i])
+        const rowData = document.createElement('td')
+        rowData.innerText = logSummaryData[i][element]
+        rowData.setAttribute("data-stat", statDataAtt[element])
+        tableRow.append(rowData)
+      }
+
+      tableBody.appendChild(tableRow)
+      // console.log(logSummaryData[i])
+
+    }
+    // for (let obj in logSummaryData) {
+    //   th = document.createElement('th')
+    //   colGroup.appendChild(column)
+
+    // }
   }
+
 
 
   summarySection(nfl_teams[team])
