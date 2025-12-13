@@ -6,6 +6,8 @@
 
 
 
+/*  */
+
 /* #player-info {
     display: flex;
     flex-direction: column;
@@ -19,7 +21,11 @@
     border-width: 2px;
     gap: 10px;
     border-style: solid;
-    border-color: red;
+    border-color: black;
+}
+
+span {
+    background-color: lightgray;
 }
 
 /* First row css player image, info and bet summary */
@@ -39,7 +45,7 @@
 
 
 .bet-summary, #player-image {
-    border-width: 2px;
+    border-width: 1px;
     border-style: solid;
     border-color: black;
 }
@@ -50,57 +56,70 @@
 
 
 
+/* Second row css player image, info and bet summary */
 
 #second-row {
     display: flex; 
+    flex-direction: row;
     justify-content: space-between;
-    border-width: 2px;
+    border-width: 1px;
     border-style: solid;
-    border-color: purple;
+    border-color: black;
+    background-color: white;
 }
 
-#second-row .second {
-    border-width: 2px;
+#second-row .second, #player-sum-container  {
+    border-width: 1px;
     border-style: solid;
-    border-color: green;
+    border-color: black;
 }
 
-
-
-
-
-#team-summary {
-    border-width: 2px;
-    border-style: solid; 
-    border-color: BLACK;
-    /* padding-right: 25%; */
-}
-
-#opp-summary {
-    border-width: 2px;
-    border-style: solid; 
-    border-color: BLACK;
-    /* padding-right: 25%; */
+.second-span, .bet-summary-span {
+    border-width: 1px;
+    border-style: solid;
+    border-color: black; 
+    display: block;
+    white-space: pre;
+    width: 100%;
+    margin-bottom: auto;
+    text-align: center;
 }
 
 #player-sum-container {
-    border-width: 2px;
-    border-style: solid; 
-    border-color: green;
     display: flex;
-    flex-direction: row;
-    gap: 2%;
+    flex-direction: column;
+    background-color: white;
+    width: 30%;
 }
 
+#player-sum-stats {
+    display: flex;
+    gap: 5px;
+}
 
-.player-stat-sum {
+.second {
+    width: 15%;
+}
+
+.player-sum-class {
     width: 33%;
     padding-right: 5%;
-    border-width: 2px;
-    border-style: solid; 
-    border-color: hotpink;
-
 }
+
+.test {
+    display: flex;
+    justify-content: space-between;
+}
+
+
+
+.white-span{
+    background-color: white;
+}
+
+
+
+
 
 
 
@@ -136,7 +155,6 @@ td, tr th {
 #third-row {
     display: flex;
     flex-direction: column;
-    gap: 10px
 }
 
 #third-row h3{
@@ -180,11 +198,11 @@ span {
     margin-bottom: 2%;
 }
 
-.player-stat-sum p{
+/* .player-stat-sum p{
     border-width: 2px;
     border-style: solid;
     border-color: BLACK;
-}
+} */
 
 /* .player-info {
     border-width: 2px;

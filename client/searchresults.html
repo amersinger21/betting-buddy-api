@@ -17,22 +17,22 @@
           <p id="team"><strong>Team: </strong></p>
         </div>
         <div id="bet-summary-occur" class="first-level">
-          <div id="total-sum" class="bet-summary"><span><h3>Bet Summary</h3></span></div>
-          <div id="loc-sum" class="bet-summary"><span><h3>Location Summary</h3></span></div>
-          <div id="misc-sum" class="bet-summary"><span><h3>Misc Summary</h3></span></div>
+          <div id="total-sum" class="bet-summary"><span class="bet-summary-span"><h3>Bet Summary</h3></span></div>
+          <div id="loc-sum" class="bet-summary"><span class="bet-summary-span"><h3>Location Summary</h3></span></div>
+          <div id="misc-sum" class="bet-summary"><span class="bet-summary-span"><h3>Misc Summary</h3></span></div>
         </div>
       </div>
       <div id="second-row">
-          <div class="second">
-            <span><strong>Player Summary</strong></span>
-            <div id="player-sum-container">
-            <div id="sum-avg" class="player-stat-sum"><span><strong>Total</strong></span></div>
-            <div id="sum-home" class="player-stat-sum"><span><strong>Home</strong></span></div>
-            <div id="sum-away" class="player-stat-sum"><span><strong>Away</strong></span></div>
-            </div>
+        <div id="player-sum-container" class="second">
+          <span class="second-span"><h3>Player Summary</h3></span>
+          <div id="player-sum-stats">
+            <div id="sum-avg" class="player-sum-class"><span class="white-span"><strong>Total</strong></span></div>
+            <div id="sum-home" class="player-sum-class"><span class="white-span"><strong>Home</strong></span></div>
+            <div id="sum-away" class="player-sum-class"><span class="white-span"><strong>Away</strong></span></div>
           </div>
-          <div id="team-sum" class="second"><span><strong>Team Summary</strong></span></div>
-          <div id="opp-sum" class="second"><span><strong>Opponent Summary</strong></span></div>
+        </div>
+        <div id="team-sum" class="second"><span class="second-span"><h3>Team Summary</h3></span></div>
+        <div id="opp-sum" class="second"><span class="second-span"><h3>Opponent Summary</h3></span></div>
       </div>
       <div id="third-row">
         <h3>Last 5 Games</h3>
@@ -202,6 +202,16 @@
     const remainingLetters = location.slice(1)
     const capitalizedWord = firstLetterCap + remainingLetters
 
+    let operatorFirstLetter = operator.charAt(0)
+    const operatorCap = operatorFirstLetter.toUpperCase()
+    const operatorRem = operator.slice(1)
+    const operatorText = operatorCap + operatorRem
+
+    let statFirstLetter = stat.charAt(0)
+    const statCap = statFirstLetter.toUpperCase()
+    const statRem = stat.slice(1)
+    const statText = statCap + statRem
+
     // locate the summary section and populate with summay data
     let summaryTag = document.getElementById('summary')
     let firstRow = document.getElementById('first-row')
@@ -235,6 +245,11 @@
     let betLocSum = document.getElementById('loc-sum')
     let betMiscSum = document.getElementById('misc-sum')
 
+    // Update the bet summary section headers
+    const betSumSpans = document.querySelectorAll(".bet-summary-span")
+    betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${statText}</h3>`
+    betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${statText} (${capitalizedWord})</h3>`
+
     // Populate the bet summary by year and by location sections
     periodArray = ['current', 'prior', 'third']
     let miscElementText;
@@ -243,13 +258,13 @@
       const year = yearArray[element]
 
       // pupulate total section
-      const betSummaryText = `<strong>${year}</strong>: ${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})`
+      const betSummaryText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})</p></div>`
       let betSummaryElement = document.createElement('p')
       betSummaryElement.innerHTML = betSummaryText
       betOccurSum.appendChild(betSummaryElement)
 
       // populate loc section
-      const betSummaryLocText = `<strong>${year}</strong>: ${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})`
+      const betSummaryLocText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})</p></div>`
       let betLocSummaryElement = document.createElement('p')
       betLocSummaryElement.innerHTML = betSummaryLocText
       betLocSum.appendChild(betLocSummaryElement)
@@ -261,7 +276,7 @@
       let betMiscElement = document.createElement('p')
       let miscElementText;
       if (element == 'vs_opponent') {
-        miscElementText = `<strong>Vs Opponent</strong>: ${betOccurrenceData['vs_opponent']}% (${betOccurrenceData['vs_opponent_hits']} of ${betOccurrenceData['vs_opponent_games']})`
+        miscElementText = `<div class="test"><span class="white-span"><strong>Vs Opponent:</strong></span> <p>${betOccurrenceData['vs_opponent']}% (${betOccurrenceData['vs_opponent_hits']} of ${betOccurrenceData['vs_opponent_games']})</p></div>`
       }
       else if (element == 'current_avg_limit') {
         let limitStatAvgText;
@@ -270,15 +285,15 @@
           miscElementText = `<strong>Avg Pass Att:</strong> ${limitStatAvg}`
         }
         else if (rushArray.includes(stat)) {
-          miscElementText = `<strong>Avg Rush Att:</strong> ${limitStatAvg}`
+          miscElementText = `<div class="test"><span class="white-span"><strong>Avg Rush Att:</strong></span> <p>${limitStatAvg}</p></div>`
         }
         else {
-          miscElementText = `<strong>Avg Tgts:</strong> ${limitStatAvg}`
+          miscElementText = `<div class="test"><span class="white-span"><strong>Avg Tgts:</strong></span> <p>${limitStatAvg}</p></div>`
         }  
       }
       else {
         if (playerInfoData['player_position'] == 'WR') {
-          miscElementText = `<strong>With QB:</strong> ${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})`
+          miscElementText = `<div class="test"><span class="white-span"><strong>With QB:</strong></span> <p>${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})</p></div>`
       }
     }
     betMiscElement.innerHTML = miscElementText
@@ -293,10 +308,10 @@
 
     // Update team / opponent names in span element
     spans = document.querySelectorAll('span')
-    teamSpan = spans[7]
-    teamSpan.innerHTML = `<strong>${team} Summary<span>`
-    oppSpan = spans[8]
-    oppSpan.innerHTML = `<strong>${'BUF'} Summary<span>`
+    teamSpan = spans[16]
+    teamSpan.innerHTML = `<h3>${team} Summary</h3>`
+    oppSpan = spans[17]
+    oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
 
     // Populate team and opponent summary sections
     for (element in loopCols) {
@@ -305,7 +320,7 @@
       const statRank = teamRankSummaryData[`${loopCols[element]}_rank`]
 
       const teamStatElement = document.createElement('p')
-      teamStatElement.innerText = `${statText}: ${statTotal}  (${statRank}th)`
+      teamStatElement.innerHTML = `<div class="test"><span class="white-span"><strong>${statText}:</strong></span> <p>${statTotal}  (<i>${statRank}th</i>)</p>`
       teamSumContainer.append(teamStatElement)
 
       const statTotalOpp = oppSummaryData[`team_${loopCols[element]}`]
@@ -313,7 +328,7 @@
       const statRankOpp = oppRankSummaryData[`${loopCols[element]}_rank`]
 
       const oppStatElement = document.createElement('p')
-      oppStatElement.innerText = `${statTextOpp}: ${statTotalOpp}  (${statRankOpp}th)`
+      oppStatElement.innerHTML = `<div class="test"><span class="white-span"><strong>${statTextOpp}:</strong></span> <p>${statTotalOpp}  (<i>${statRankOpp}th</i>)</p>`
       oppSumContainer.append(oppStatElement)
     }
 
@@ -336,8 +351,8 @@
       
       for (const col in avgCols) {
         let playerPTag = document.createElement('p')
-        const plyrElementText = `${avgColConv[avgCols[col]]}: ${loopArray[`${textSeg}_${avgCols[col]}`]}`
-        playerPTag.innerText = plyrElementText
+        const plyrElementText = `<div class="test"><span class="white-span"><strong>${avgColConv[avgCols[col]]}:</strong></span> <p>${loopArray[`${textSeg}_${avgCols[col]}`]}</p></div>`
+        playerPTag.innerHTML = plyrElementText
 
         if (lst == 0) {
           sumSection = document.getElementById('sum-avg')
@@ -399,7 +414,6 @@
         let statVal = loopObj[statDataAtt[i]]
 
         if ((i == 4) || (i == 5)) {
-          console.log(statVal)
           statVal = nflIdArray[statVal]
         }
 
