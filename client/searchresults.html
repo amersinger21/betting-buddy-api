@@ -148,9 +148,9 @@
                       'rush_yards': 'Rush Yds', 
                       'rush_td': 'Rec TD',
                       'rush_longest': 'Longest Rec'}
-        sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Rush Att', 'Rush Yards', 'Rush TD', 
+        sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rush Att', 'Rush Yards', 'Rush TD', 
                         'Longest Rush', 'Fumbles']
-        statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'rush_att', 'rush_yards', 'rush_td', 
+        statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rush_att', 'rush_yards', 'rush_td', 
                        'rush_longest', 'fumbles']
                     }
     else {
@@ -187,9 +187,9 @@
                           'pass_td': 'Pass TD',
                           'pass_yards_per_att': 'Yards Per Att', 
                           'pass_yards_per_game': 'Yards per Game'}
-          sumLogHeader = ['Name', 'Year', 'Week', 'Pos', 'Game', 'Player', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 
+          sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 
                           'Longest Pass']
-          statDataAtt = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
+          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
                          'pass_td', 'pass_comp', 'pass_longest']
         }
     }
@@ -247,8 +247,8 @@
 
     // Update the bet summary section headers
     const betSumSpans = document.querySelectorAll(".bet-summary-span")
-    betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${statText}</h3>`
-    betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${statText} (${capitalizedWord})</h3>`
+    betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]}</h3>`
+    betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]} (${capitalizedWord})</h3>`
 
     // Populate the bet summary by year and by location sections
     periodArray = ['current', 'prior', 'third']
