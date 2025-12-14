@@ -2179,15 +2179,16 @@ def nfl_bet_occurrence_summary():
 
     for tag in [nfl_prior_year, nfl_current_year]:
         df_limit_years = df_bet.groupby(by=['year']).sum()[f"{limit_stat}"].reset_index()
-        prior_limit = df_limit_years[df_limit_years['year'] == tag].values.tolist()[0][1]
-        prior_avg = prior_limit / bet_dict[tag]
-        json_output.update({f'{year_name_dict[tag]}_avg_limit': prior_avg})
+        limit_stat_groupby = df_limit_years[df_limit_years['year'] == tag]
+        if limit_stat_groupby.empty:
+            json_output.update({f'{year_name_dict[tag]}_avg_limit': 0.0})
+        else:
+            prior_avg = (limit_stat_groupby['targets'].values[0]) / (bet_dict[tag])
+            json_output.update({f'{year_name_dict[tag]}_avg_limit': prior_avg})
 
 
     # Create a dictionary of games played each year for location (home/away)
-    print(value)
     df_bet_loc_years = df_bet_loc.groupby(by=['year']).count()['week'].reset_index()
-    print(df_bet_loc_years)
     bet_loc_dict = dict(zip(df_bet_loc_years['year'].values.tolist(), df_bet_loc_years['week'].values.tolist()))
 
     # Get the total number of games vs opponent
@@ -2216,11 +2217,15 @@ def nfl_bet_occurrence_summary():
                                     round((bet_dict[year_element] / games_dict[year_element]) * 100, 1)})
         except ZeroDivisionError:
             json_output.update({year_name_dict[year_element]: 0.0})
+        except KeyError:
+            json_output.update({year_name_dict[year_element]: 0.0})
 
         try:
             json_output.update({f'loc_{year_name_dict[year_element]}': round(
                 (bet_loc_dict[year_element] / loc_games_dict[year_element]) * 100, 1)})
         except ZeroDivisionError:
+            json_output.update({'loc_current': 0.0})
+        except KeyError:
             json_output.update({'loc_current': 0.0})
 
 
@@ -2236,6 +2241,7 @@ def nfl_bet_occurrence_summary():
         except ZeroDivisionError:
             json_output.update({'qb_player_data': 0.0})
 
+    # print(json_output)
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
