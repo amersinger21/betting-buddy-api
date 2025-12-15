@@ -257,14 +257,30 @@
       // Initialize variables
       const year = yearArray[element]
 
+      let totalHits = betOccurrenceData['player_total_hits'][year]
+      if (totalHits == null) {
+        totalHits = 0
+      }
+
       // pupulate total section
-      const betSummaryText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${betOccurrenceData[element]}% (${betOccurrenceData['player_total_hits'][year]} of ${betOccurrenceData['player_total_games'][year]})</p></div>`
+      const betSummaryText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${betOccurrenceData[element]}% (${totalHits} of ${betOccurrenceData['player_total_games'][year]})</p></div>`
       let betSummaryElement = document.createElement('p')
       betSummaryElement.innerHTML = betSummaryText
       betOccurSum.appendChild(betSummaryElement)
 
+      let totalLocHits = betOccurrenceData[`player_hits_location`][yearArray[element]]
+      console.log(totalHits)
+      if (totalLocHits == null) {
+        totalLocHits = 0
+      }
+
+      let totalLoc = betOccurrenceData[`loc_${element}`]
+      if (totalLoc == null) {
+            totalLoc = '0%'
+        }
+
       // populate loc section
-      const betSummaryLocText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${betOccurrenceData[`loc_${element}`]}% (${betOccurrenceData[`player_hits_location`][yearArray[element]]} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})</p></div>`
+      const betSummaryLocText = `<div class="test"><span class="white-span"><strong>${year}:</strong></span> <p>${totalLoc}% (${totalLocHits} of ${betOccurrenceData['player_total_loc_games'][yearArray[element]]})</p></div>`
       let betLocSummaryElement = document.createElement('p')
       betLocSummaryElement.innerHTML = betSummaryLocText
       betLocSum.appendChild(betLocSummaryElement)

@@ -98,7 +98,7 @@ span {
 }
 
 .second {
-    width: 15%;
+    width: 20%;
 }
 
 .player-sum-class {
@@ -110,7 +110,6 @@ span {
     display: flex;
     justify-content: space-between;
 }
-
 
 
 .white-span{
