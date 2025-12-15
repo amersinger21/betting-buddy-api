@@ -2177,13 +2177,14 @@ def nfl_bet_occurrence_summary():
     df_bet_years = df_bet.groupby(by=['year']).count()['week'].reset_index()
     bet_dict = dict(zip(df_bet_years['year'].values.tolist(), df_bet_years['week'].values.tolist()))
 
+    # Get avg number of att/targets in games bet hit.
     for tag in [nfl_prior_year, nfl_current_year]:
         df_limit_years = df_bet.groupby(by=['year']).sum()[f"{limit_stat}"].reset_index()
         limit_stat_groupby = df_limit_years[df_limit_years['year'] == tag]
         if limit_stat_groupby.empty:
             json_output.update({f'{year_name_dict[tag]}_avg_limit': 0.0})
         else:
-            prior_avg = (limit_stat_groupby['targets'].values[0]) / (bet_dict[tag])
+            prior_avg = (limit_stat_groupby[limit_stat].values[0]) / (bet_dict[tag])
             json_output.update({f'{year_name_dict[tag]}_avg_limit': prior_avg})
 
 
