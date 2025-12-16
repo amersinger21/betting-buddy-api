@@ -2024,7 +2024,7 @@ def nfl_game_log_summary():
     column_name = request.args.get('stat', None)
     json_output = {}
 
-    if column_name in ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']:
+    if column_name in ['pass_att',  'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']:
         columns = 'pass_att, pass_yards, pass_td, pass_comp, pass_longest'
     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         columns = 'rush_att, rush_yards, rush_td, rush_longest, fumbles'
