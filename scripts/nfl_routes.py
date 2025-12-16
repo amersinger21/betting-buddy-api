@@ -15,7 +15,7 @@ nfl_fourth_year = 2022
 nfl_third_year = 2023
 nfl_prior_year = 2024
 nfl_current_year = 2025
-nfl_current_week = 11
+nfl_current_week = 15
 nfl_next_week = nfl_current_week + 1
 
 year_name_dict = {2019: 'six_years_ago', 2020: 'five_years_ago' , 2021: 'fifth',
@@ -1790,7 +1790,7 @@ def nfl_player_next_game():
     team_id = int(request.args.get('team_id', None))
     json_output = {}
 
-    # SQL Query that returns the player information
+    # SQL Query that returns the next game information
     connection = create_connection()
     cursor = connection.cursor()
 
@@ -1800,6 +1800,7 @@ def nfl_player_next_game():
     cursor.execute(player_query)
     results = cursor.fetchone()
 
+    # Populate JSON based on player team being home/away
     home_id = results[3]
     if home_id == team_id:
         json_output.update({'next_game_loc': 'home'})
@@ -1807,7 +1808,6 @@ def nfl_player_next_game():
     else:
         json_output.update({'next_game_loc': 'away'})
         json_output.update({'next_opp': home_id})
-
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -1856,7 +1856,7 @@ def nfl_team_summary():
                     nfl_team_offense.yards_per_att, nfl_team_offense.pass_yards_per_game'''
 
 
-    # SQL Query that returns the player information
+    # SQL Query that returns team information
     connection = create_connection()
     cursor = connection.cursor()
 
@@ -1867,7 +1867,6 @@ def nfl_team_summary():
                     WHERE nfl_team_offense.team_id = {team_id} and nfl_team_offense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
-    print(results)
 
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         # Add player data to JSON output
@@ -1920,7 +1919,7 @@ def nfl_team_rank_summary():
 
     df_teams = pd.DataFrame(results, columns=cols).reset_index(drop=True)
     for rank_col in rank_cols:
-        df_teams[f'{rank_col}_rank'] = df_teams[rank_col].rank(ascending=True)
+        df_teams[f'{rank_col}_rank'] = df_teams[rank_col].rank(ascending=False)
 
     # # Filter to get team ranks
     df_team = df_teams[df_teams['team_id'] == team_id]
@@ -1954,7 +1953,6 @@ def nfl_opponent_summary():
                     WHERE nfl_team_defense.team_id = {opp_id} and nfl_team_defense.year = {nfl_current_year} and team.sport_id = 1'''
     cursor.execute(player_query)
     results = cursor.fetchone()
-    print(results)
 
     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
         # Add player data to JSON output
