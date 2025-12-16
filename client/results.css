@@ -89,7 +89,7 @@ span {
     display: flex;
     flex-direction: column;
     background-color: white;
-    width: 30%;
+    width: 35%;
 }
 
 #player-sum-stats {
@@ -116,6 +116,9 @@ span {
     background-color: white;
 }
 
+ #player-sum-container span {
+    padding-bottom: 10px;
+ }
 
 
 

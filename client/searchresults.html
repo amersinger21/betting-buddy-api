@@ -110,7 +110,6 @@
     const playerAvgRequest = await fetch(
       `http://129.80.84.210/api/nfl/summary/player_summary?id=${id}&stat=${stat}&opp_id=4`);
     const playerAvgData = await playerAvgRequest.json();
-    console.log(playerAvgData)
 
     //=========================================TEAM SECTION===============================================// 
     const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
@@ -127,7 +126,6 @@
 
     const logSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/game_logs_summary?id=${id}&stat=${stat}`);
     const logSummaryData = await logSummaryRequest.json();
-    console.log(logSummaryData)
 
     // Initialize function variables
     let loopCols;
@@ -175,7 +173,7 @@
                          'rec_td', 'rec_longest']
         }
         else {
-          avg_cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
+          avgCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
           avgColConv = {'pass_att': 'Pass Att', 
                         'pass_comp': 'Completions', 
                         'pass_yards': 'Pass Yds',
@@ -212,7 +210,7 @@
     const statRem = stat.slice(1)
     const statText = statCap + statRem
 
-    // locate the summary section and populate with summay data
+    // locate the elements of the summary section by ID
     let summaryTag = document.getElementById('summary')
     let firstRow = document.getElementById('first-row')
     let playerImageSection = document.getElementById('player-image')
@@ -222,6 +220,7 @@
     // Add player image
     let imageTag = document.createElement('img')
 
+    // LOOP - populate the player info section
     const playerInfoArray = ['player_name', 'player_position', 'player_team_name']
     for (key in playerInfoArray) {
       let val = playerInfoArray[key]
@@ -250,13 +249,11 @@
     betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]}</h3>`
     betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]} (${capitalizedWord})</h3>`
 
-    // Populate the bet summary by year and by location sections
+    // LOOP - Populate the bet summary by year and by location sections
     periodArray = ['current', 'prior', 'third']
-    let miscElementText;
     for (element of periodArray) {
       // Initialize variables
       const year = yearArray[element]
-
       let totalHits = betOccurrenceData['player_total_hits'][year]
       if (totalHits == null) {
         totalHits = 0
@@ -269,7 +266,6 @@
       betOccurSum.appendChild(betSummaryElement)
 
       let totalLocHits = betOccurrenceData[`player_hits_location`][yearArray[element]]
-      console.log(totalHits)
       if (totalLocHits == null) {
         totalLocHits = 0
       }
@@ -286,7 +282,7 @@
       betLocSum.appendChild(betLocSummaryElement)
     }
    
-    // Populate the Bet-Summary-Misc div
+    // LOOP - Populate the Bet-Summary-Misc div
     miscSummaryArray = ['vs_opponent', 'current_avg_limit', 'qb_player_data']
     for (const element of miscSummaryArray) {
       let betMiscElement = document.createElement('p')
@@ -298,7 +294,7 @@
         let limitStatAvgText;
         const limitStatAvg = betOccurrenceData['current_avg_limit'].toFixed(2)
         if (passArray.includes(stat)) {
-          miscElementText = `<strong>Avg Pass Att:</strong> ${limitStatAvg}`
+          miscElementText = `<div class="test"><span class="white-span"><strong>Avg Pass Att:</strong></span> <p>${limitStatAvg}</p></div>`
         }
         else if (rushArray.includes(stat)) {
           miscElementText = `<div class="test"><span class="white-span"><strong>Avg Rush Att:</strong></span> <p>${limitStatAvg}</p></div>`
@@ -310,6 +306,9 @@
       else {
         if (playerInfoData['player_position'] == 'WR') {
           miscElementText = `<div class="test"><span class="white-span"><strong>With QB:</strong></span> <p>${betOccurrenceData['qb_player_data']}% (${betOccurrenceData['start_qb_hits']} of ${betOccurrenceData['start_qb_games']})</p></div>`
+      }
+      else {
+        miscElementText = `<div class="test"><span class="white-span"><strong>TBD: </strong></span> <p>{TBD)</p></div>`
       }
     }
     betMiscElement.innerHTML = miscElementText
@@ -324,11 +323,19 @@
 
     // Update team / opponent names in span element
     spans = document.querySelectorAll('span')
-    teamSpan = spans[16]
-    teamSpan.innerHTML = `<h3>${team} Summary</h3>`
-    oppSpan = spans[17]
-    oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
-
+    console.log(spans)
+    if (recArray.includes(stat)) {
+        teamSpan = spans[17]
+        teamSpan.innerHTML = `<h3>${team} Summary</h3>`
+        oppSpan = spans[18]
+        oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
+    }
+    else if (passArray.includes(stat)) {
+        teamSpan = spans[15]
+        teamSpan.innerHTML = `<h3>${team} Summary</h3>`
+        oppSpan = spans[16]
+        oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
+    }
     // Populate team and opponent summary sections
     for (element in loopCols) {
       const statTotal = teamSummaryData[`team_${loopCols[element]}`]
@@ -342,7 +349,7 @@
       const statTotalOpp = oppSummaryData[`team_${loopCols[element]}`]
       const statTextOpp = teamStatConv[loopCols[element]]
       const statRankOpp = oppRankSummaryData[`${loopCols[element]}_rank`]
-
+      
       const oppStatElement = document.createElement('p')
       oppStatElement.innerHTML = `<div class="test"><span class="white-span"><strong>${statTextOpp}:</strong></span> <p>${statTotalOpp}  (<i>${statRankOpp}th</i>)</p>`
       oppSumContainer.append(oppStatElement)
@@ -364,7 +371,7 @@
       else {
         textSeg = 'away'
       }
-      
+
       for (const col in avgCols) {
         let playerPTag = document.createElement('p')
         const plyrElementText = `<div class="test"><span class="white-span"><strong>${avgColConv[avgCols[col]]}:</strong></span> <p>${loopArray[`${textSeg}_${avgCols[col]}`]}</p></div>`
@@ -432,7 +439,6 @@
         if ((i == 4) || (i == 5)) {
           statVal = nflIdArray[statVal]
         }
-
 
         const rowData = document.createElement('td')
         
