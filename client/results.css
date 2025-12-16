@@ -5,17 +5,7 @@
 }
 
 
-
-/*  */
-
-/* #player-info {
-    display: flex;
-    flex-direction: column;
-    border-width: 2px;
-    border-style: solid; 
-    border-color: black;
-} */
-
+/* SUMMARY SECTION */
 #summary {
     display: grid;
     border-width: 2px;
@@ -53,7 +43,6 @@ span {
 #player-image {
     margin-right: 10px;
 }
-
 
 
 /* Second row css player image, info and bet summary */
@@ -123,8 +112,19 @@ span {
 
 
 
+/* Third row CSS - Play game log section */
+#third-row {
+    display: flex;
+    flex-direction: column;
+}
 
-
+#third-row h3{
+    margin-right: auto;
+    border-width: 1px;
+    border-style: solid; 
+    border-color: gray;
+    background-color: lightgray;
+}
 
 
 .paddingBetweenCols {
@@ -152,47 +152,6 @@ td, tr th {
     border-color: black;
 }
 
-/* Third row CSS - Play game log section */
-
-#third-row {
-    display: flex;
-    flex-direction: column;
-}
-
-#third-row h3{
-    margin-right: auto;
-    border-width: 1px;
-    border-style: solid; 
-    border-color: gray;
-    background-color: lightgray;
-}
-
-/* #bet-occurrence-sum{
-    border-width: 2px;
-    border-style: solid;
-    border-color: BLACK;
-    display: grid;
-    place-self: center;
-    margin-bottom: 2%;
-} */
-
-/* .bet-summary {
-    border-style: solid; 
-    border-color: blue;
-    align-items: center;
-} */
-
-/* .bet-summary span{
-    display: grid;
-    place-self: center;
-    margin-bottom: 2%;
-}
-
-.player-stat-sum span{
-    display: grid;
-    place-self: center;
-    margin-bottom: 2%;
-} */
 
 span {
     display: grid;
@@ -200,14 +159,10 @@ span {
     margin-bottom: 2%;
 }
 
-/* .player-stat-sum p{
-    border-width: 2px;
-    border-style: solid;
-    border-color: BLACK;
-} */
 
-/* .player-info {
+/* Player Indepth Section*/
+#player-section {
     border-width: 2px;
-    border-style: solid; /* This is crucial */
-    /* border-color: red; */
-/* } */
+    border-style: solid; 
+    border-color: black; 
+}

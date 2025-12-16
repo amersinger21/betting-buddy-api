@@ -40,6 +40,11 @@
         </table>
       </div>
     </div>
+
+    <h2>Player Bet Data</h2>
+    <div id="player-section">
+
+    </div>
   </body>
 </html>
 
@@ -91,7 +96,6 @@
   // console.log(nfl_teams[team])
   async function summarySection(team_id) {
     //=========================================PLAYER SECTION===============================================// 
-    
     const playerInfoResponse = await fetch(`http://129.80.84.210/api/nfl/summary/player_info?id=${id}`);
     const playerInfoData = await playerInfoResponse.json();
  
@@ -187,8 +191,8 @@
                           'pass_yards_per_game': 'Yards per Game'}
           sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 
                           'Longest Pass']
-          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'pass_att', 'pass_yards',
-                         'pass_td', 'pass_comp', 'pass_longest']
+          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'pass_att',  'pass_comp', 'pass_yards',
+                         'pass_td', 'pass_longest']
         }
     }
 
@@ -336,6 +340,7 @@
         oppSpan = spans[16]
         oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
     }
+    
     // Populate team and opponent summary sections
     for (element in loopCols) {
       const statTotal = teamSummaryData[`team_${loopCols[element]}`]
@@ -422,7 +427,8 @@
     // Create table body element and populate table with rows and data
     tableBody = document.createElement('tbody')
     logTable.appendChild(tableBody)
-    
+      
+    // LOOP - loop thorugh tahle data and populate rows
     for  (let i = 1; i <= Object.keys(logSummaryData).length; i++) {
       const loopObj = logSummaryData[i]
 
@@ -441,24 +447,15 @@
         }
 
         const rowData = document.createElement('td')
-        
         rowData.setAttribute("data-stat", statDataAtt[i])
 
         rowData.classList.add('center')
         rowData.innerText = statVal
         tableRow.append(rowData)
-
       }
 
       tableBody.appendChild(tableRow)
-      // console.log(logSummaryData[i])
-
     }
-    // for (let obj in logSummaryData) {
-    //   th = document.createElement('th')
-    //   colGroup.appendChild(column)
-
-    // }
   }
 
 
