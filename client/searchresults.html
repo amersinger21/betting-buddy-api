@@ -25,7 +25,7 @@
       <div id="second-row">
         <div id="player-sum-container" class="second">
           <span class="second-span"><h3>Player Summary</h3></span>
-          <div id="player-sum-stats">
+          <div id="player-sum">
             <div id="sum-avg" class="player-sum-class"><span class="white-span"><strong>Total</strong></span></div>
             <div id="sum-home" class="player-sum-class"><span class="white-span"><strong>Home</strong></span></div>
             <div id="sum-away" class="player-sum-class"><span class="white-span"><strong>Away</strong></span></div>
@@ -41,46 +41,42 @@
       </div>
     </div>
 
-    <h2>Player Bet Data</h2>
-    <div id="player-section">
-
+    <div id="button-container">
+      <button type="button" class="next-buttons" id=""><strong>Game Logs</strong></button>
+      <button type="button" class="next-buttons" id=""><strong>Player Bet Data</strong></button>
+      <button type="button" class="next-buttons" id=""><strong>Team Data</strong></button>
+      <button type="button" class="next-buttons" id=""><strong>Opponent Data</strong></button>
     </div>
   </body>
 </html>
 
 <script>
-  nfl_teams = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
+  const nflIdArray = {'ARI': 1, 'ATL': 2, 'BAL': 3, 'BUF': 4, 'CAR': 5, 'CHI': 6, 'CIN': 7, 'CLE': 8, 'DAL': 9, 'DEN': 10,
                  'DET': 11, 'GB': 12, 'HOU': 13, 'IND': 14, 'JAX': 15, 'KC': 16, 'LAC': 17, 'LAR': 18, 'LV': 19,
                  'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
                  'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
-  let nflIdArray = {1: 'ARI', 2: 'ATL', 3: 'BAL', 4: 'BUF', 5: 'CAR', 6: 'CHI', 7: 'CIN', 8: 'CLE', 9: 'DAL', 10: 'DEN', 
+  const nflTeamArray = {1: 'ARI', 2: 'ATL', 3: 'BAL', 4: 'BUF', 5: 'CAR', 6: 'CHI', 7: 'CIN', 8: 'CLE', 9: 'DAL', 10: 'DEN', 
     11: 'DET', 12: 'GB', 13: 'HOU', 14: 'IND', 15: 'JAX', 16: 'KC', 17: 'LAC', 18: 'LAR', 19: 'LV', 20: 'MIA', 21: 'MIN', 
     22: 'NE', 23: 'NO', 24: 'NYG', 25: 'NYJ', 26: 'PHI', 27: 'PIT', 28: 'SEA', 29: 'SF', 30: 'TB', 31: 'TEN', 32: 'WAS'}
+  const yearArray = {'current': 2025, 'prior': 2024, 'third': 2023, 'fourth': 2022, 'fifth': 2021}
 
-  passArray = ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']
-  rushArray = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
-  recArray = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
+
+  const passArray = ['pass_att', 'pass_yards', 'pass_td', 'pass_comp', 'pass_longest']
+  const rushArray = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
+  const recArray = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
   
-  statDict = {
-    'pass_att': 'Pass Att', 'pass_yards': 'Pass Yard', 'pass_td': 'Pass TD', 'pass_comp': 'Pass Completions', 'pass_longest': 'Longest Pass', 
-    'rush_att': 'Rush Att','rush_yards': 'Rush Yard', 'rush_td': 'Rush TD', 'rush_longest': 'Longest Rush',
-    'rec': 'Receptions', 'targets': 'Targets', 'rec_yards': 'Rec Yard', 'rec_td': 'Rec TD', 'rec_longest': 'Longest Catch'}
-
-  statLimitDict = {
-    'pass_att': 'Pass Att', 'pass_yards': 'Pass Att', 'pass_td': 'Pass Att', 'pass_comp': 'Pass Att', 'pass_longest': 'Pass Att', 
-    'rush_att': 'Rush Att','rush_yards': 'Rush Att', 'rush_td': 'Rush Att', 'rush_longest': 'Rush Att',
-    'rec': 'Targets', 'targets': 'Targets', 'rec_yards': 'Targets', 'rec_td': 'Targets', 'rec_longest': 'Targets'}
-
-  yearArray = {
-    'current': 2025,
-    'prior': 2024,
-    'third': 2023,
-    'fourth': 2022,
-    'fifth': 2021
-  }
+  // Initialize object variables
+  statLimitDict = {'pass_att': 'Pass Att', 'pass_yards': 'Pass Att', 'pass_td': 'Pass Att', 'pass_comp': 'Pass Att',
+              'pass_longest': 'Pass Att', 'rush_att': 'Rush Att','rush_yards': 'Rush Att', 'rush_td': 'Rush Att', 
+              'rush_longest': 'Rush Att', 'rec': 'Targets', 'targets': 'Targets', 'rec_yards': 'Targets', 'rec_td': 'Targets', 
+              'rec_longest': 'Targets'}
+  statDict = {'pass_att': 'Pass Att', 'pass_yards': 'Pass Yard', 'pass_td': 'Pass TD', 'pass_comp': 'Pass Completions', 
+              'pass_longest': 'Longest Pass', 'rush_att': 'Rush Att','rush_yards': 'Rush Yard', 'rush_td': 'Rush TD', 
+              'rush_longest': 'Longest Rush', 'rec': 'Receptions', 'targets': 'Targets', 'rec_yards': 'Rec Yard', 'rec_td': 'Rec TD', 
+              'rec_longest': 'Longest Catch'}
   
   let params = new URLSearchParams(document.location.search);
-
+  // Initialize the query variables
   const id = params.get("id");
   const stat = params.get("stat");
   const team = params.get('team')
@@ -89,12 +85,8 @@
   const limitStat = statLimitDict[stat]
   let data;
 
-  // What is this referencing? Are they just not built yet?
-  const statName = document.querySelector("#statName");
-  const statResult = document.querySelector("#statResult");
-
-  // console.log(nfl_teams[team])
   async function summarySection(team_id) {
+
     //=========================================PLAYER SECTION===============================================// 
     const playerInfoResponse = await fetch(`http://129.80.84.210/api/nfl/summary/player_info?id=${id}`);
     const playerInfoData = await playerInfoResponse.json();
@@ -116,10 +108,10 @@
     const playerAvgData = await playerAvgRequest.json();
 
     //=========================================TEAM SECTION===============================================// 
-    const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
+    const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nflIdArray[team]}&stat=${stat}`);
     const teamSummaryData = await teamSummaryRequest.json();
 
-    const teamRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_rank_summary?team_id=${nfl_teams[team]}&stat=${stat}`);
+    const teamRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_rank_summary?team_id=${nflIdArray[team]}&stat=${stat}`);
     const teamRankSummaryData = await teamRankSummaryRequest.json();
 
     const oppSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_summary?opp_id=4&stat=${stat}`);
@@ -137,65 +129,41 @@
     let avgCols;
     let teamStatConv;
     let sumLogHeader;
-    if (stat in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']) {
-        loopCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game']
-        rankCols = ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank']
-        teamStatConv = {'rush_att': 'Rush Att', 
-                        'rush_yards': 'Rush Yards', 
-                        'rush_td': 'Rush TD',
-                        'yards_per_att': 'Yards Per Att', 
-                        'yards_per_game': 'Yards per Game'}
-        avgCols = ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
-        avgColConv = {'rush_att': 'Rush Att', 
-                      'rush_yards': 'Rush Yds', 
-                      'rush_td': 'Rec TD',
-                      'rush_longest': 'Longest Rec'}
-        sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rush Att', 'Rush Yards', 'Rush TD', 
-                        'Longest Rush', 'Fumbles']
-        statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rush_att', 'rush_yards', 'rush_td', 
-                       'rush_longest', 'fumbles']
-                    }
+    let statType;
+    if (rushArray.includes(stat)) {
+        statType = 'rushing'
+      }
+    else if (recArray.includes(stat)) {
+        statType = 'receiving'
+      }
     else {
-        loopCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game']
-        rankCols = ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank']
-        if (playerInfoData['player_position'] == 'WR') {
-          avgCols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
-          avgColConv = {'rec': 'Rec', 
-                        'targets': 'Tgts', 
-                        'rec_yards': 'Rec Yds',
-                        'rec_td': 'Rec TD',
-                        'rec_longest': 'Longest Rec'}
-          teamStatConv = {'pass_att': 'Targets', 
-                          'pass_comp': 'Rec', 
-                          'pass_yards': 'Rec Yards',
-                          'pass_td': 'Rec TD',
-                          'pass_yards_per_att': 'Yards Per Rec', 
-                          'pass_yards_per_game': 'Rec Yds per Game'}
-          sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rec', 'Tgt', 'Rec Yds', 'Rec TD',
-                          'Longest Rec']
-          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rec', 'targets', 'rec_yards',
-                         'rec_td', 'rec_longest']
-        }
-        else {
-          avgCols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
-          avgColConv = {'pass_att': 'Pass Att', 
-                        'pass_comp': 'Completions', 
-                        'pass_yards': 'Pass Yds',
-                        'pass_td': 'Pass TD',
-                        'pass_longest': 'Longest Pass'}
-          teamStatConv = {'pass_att': 'Pass Att', 
-                          'pass_comp': 'Pass Comp', 
-                          'pass_yards': 'Pass Yards',
-                          'pass_td': 'Pass TD',
-                          'pass_yards_per_att': 'Yards Per Att', 
-                          'pass_yards_per_game': 'Yards per Game'}
-          sumLogHeader = ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 
-                          'Longest Pass']
-          statDataAtt = ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'pass_att',  'pass_comp', 'pass_yards',
-                         'pass_td', 'pass_longest']
-        }
+        statType = 'passing'
     }
 
+    statObj = {
+      'rushing': {'loopCols':['rush_att', 'rush_yards', 'rush_td', 'rush_yards_per_att', 'rush_yards_per_game'],
+                  'rankCols': ['rush_att_rank', 'rush_yards_rank', 'rush_td_rank', 'yards_per_att_rank', 'yards_per_game_rank'],
+                  'avgCols': ['rush_att', 'rush_yards', 'rush_td', 'rush_longest'],
+                  'teamStatObj': {'rush_att': 'Rush Att', 'rush_yards': 'Rush Yards', 'rush_td': 'Rush TD', 'yards_per_att': 'Yards Per Att', 'yards_per_game': 'Yards per Game'},
+                  'avgColObj': {'rush_att': 'Rush Att', 'rush_yards': 'Rush Yds', 'rush_td': 'Rec TD', 'rush_longest': 'Longest Rec'},
+                  'sumLogHeader': ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rush Att', 'Rush Yards', 'Rush TD','Longest Rush', 'Fumbles'],
+                  'statDataAtt': ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rush_att', 'rush_yards', 'rush_td', 'rush_longest', 'fumbles']
+      },
+      'passing': {'loopCols':['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game'],
+                  'rankCols': ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank'],
+                  'avgCols': ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest'],
+                  'teamStatObj': {'pass_att': 'Pass Att', 'pass_comp': 'Pass Comp', 'pass_yards': 'Pass Yards', 'pass_td': 'Pass TD', 'pass_yards_per_att': 'Yards Per Att', 'pass_yards_per_game': 'Yards per Game'},
+                  'avgColObj': {'pass_att': 'Pass Att', 'pass_comp': 'Completions', 'pass_yards': 'Pass Yds', 'pass_td': 'Pass TD', 'pass_longest': 'Longest Pass'},
+                  'sumLogHeader': ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Pass Att', 'Pass Comp', 'Pass Yds', 'Pass TD', 'Longest Pass'],
+                  'statDataAtt': ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'pass_att',  'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']},
+      'receiving': {'loopCols':['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_yards_per_att', 'pass_yards_per_game'],
+                  'rankCols': ['pass_att_rank', 'pass_comp_rank', 'pass_yards_rank', 'pass_td_rank', 'yards_per_att_rank', 'pass_yards_per_game_rank'],
+                  'avgCols': ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest'],
+                  'teamStatObj': {'pass_att': 'Targets', 'pass_comp': 'Rec', 'pass_yards': 'Rec Yards', 'pass_td': 'Rec TD', 'pass_yards_per_att': 'Yards Per Rec', 'pass_yards_per_game': 'Rec Yds per Game'},
+                  'avgColObj': {'rec': 'Rec', 'targets': 'Tgts', 'rec_yards': 'Rec Yds', 'rec_td': 'Rec TD', 'rec_longest': 'Longest Rec'},
+                  'sumLogHeader': ['Game', 'Year', 'Week', 'Pos', 'Team', 'Opponent', 'Rec', 'Tgt', 'Rec Yds', 'Rec TD', 'Longest Rec'],
+                  'statDataAtt': ['game_id', 'year', 'week', 'pos', 'team_id', 'opp_id', 'rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']}
+    }
 
      //=========================================PLAYER SECTION===============================================// 
     // Capitalize location variable
@@ -250,8 +218,8 @@
 
     // Update the bet summary section headers
     const betSumSpans = document.querySelectorAll(".bet-summary-span")
-    betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]}</h3>`
-    betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${avgColConv[stat]} (${capitalizedWord})</h3>`
+    betSumSpans[0].innerHTML = `<h3>${operatorText} ${amount} ${statObj[statType]['avgColObj'][stat]}</h3>`
+    betSumSpans[1].innerHTML = `<h3>${operatorText} ${amount} ${statObj[statType]['avgColObj'][stat]} (${capitalizedWord})</h3>`
 
     // LOOP - Populate the bet summary by year and by location sections
     periodArray = ['current', 'prior', 'third']
@@ -327,11 +295,10 @@
 
     // Update team / opponent names in span element
     spans = document.querySelectorAll('span')
-    console.log(spans)
     if (recArray.includes(stat)) {
-        teamSpan = spans[17]
+        teamSpan = spans[16]
         teamSpan.innerHTML = `<h3>${team} Summary</h3>`
-        oppSpan = spans[18]
+        oppSpan = spans[17]
         oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
     }
     else if (passArray.includes(stat)) {
@@ -418,9 +385,9 @@
   
     for (let i = 0; i < 11; i++) {
       th = document.createElement('th')
-      th.innerText = sumLogHeader[i]
+      th.innerText = statObj[statType]['sumLogHeader'][i]
       th.setAttribute("scope", "col")
-      th.setAttribute("data-stat", statDataAtt[i])
+      th.setAttribute("data-stat", statObj[statType]['statDataAtt'][i])
       tHeadRow.appendChild(th)
       }
     
@@ -440,14 +407,14 @@
 
 
       for (let i = 1; i < Object.keys(loopObj).length - 2; i++) {
-        let statVal = loopObj[statDataAtt[i]]
+        let statVal = loopObj[statObj[statType]['statDataAtt'][i]]
 
         if ((i == 4) || (i == 5)) {
-          statVal = nflIdArray[statVal]
+          statVal = nflTeamArray[statVal]
         }
 
         const rowData = document.createElement('td')
-        rowData.setAttribute("data-stat", statDataAtt[i])
+        rowData.setAttribute("data-stat", statObj[statType]['statDataAtt'][i])
 
         rowData.classList.add('center')
         rowData.innerText = statVal
@@ -458,7 +425,7 @@
     }
   }
 
+summarySection(nflIdArray[team])
+ 
 
-
-  summarySection(nfl_teams[team])
 </script>

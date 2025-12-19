@@ -81,7 +81,7 @@ span {
     width: 35%;
 }
 
-#player-sum-stats {
+#player-sum {
     display: flex;
     gap: 5px;
 }
