@@ -124,12 +124,6 @@
     const logSummaryData = await logSummaryRequest.json();
 
     // Initialize function variables
-    let loopCols;
-    let rankCols;
-    let avgCols;
-    let teamStatConv;
-    let sumLogHeader;
-    let statType;
     if (rushArray.includes(stat)) {
         statType = 'rushing'
       }
@@ -289,12 +283,12 @@
   }
     
   //=========================================TEAM SECTION===============================================// 
-    playerStatContainer = document.getElementById('player-summary')
+    playerStatContainer = document.getElementById('player-sum')
     teamSumContainer = document.getElementById('team-sum')
     oppSumContainer = document.getElementById('opp-sum')
 
     // Update team / opponent names in span element
-    spans = document.querySelectorAll('span')
+    const spans = document.querySelectorAll('span')
     if (recArray.includes(stat)) {
         teamSpan = spans[16]
         teamSpan.innerHTML = `<h3>${team} Summary</h3>`
@@ -308,10 +302,12 @@
         oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
     }
     
+    const loopCols = statObj[statType]['loopCols']
+    const teamStatObj = statObj[statType]['teamStatObj']
     // Populate team and opponent summary sections
     for (element in loopCols) {
       const statTotal = teamSummaryData[`team_${loopCols[element]}`]
-      const statText = teamStatConv[loopCols[element]]
+      const statText = teamStatObj[loopCols[element]]
       const statRank = teamRankSummaryData[`${loopCols[element]}_rank`]
 
       const teamStatElement = document.createElement('p')
@@ -319,7 +315,7 @@
       teamSumContainer.append(teamStatElement)
 
       const statTotalOpp = oppSummaryData[`team_${loopCols[element]}`]
-      const statTextOpp = teamStatConv[loopCols[element]]
+      const statTextOpp = teamStatObj[loopCols[element]]
       const statRankOpp = oppRankSummaryData[`${loopCols[element]}_rank`]
       
       const oppStatElement = document.createElement('p')
@@ -344,9 +340,11 @@
         textSeg = 'away'
       }
 
+      const avgCols = statObj[statType]['avgCols']
       for (const col in avgCols) {
         let playerPTag = document.createElement('p')
-        const plyrElementText = `<div class="test"><span class="white-span"><strong>${avgColConv[avgCols[col]]}:</strong></span> <p>${loopArray[`${textSeg}_${avgCols[col]}`]}</p></div>`
+        const avgColName = statObj[statType]['avgColObj']
+        const plyrElementText = `<div class="test"><span class="white-span"><strong>${avgColName[avgCols[col]]}:</strong></span> <p>${loopArray[`${textSeg}_${avgCols[col]}`]}</p></div>`
         playerPTag.innerHTML = plyrElementText
 
         if (lst == 0) {
