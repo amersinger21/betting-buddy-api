@@ -1785,7 +1785,8 @@ def nfl_update_starting_lineup_te():
     return f"nfl_weekly_rank has been updated ."
 
 
-@nfl.route('/nfl/player/next_game', methods=['GET'])
+# Misc Routes
+@nfl.route('/nfl/team/next_game', methods=['GET'])
 def nfl_player_next_game():
     team_id = int(request.args.get('team_id', None))
     json_output = {}
@@ -1808,6 +1809,36 @@ def nfl_player_next_game():
     else:
         json_output.update({'next_game_loc': 'away'})
         json_output.update({'next_opp': home_id})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
+@nfl.route('/nfl/team/starting_lineup', methods=['GET'])
+def nfl_team_starting_lineup():
+    team_id = int(request.args.get('team_id', None))
+
+    # SQL Query that returns the next game information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_starting_lineups.team_id, 
+				            nfl_starting_lineups.player_id, nfl_starting_lineups.position from nfl_starting_lineups
+                    JOIN player ON player.id = nfl_starting_lineups.player_id
+                    WHERE team_id = {team_id}'''
+    cursor.execute(player_query)
+    results = cursor.fetchall()
+
+    json_output = {
+        'qb': results[0][0],
+        'rb1': results[1][0],
+        'rb2': results[2][0],
+        'wr1': results[3][0],
+        'wr2': results[4][0],
+        'wr3': results[5][0],
+        'te1': results[6][0],
+        'te2': results[7][0],
+    }
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
@@ -2336,6 +2367,34 @@ def nfl_player_stat_summary():
     json_output.update({'player_avg_stats': stat_avg_dict})
     json_output.update({'player_home_avg': stat_home_dict})
     json_output.update({'player_away_avgs': stat_away_dict})
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+@nfl.route('/nfl/summary/record', methods=['GET'])
+def nfl_team_record():
+    team_id = int(request.args.get('team_id', None))
+
+    # SQL Query that returns the next game information
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT team.name, nfl_standings.team_id, nfl_standings.wins, nfl_standings.losses,
+                        nfl_standings.ties, nfl_standings.win_loss_percentage
+                    FROM nfl_standings
+                    JOIN team ON team.id = nfl_standings.team_id
+                    WHERE nfl_standings.year = {nfl_current_year} AND nfl_standings.team_id = {team_id}'''
+    cursor.execute(player_query)
+    results = cursor.fetchone()
+
+    json_output = {
+        'team_name': results[0],
+        'team_id': results[1],
+        'wins': results[2],
+        'losses': results[3],
+        'ties': results[4],
+        'win_loss_percentage': f"{results[5] * 100}%",
+    }
 
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
