@@ -35,9 +35,18 @@
         <div id="opp-sum" class="second"><span class="second-span"><h3>Opponent Summary</h3></span></div>
       </div>
       <div id="third-row">
-        <h3>Last 5 Games</h3>
-        <table id="summary-logs" class="paddingBetweenCols">
-        </table>
+        <div id="table-container">
+            <h3>Last 5 Games</h3>
+            <table id="summary-logs" class="paddingBetweenCols">
+            </table>
+        </div>
+        <div id="next-game-container">
+          <h3>Next Game</h3>
+          <div id="next-game">
+            <div id="away-team"></div>
+            <div id="home-team"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -98,13 +107,14 @@
     const nextGameRequest = await fetch(`http://129.80.84.210/api/nfl/player/next_game?team_id=${team_id}`);
     const nextGameData = await nextGameRequest.json();
     const location = nextGameData['next_game_loc']
+    const oppId = nextGameData['next_opp']
 
     const betSummaryRequest = await fetch(
-      `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=4&loc=${location}&qb=${startingQB}`);
+      `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=${oppId}&loc=${location}&qb=${startingQB}`);
     const betOccurrenceData = await betSummaryRequest.json();
 
     const playerAvgRequest = await fetch(
-      `http://129.80.84.210/api/nfl/summary/player_summary?id=${id}&stat=${stat}&opp_id=4`);
+      `http://129.80.84.210/api/nfl/summary/player_summary?id=${id}&stat=${stat}&opp_id=${oppId}`);
     const playerAvgData = await playerAvgRequest.json();
 
     //=========================================TEAM SECTION===============================================// 
@@ -114,7 +124,7 @@
     const teamRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_rank_summary?team_id=${nflIdArray[team]}&stat=${stat}`);
     const teamRankSummaryData = await teamRankSummaryRequest.json();
 
-    const oppSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_summary?opp_id=4&stat=${stat}`);
+    const oppSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_summary?opp_id=${oppId}&stat=${stat}`);
     const oppSummaryData = await oppSummaryRequest.json();
 
     const oppRankSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/opponent_rank_summary?opp_id=4&stat=${stat}`);
@@ -292,13 +302,13 @@
         teamSpan = spans[16]
         teamSpan.innerHTML = `<h3>${team} Summary</h3>`
         oppSpan = spans[17]
-        oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
+        oppSpan.innerHTML = `<h3>${nflTeamArray[oppId]} Summary</h3>`
     }
     else if (passArray.includes(stat)) {
         teamSpan = spans[15]
         teamSpan.innerHTML = `<h3>${team} Summary</h3>`
         oppSpan = spans[16]
-        oppSpan.innerHTML = `<h3>${'BUF'} Summary</h3>`
+        oppSpan.innerHTML = `<h3>${nflTeamArray[oppId]} Summary</h3>`
     }
     
     const loopCols = statObj[statType]['loopCols']
@@ -417,9 +427,29 @@
         rowData.innerText = statVal
         tableRow.append(rowData)
       }
-
       tableBody.appendChild(tableRow)
     }
+
+    // Update Next Game Section
+    let awayTeam;
+    let homeTeam;
+    let awayTeamSect = document.getElementById('away-team')
+    let homeTeamSect = document.getElementById('home-team')
+    if (location == 'away') {
+      homeTeam = nflTeamArray[oppId]
+      awayTeam = nflTeamArray[team_id]
+    }
+    else {
+      homeTeam = nflTeamArray[team_id]
+      wayTeam = nflTeamArray[oppId]
+    }
+    const awayHeader = document.createElement('span')
+    awayHeader.innerHTML = (`<strong>${awayTeam}</strong>`) 
+    awayTeamSect.appendChild(awayHeader)
+
+    const homeHeader = document.createElement('span')
+    homeHeader.innerHTML = (`<strong>${homeTeam}</strong>`) 
+    awayTeamSect.appendChild(homeHeader)
   }
 
 summarySection(nflIdArray[team])

@@ -115,10 +115,10 @@ span {
 /* Third row CSS - Play game log section */
 #third-row {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
 }
 
-#third-row h3{
+#third-row h3, #table-container h3 {
     margin-right: auto;
     border-width: 1px;
     border-style: solid; 
