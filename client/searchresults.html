@@ -97,17 +97,17 @@
   async function summarySection(team_id) {
 
     //=========================================PLAYER SECTION===============================================// 
+    const nextGameRequest = await fetch(`http://129.80.84.210/api/nfl/team/next_game?team_id=${team_id}`);
+    const nextGameData = await nextGameRequest.json();
+    const location = nextGameData['next_game_loc']
+    const oppId = nextGameData['next_opp']
+
     const playerInfoResponse = await fetch(`http://129.80.84.210/api/nfl/summary/player_info?id=${id}`);
     const playerInfoData = await playerInfoResponse.json();
  
     const startQbRequest = await fetch(`http://129.80.84.210/api/nfl/team/starting_qb?team_id=${team_id}`);
     const startQbData = await startQbRequest.json();
     const startingQB = startQbData['starting_qb']
-
-    const nextGameRequest = await fetch(`http://129.80.84.210/api/nfl/player/next_game?team_id=${team_id}`);
-    const nextGameData = await nextGameRequest.json();
-    const location = nextGameData['next_game_loc']
-    const oppId = nextGameData['next_opp']
 
     const betSummaryRequest = await fetch(
       `http://129.80.84.210/api/nfl/summary/bet_occurrence_summary?id=${id}&stat=${stat}&operator=${operator}&value=${amount}&opp_id=${oppId}&loc=${location}&qb=${startingQB}`);
@@ -116,8 +116,10 @@
     const playerAvgRequest = await fetch(
       `http://129.80.84.210/api/nfl/summary/player_summary?id=${id}&stat=${stat}&opp_id=${oppId}`);
     const playerAvgData = await playerAvgRequest.json();
+    
 
-    //=========================================TEAM SECTION===============================================// 
+    //=========================================TEAM ROUTES===============================================// 
+
     const teamSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/team_summary?team_id=${nflIdArray[team]}&stat=${stat}`);
     const teamSummaryData = await teamSummaryRequest.json();
 
@@ -132,6 +134,16 @@
 
     const logSummaryRequest = await fetch(`http://129.80.84.210/api/nfl/summary/game_logs_summary?id=${id}&stat=${stat}`);
     const logSummaryData = await logSummaryRequest.json();
+
+    const startingLineupRequest = await fetch(`http://129.80.84.210/api/nfl/team/starting_lineup?team_id=${team_id}`);
+    const startingLineupData = await startingLineupRequest.json();
+
+    const teamRecordRequest = await fetch(`http://129.80.84.210/api/nfl/summary/record?team_id=${team_id}`);
+    const teamRecordData = await teamRecordRequest.json();
+
+    const oppRecordRequest = await fetch(`http://129.80.84.210/api/nfl/summary/record?team_id=${oppId}`);
+    const oppRecordData = await oppRecordRequest.json();
+
 
     // Initialize function variables
     if (rushArray.includes(stat)) {
@@ -435,17 +447,32 @@
     let homeTeam;
     let awayTeamSect = document.getElementById('away-team')
     let homeTeamSect = document.getElementById('home-team')
+    let awayRecord = document.createElement('p')
+    let homeRecord = document.createElement('p')
+
     if (location == 'away') {
       homeTeam = nflTeamArray[oppId]
       awayTeam = nflTeamArray[team_id]
+
+      homeRecord.innerHTML = `${oppRecordData['wins']}-${oppRecordData['losses']}-${oppRecordData['ties']} (Win %: ${oppRecordData['win_loss_percentage']})`
+      awayRecord.innerHTML = `${teamRecordData['wins']}-${teamRecordData['losses']}-${teamRecordData['ties']} (Win %: ${teamRecordData['win_loss_percentage']})`
     }
     else {
       homeTeam = nflTeamArray[team_id]
-      wayTeam = nflTeamArray[oppId]
+      awayTeam = nflTeamArray[oppId]
+
+      homeRecord.innerHTML = `${teamRecordData['wins']}-${teamRecordData['losses']}-${teamRecordData['ties']} (Win %: ${teamRecordData['win_loss_percentage']})`
+      awayRecord.innerHTML = `${oppRecordData['wins']}-${oppRecordData['losses']}-${oppRecordData['ties']} (Win %: ${oppRecordData['win_loss_percentage']})`
     }
     const awayHeader = document.createElement('span')
     awayHeader.innerHTML = (`<strong>${awayTeam}</strong>`) 
     awayTeamSect.appendChild(awayHeader)
+
+    awayTeamSect.appendChild(awayRecord)
+    homeTeamSect.appendChild(homeRecord)
+
+    // Add away teams record
+   
 
     const homeHeader = document.createElement('span')
     homeHeader.innerHTML = (`<strong>${homeTeam}</strong>`) 
