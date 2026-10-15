@@ -21,12 +21,11 @@ def add_player():
         connection = create_connection()
         cursor = connection.cursor()
 
-        values = [row['last_name'], row['first_name'], row['sport_id'], row['position'], row['image'], row['current_team'],
-                  row['currently_playing']]
+        values = [row['last_name'], row['first_name'], row['sport_id'], row['image']]
 
         # execute sql query inserting into table
         cursor.execute(
-            "INSERT INTO player (last_name, first_name, sport_id, position, image, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO player (last_name, first_name, sport_id, image) VALUES (%s, %s, %s, %s)",
             (values))
 
         connection.commit()
@@ -83,25 +82,25 @@ def get_player_dropdown():
     return result_list
 
 
-@player.route('/players', methods=['PUT'])
-def update_player_status(json_dict):
-    file = request.files['player_template']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        values = [row['current_team'], row['currently_playing'], row['id'], row['last_name'], row['first_name']]
-
-
-        cursor.execute('''UPDATE player
-                SET current_team = %s, currently_playing = %s
-                WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
-        connection.commit()
-        print(f"{row['first_name']} {row['last_name']} has been added to player tabel.")
+# @player.route('/players', methods=['PUT'])
+# def update_player_status(json_dict):
+#     file = request.files['player_template']
+#
+#     # Read CSV data
+#     df = pd.read_csv(file)
+#
+#     for ind, row in df.iterrows():
+#         connection = create_connection()
+#         cursor = connection.cursor()
+#
+#         values = [row['current_team'], row['currently_playing'], row['id'], row['last_name'], row['first_name']]
+#
+#
+#         cursor.execute('''UPDATE player
+#                 SET current_team = %s, currently_playing = %s
+#                 WHERE player.id = %s AND player.last_name = %s AND player.first_name = %s''', (values))
+#         connection.commit()
+#         print(f"{row['first_name']} {row['last_name']} has been added to player tabel.")
 
 
 
