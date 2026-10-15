@@ -21,12 +21,11 @@ def add_player():
         connection = create_connection()
         cursor = connection.cursor()
 
-        values = [row['last_name'], row['first_name'], row['sport_id'], row['position'], row['image'], row['current_team'],
-                  row['currently_playing']]
+        values = [row['last_name'], row['first_name'], row['sport_id'], row['image']]
 
         # execute sql query inserting into table
         cursor.execute(
-            "INSERT INTO player (last_name, first_name, sport_id, position, image, current_team, currently_playing) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO player (last_name, first_name, sport_id, image) VALUES (%s, %s, %s, %s)",
             (values))
 
         connection.commit()
