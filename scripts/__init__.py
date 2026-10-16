@@ -43,6 +43,7 @@ def create_app():
     from .home import home
     from .nba_routes import nba
     from .mlb_routes import mlb
+    from .roster_routes import roster
     # from .download_routes import docs
 
     app.register_blueprint(weather, url_prefix='/api')
@@ -52,6 +53,7 @@ def create_app():
     app.register_blueprint(home, url_prefix='/api')
     app.register_blueprint(nba, url_prefix='/api')
     app.register_blueprint(mlb, url_prefix='/api')
+    app.register_blueprint(roster, url_prefix='/api')
     # app.register_blueprint(docs, url_prefix='/api')
 
     return app
