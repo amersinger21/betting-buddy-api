@@ -1147,6 +1147,7 @@ def nfl_game_info():
 
     return f"nfl_games has been updated with the most recent game data."
 
+# NFL TEAM OFFENSE ROUTES
 @nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
 def nfl_team_defense():
     file = request.files['nfl_team_defense']
@@ -1261,6 +1262,79 @@ def nfl_team_defense():
         connection.commit()
 
     return f"nfl_team_defense has been updated with the most recent years data."
+
+
+@nfl.route('/nfl/team/pass_offense', methods=['POST', 'PUT'])
+def nfl_team_off_passing():
+    file = request.files['nfl_team_pass_off_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        print(row)
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_pass_offense (team_id, year, games, dropback_epa, dropback_sr, pass_comp,
+             pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, yards_per_att, pass_yards_per_comp, 
+             pass_yards_per_game, passer_rating, sacks, ints, int_percentage) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_pass_offense 
+                    SET games = %s, dropback_epa = %s, dropback_sr = %s,  pass_comp = %s, pass_att = %s, 
+                    pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, pass_td_percentage = %s, 
+                    yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
+                    passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s
+                    WHERE nfl_team_pass_offense.team_id = %s AND nfl_team_pass_offense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_pass_offense has been updated with the most recent {json_dict['year']} data."
 
 @nfl.route('/nfl/team_offense', methods=['POST', 'PUT'])
 def nfl_team_offense():
