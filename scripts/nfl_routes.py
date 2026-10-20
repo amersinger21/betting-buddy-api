@@ -1272,7 +1272,6 @@ def nfl_team_off_passing():
     df = pd.read_csv(file)
 
     for ind, row in df.iterrows():
-        print(row)
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -1344,7 +1343,6 @@ def nfl_team_off_rushing():
     df = pd.read_csv(file)
 
     for ind, row in df.iterrows():
-        print(row)
         connection = create_connection()
         cursor = connection.cursor()
 
@@ -1385,7 +1383,7 @@ def nfl_team_off_rushing():
             cursor.execute("""UPDATE nfl_team_rush_offense 
                     SET games = %s, rush_epa = %s, rush_sr = %s, rush_att = %s, rush_yards = %s, 
                     rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s
-                    WHERE nfl_team_offense.team_id = %s AND nfl_team_offense.year = %s""",(values))
+                    WHERE nfl_team_rush_offense.team_id = %s AND nfl_team_rush_offense.year = %s""",(values))
 
         connection.commit()
 
@@ -1461,13 +1459,53 @@ def nfl_team_off_drives():
                     total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
                     yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
                     fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s
-                    WHERE nfl_team_offense.team_id = %s AND nfl_team_offense.year = %s""",(values))
+                    WHERE nfl_team_offense_drives.team_id = %s AND nfl_team_offense_drives.year = %s""",(values))
 
         connection.commit()
 
     return f"nfl_team_offense_drives has been updated with the most recent {json_dict['year']} data."
 
+@nfl.route('/nfl/team/red_zone', methods=['POST', 'PUT'])
+def nfl_team_off_rz():
+    file = request.files['nfl_team_rz_off_template']
 
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_rz_offense (team_id, year, games, rz_att, rz_td, rz_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_rz_offense 
+                    SET games = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
+                    WHERE nfl_team_rz_offense.team_id = %s AND nfl_team_rz_offense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_rz_offense has been updated with the most recent {json_dict['year']} data."
 
 @nfl.route('/nfl/team_offense', methods=['POST', 'PUT'])
 def nfl_team_offense():
