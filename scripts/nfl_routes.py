@@ -1783,7 +1783,7 @@ def nfl_team_wr_splits():
 
     return f"nfl_defense_wr_splits has been updated with the most recent {json_dict['year']} data."
 @nfl.route('/nfl/team/te_split', methods=['POST', 'PUT'])
-def nfl_team_wr_splits():
+def nfl_team_te_splits():
     file = request.files['nfl_te_split_template']
 
     # Read CSV data
