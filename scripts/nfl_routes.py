@@ -1102,7 +1102,7 @@ def nfl_qb_breakdown():
 
 
 
-# UPLOAD/ADD ROUTES
+############################   UPLOAD/ADD ROUTES   #################################
 @nfl.route('/nfl/games', methods=['POST', 'PUT'])
 def nfl_game_info():
     file = request.files['nfl_game_info']
@@ -1147,7 +1147,490 @@ def nfl_game_info():
 
     return f"nfl_games has been updated with the most recent game data."
 
+
 # NFL TEAM OFFENSE ROUTES
+@nfl.route('/nfl/team/pass_offense', methods=['POST', 'PUT'])
+def nfl_team_off_passing():
+    file = request.files['nfl_team_pass_off_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_pass_offense (team_id, year, games, dropback_epa, dropback_sr, pass_comp,
+             pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, yards_per_att, pass_yards_per_comp, 
+             pass_yards_per_game, passer_rating, sacks, ints, int_percentage) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_pass_offense 
+                    SET games = %s, dropback_epa = %s, dropback_sr = %s,  pass_comp = %s, pass_att = %s, 
+                    pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, pass_td_percentage = %s, 
+                    yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
+                    passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s
+                    WHERE nfl_team_pass_offense.team_id = %s AND nfl_team_pass_offense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_pass_offense has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/rush_offense', methods=['POST', 'PUT'])
+def nfl_team_off_rushing():
+    file = request.files['nfl_team_rush_off_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rush_epa': row['rush_epa'],
+                         'rush_sr': row['rush_sr'],
+                         'rush_att': row['rush_att'],
+                         'rush_yards': row['rush_yards'],
+                         'rush_td': row['rush_td'],
+                         'rush_yards_per_att': row['rush_yards_per_att'],
+                         'rush_yards_per_game': row['rush_yards_per_game'],
+                         'fumbles': row['fumbles']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_rush_offense (team_id, year, games, rush_epa, rush_sr, 
+             rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, fumbles) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rush_epa': row['rush_epa'],
+                         'rush_sr': row['rush_sr'],
+                         'rush_att': row['rush_att'],
+                         'rush_yards': row['rush_yards'],
+                         'rush_td': row['rush_td'],
+                         'rush_yards_per_att': row['rush_yards_per_att'],
+                         'rush_yards_per_game': row['rush_yards_per_game'],
+                         'fumbles': row['fumbles'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_rush_offense 
+                    SET games = %s, rush_epa = %s, rush_sr = %s, rush_att = %s, rush_yards = %s, 
+                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s
+                    WHERE nfl_team_rush_offense.team_id = %s AND nfl_team_rush_offense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_rush_offense has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/off_drives', methods=['POST', 'PUT'])
+def nfl_team_off_drives():
+    file = request.files['nfl_team_drive_off_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'epa_per_play': row['epa_per_play'],
+                         'success_rate': row['success_rate'],
+                         'points_per_game': row['points_per_game'],
+                         'total_points': row['total_points'],
+                         'drives': row['drives'],
+                         'plays': row['plays'],
+                         'scoring_percentage': row['scoring_percentage'],
+                         'to_percentage': row['to_percentage'],
+                         'plays_per_drive': row['plays_per_drive'],
+                         'yards_per_drive': row['yards_per_drive'],
+                         'points_per_drive': row['points_per_drive'],
+                         'third_down_att': row['third_down_att'],
+                         'third_down_conv': row['third_down_conv'],
+                         'third_down_conv_rate': row['third_down_conv_rate'],
+                         'fourth_down_att': row['fourth_down_att'],
+                         'fourth_down_conv': row['fourth_down_conv'],
+                         'fourth_down_conv_rate': row['fourth_down_conv_rate']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_offense_drives (team_id, year, games, epa_per_play, success_rate, 
+             points_per_game, total_points, drives, plays, scoring_percentage, to_percentage, plays_per_drive, 
+             yards_per_drive, points_per_drive, third_down_att, third_down_conv, third_down_conv_rate, fourth_down_att, 
+             fourth_down_conv, fourth_down_conv_rate) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'epa_per_play': row['epa_per_play'],
+                         'success_rate': row['success_rate'],
+                         'points_per_game': row['points_per_game'],
+                         'total_points': row['total_points'],
+                         'drives': row['drives'],
+                         'plays': row['plays'],
+                         'scoring_percentage': row['scoring_percentage'],
+                         'to_percentage': row['to_percentage'],
+                         'plays_per_drive': row['plays_per_drive'],
+                         'yards_per_drive': row['yards_per_drive'],
+                         'points_per_drive': row['points_per_drive'],
+                         'third_down_att': row['third_down_att'],
+                         'third_down_conv': row['third_down_conv'],
+                         'third_down_conv_rate': row['third_down_conv_rate'],
+                         'fourth_down_att': row['fourth_down_att'],
+                         'fourth_down_conv': row['fourth_down_conv'],
+                         'fourth_down_conv_rate': row['fourth_down_conv_rate'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_offense_drives 
+                    SET games = %s, epa_per_play = %s, success_rate = %s, %s, points_per_game = %s, 
+                    total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
+                    yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
+                    fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s
+                    WHERE nfl_team_offense_drives.team_id = %s AND nfl_team_offense_drives.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_offense_drives has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/red_zone', methods=['POST', 'PUT'])
+def nfl_team_off_rz():
+    file = request.files['nfl_team_rz_off_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_rz_offense (team_id, year, games, rz_att, rz_td, rz_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_rz_offense 
+                    SET games = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
+                    WHERE nfl_team_rz_offense.team_id = %s AND nfl_team_rz_offense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_rz_offense has been updated with the most recent {json_dict['year']} data."
+
+
+# NFL TEAM DEFENSE ROUTES
+@nfl.route('/nfl/team/pass_defense', methods=['POST', 'PUT'])
+def nfl_team_def_passing():
+    file = request.files['nfl_team_pass_def_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_pass_defense (team_id, year, games, dropback_epa, dropback_sr, pass_comp,
+             pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, yards_per_att, pass_yards_per_comp, 
+             pass_yards_per_game, passer_rating, sacks, ints, int_percentage) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'dropback_epa': row['dropback_epa'],
+                         'dropback_sr': row['dropback_sr'],
+                         'pass_comp': row['pass_comp'],
+                         'pass_att': row['pass_att'],
+                         'pass_comp_percentage': row['pass_comp_percentage'],
+                         'pass_yards': row['pass_yards'],
+                         'pass_td': row['pass_td'],
+                         'pass_td_percentage': row['pass_td_percentage'],
+                         'yards_per_att': row['yards_per_att'],
+                         'pass_yards_per_comp': row['pass_yards_per_comp'],
+                         'pass_yards_per_game': row['pass_yards_per_game'],
+                         'passer_rating': row['passer_rating'],
+                         'sacks': row['sacks'],
+                         'ints': row['ints'],
+                         'int_percentage': row['int_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_pass_defense 
+                    SET games = %s, dropback_epa = %s, dropback_sr = %s,  pass_comp = %s, pass_att = %s, 
+                    pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, pass_td_percentage = %s, 
+                    yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
+                    passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s
+                    WHERE nfl_team_pass_defense.team_id = %s AND nfl_team_pass_defense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_pass_offense has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/rush_defense', methods=['POST', 'PUT'])
+def nfl_team_def_rushing():
+    file = request.files['nfl_team_rush_def_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rush_epa': row['rush_epa'],
+                         'rush_sr': row['rush_sr'],
+                         'rush_att': row['rush_att'],
+                         'rush_yards': row['rush_yards'],
+                         'rush_td': row['rush_td'],
+                         'rush_yards_per_att': row['rush_yards_per_att'],
+                         'rush_yards_per_game': row['rush_yards_per_game']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_rush_defense (team_id, year, games, rush_epa, rush_sr, 
+             rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rush_epa': row['rush_epa'],
+                         'rush_sr': row['rush_sr'],
+                         'rush_att': row['rush_att'],
+                         'rush_yards': row['rush_yards'],
+                         'rush_td': row['rush_td'],
+                         'rush_yards_per_att': row['rush_yards_per_att'],
+                         'rush_yards_per_game': row['rush_yards_per_game'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_rush_defense 
+                    SET games = %s, rush_epa = %s, rush_sr = %s, rush_att = %s, rush_yards = %s, 
+                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s
+                    WHERE nfl_team_rush_defense.team_id = %s AND nfl_team_rush_defense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_rush_offense has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/def_drives', methods=['POST', 'PUT'])
+def nfl_team_def_drives():
+    file = request.files['nfl_team_drive_def_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'epa_per_play': row['epa_per_play'],
+                         'success_rate': row['success_rate'],
+                         'points_per_game': row['points_per_game'],
+                         'total_points': row['total_points'],
+                         'drives': row['drives'],
+                         'plays': row['plays'],
+                         'scoring_percentage': row['scoring_percentage'],
+                         'to_percentage': row['to_percentage'],
+                         'plays_per_drive': row['plays_per_drive'],
+                         'yards_per_drive': row['yards_per_drive'],
+                         'points_per_drive': row['points_per_drive'],
+                         'third_down_att': row['third_down_att'],
+                         'third_down_conv': row['third_down_conv'],
+                         'third_down_conv_rate': row['third_down_conv_rate'],
+                         'fourth_down_att': row['fourth_down_att'],
+                         'fourth_down_conv': row['fourth_down_conv'],
+                         'fourth_down_conv_rate': row['fourth_down_conv_rate']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_defense_drives (team_id, year, games, epa_per_play, success_rate, 
+             points_per_game, total_points, drives, plays, scoring_percentage, to_percentage, plays_per_drive, 
+             yards_per_drive, points_per_drive, third_down_att, third_down_conv, third_down_conv_rate, fourth_down_att, 
+             fourth_down_conv, fourth_down_conv_rate) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'epa_per_play': row['epa_per_play'],
+                         'success_rate': row['success_rate'],
+                         'points_per_game': row['points_per_game'],
+                         'total_points': row['total_points'],
+                         'drives': row['drives'],
+                         'plays': row['plays'],
+                         'scoring_percentage': row['scoring_percentage'],
+                         'to_percentage': row['to_percentage'],
+                         'plays_per_drive': row['plays_per_drive'],
+                         'yards_per_drive': row['yards_per_drive'],
+                         'points_per_drive': row['points_per_drive'],
+                         'third_down_att': row['third_down_att'],
+                         'third_down_conv': row['third_down_conv'],
+                         'third_down_conv_rate': row['third_down_conv_rate'],
+                         'fourth_down_att': row['fourth_down_att'],
+                         'fourth_down_conv': row['fourth_down_conv'],
+                         'fourth_down_conv_rate': row['fourth_down_conv_rate'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_defense_drives 
+                    SET games = %s, epa_per_play = %s, success_rate = %s, %s, points_per_game = %s, 
+                    total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
+                    yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
+                    fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s
+                    WHERE nfl_team_defense_drives.team_id = %s AND nfl_team_defense_drives.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_defense_drives has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/def_red_zone', methods=['POST', 'PUT'])
+def nfl_team_def_rz():
+    file = request.files['nfl_team_rz_def_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_team_rz_defense (team_id, year, games, rz_att, rz_td, rz_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rz_att': row['rz_att'],
+                         'rz_td': row['rz_td'],
+                         'rz_percentage': row['rz_percentage'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_team_rz_defense 
+                    SET games = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
+                    WHERE nfl_team_rz_defense.team_id = %s AND nfl_team_rz_defense.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_rz_defense has been updated with the most recent {json_dict['year']} data."
+
+
+
 @nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
 def nfl_team_defense():
     file = request.files['nfl_team_defense']
@@ -1262,389 +1745,6 @@ def nfl_team_defense():
         connection.commit()
 
     return f"nfl_team_defense has been updated with the most recent years data."
-
-
-@nfl.route('/nfl/team/pass_offense', methods=['POST', 'PUT'])
-def nfl_team_off_passing():
-    file = request.files['nfl_team_pass_off_template']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
-                         'dropback_epa': row['dropback_epa'],
-                         'dropback_sr': row['dropback_sr'],
-                         'pass_comp': row['pass_comp'],
-                         'pass_att': row['pass_att'],
-                         'pass_comp_percentage': row['pass_comp_percentage'],
-                         'pass_yards': row['pass_yards'],
-                         'pass_td': row['pass_td'],
-                         'pass_td_percentage': row['pass_td_percentage'],
-                         'yards_per_att': row['yards_per_att'],
-                         'pass_yards_per_comp': row['pass_yards_per_comp'],
-                         'pass_yards_per_game': row['pass_yards_per_game'],
-                         'passer_rating': row['passer_rating'],
-                         'sacks': row['sacks'],
-                         'ints': row['ints'],
-                         'int_percentage': row['int_percentage']}
-            values = list(json_dict.values())
-
-            cursor.execute("""INSERT INTO nfl_team_pass_offense (team_id, year, games, dropback_epa, dropback_sr, pass_comp,
-             pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, yards_per_att, pass_yards_per_comp, 
-             pass_yards_per_game, passer_rating, sacks, ints, int_percentage) VALUES 
-             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-                         'dropback_epa': row['dropback_epa'],
-                         'dropback_sr': row['dropback_sr'],
-                         'pass_comp': row['pass_comp'],
-                         'pass_att': row['pass_att'],
-                         'pass_comp_percentage': row['pass_comp_percentage'],
-                         'pass_yards': row['pass_yards'],
-                         'pass_td': row['pass_td'],
-                         'pass_td_percentage': row['pass_td_percentage'],
-                         'yards_per_att': row['yards_per_att'],
-                         'pass_yards_per_comp': row['pass_yards_per_comp'],
-                         'pass_yards_per_game': row['pass_yards_per_game'],
-                         'passer_rating': row['passer_rating'],
-                         'sacks': row['sacks'],
-                         'ints': row['ints'],
-                         'int_percentage': row['int_percentage'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_team_pass_offense 
-                    SET games = %s, dropback_epa = %s, dropback_sr = %s,  pass_comp = %s, pass_att = %s, 
-                    pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, pass_td_percentage = %s, 
-                    yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
-                    passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s
-                    WHERE nfl_team_pass_offense.team_id = %s AND nfl_team_pass_offense.year = %s""",(values))
-
-        connection.commit()
-
-    return f"nfl_team_pass_offense has been updated with the most recent {json_dict['year']} data."
-
-@nfl.route('/nfl/team/rush_offense', methods=['POST', 'PUT'])
-def nfl_team_off_rushing():
-    file = request.files['nfl_team_rush_off_template']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
-                         'rush_epa': row['rush_epa'],
-                         'rush_sr': row['rush_sr'],
-                         'rush_att': row['rush_att'],
-                         'rush_yards': row['rush_yards'],
-                         'rush_td': row['rush_td'],
-                         'rush_yards_per_att': row['rush_yards_per_att'],
-                         'rush_yards_per_game': row['rush_yards_per_game'],
-                         'fumbles': row['fumbles']}
-            values = list(json_dict.values())
-
-            cursor.execute("""INSERT INTO nfl_team_rush_offense (team_id, year, games, rush_epa, rush_sr, 
-             rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, fumbles) 
-             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-                         'rush_epa': row['rush_epa'],
-                         'rush_sr': row['rush_sr'],
-                         'rush_att': row['rush_att'],
-                         'rush_yards': row['rush_yards'],
-                         'rush_td': row['rush_td'],
-                         'rush_yards_per_att': row['rush_yards_per_att'],
-                         'rush_yards_per_game': row['rush_yards_per_game'],
-                         'fumbles': row['fumbles'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_team_rush_offense 
-                    SET games = %s, rush_epa = %s, rush_sr = %s, rush_att = %s, rush_yards = %s, 
-                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s
-                    WHERE nfl_team_rush_offense.team_id = %s AND nfl_team_rush_offense.year = %s""",(values))
-
-        connection.commit()
-
-    return f"nfl_team_rush_offense has been updated with the most recent {json_dict['year']} data."
-
-@nfl.route('/nfl/team/off_drives', methods=['POST', 'PUT'])
-def nfl_team_off_drives():
-    file = request.files['nfl_team_drive_off_template']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
-                         'epa_per_play': row['epa_per_play'],
-                         'success_rate': row['success_rate'],
-                         'points_per_game': row['points_per_game'],
-                         'total_points': row['total_points'],
-                         'drives': row['drives'],
-                         'plays': row['plays'],
-                         'scoring_percentage': row['scoring_percentage'],
-                         'to_percentage': row['to_percentage'],
-                         'plays_per_drive': row['plays_per_drive'],
-                         'yards_per_drive': row['yards_per_drive'],
-                         'points_per_drive': row['points_per_drive'],
-                         'third_down_att': row['third_down_att'],
-                         'third_down_conv': row['third_down_conv'],
-                         'third_down_conv_rate': row['third_down_conv_rate'],
-                         'fourth_down_att': row['fourth_down_att'],
-                         'fourth_down_conv': row['fourth_down_conv'],
-                         'fourth_down_conv_rate': row['fourth_down_conv_rate']}
-            values = list(json_dict.values())
-
-            cursor.execute("""INSERT INTO nfl_team_offense_drives (team_id, year, games, epa_per_play, success_rate, 
-             points_per_game, total_points, drives, plays, scoring_percentage, to_percentage, plays_per_drive, 
-             yards_per_drive, points_per_drive, third_down_att, third_down_conv, third_down_conv_rate, fourth_down_att, 
-             fourth_down_conv, fourth_down_conv_rate) 
-             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-                         'epa_per_play': row['epa_per_play'],
-                         'success_rate': row['success_rate'],
-                         'points_per_game': row['points_per_game'],
-                         'total_points': row['total_points'],
-                         'drives': row['drives'],
-                         'plays': row['plays'],
-                         'scoring_percentage': row['scoring_percentage'],
-                         'to_percentage': row['to_percentage'],
-                         'plays_per_drive': row['plays_per_drive'],
-                         'yards_per_drive': row['yards_per_drive'],
-                         'points_per_drive': row['points_per_drive'],
-                         'third_down_att': row['third_down_att'],
-                         'third_down_conv': row['third_down_conv'],
-                         'third_down_conv_rate': row['third_down_conv_rate'],
-                         'fourth_down_att': row['fourth_down_att'],
-                         'fourth_down_conv': row['fourth_down_conv'],
-                         'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_team_offense_drives 
-                    SET games = %s, epa_per_play = %s, success_rate = %s, %s, points_per_game = %s, 
-                    total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
-                    yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
-                    fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s
-                    WHERE nfl_team_offense_drives.team_id = %s AND nfl_team_offense_drives.year = %s""",(values))
-
-        connection.commit()
-
-    return f"nfl_team_offense_drives has been updated with the most recent {json_dict['year']} data."
-
-@nfl.route('/nfl/team/red_zone', methods=['POST', 'PUT'])
-def nfl_team_off_rz():
-    file = request.files['nfl_team_rz_off_template']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
-                         'rz_att': row['rz_att'],
-                         'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage']}
-            values = list(json_dict.values())
-
-            cursor.execute("""INSERT INTO nfl_team_rz_offense (team_id, year, games, rz_att, rz_td, rz_percentage) 
-             VALUES (%s, %s, %s, %s, %s, %s)""", (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-                         'rz_att': row['rz_att'],
-                         'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_team_rz_offense 
-                    SET games = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
-                    WHERE nfl_team_rz_offense.team_id = %s AND nfl_team_rz_offense.year = %s""",(values))
-
-        connection.commit()
-
-    return f"nfl_team_rz_offense has been updated with the most recent {json_dict['year']} data."
-
-@nfl.route('/nfl/team_offense', methods=['POST', 'PUT'])
-def nfl_team_offense():
-    file = request.files['nfl_team_offense']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        print(row)
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'],
-                         'year': row['year'],
-                         'games': row['games'],
-                         'dvoa': row['dvoa'],
-                         'epa_per_play': row['epa_per_play'],
-                         'success_rate': row['success_rate'],
-                         'dropback_epa': row['dropback_epa'],
-                         'dropback_sr': row['dropback_sr'],
-                         'rush_epa': row['rush_epa'],
-                         'rush_sr': row['rush_sr'],
-                         'pass_comp': row['pass_comp'],
-                         'pass_att': row['pass_att'],
-                         'pass_comp_percentage': row['pass_comp_percentage'],
-                         'pass_yards': row['pass_yards'],
-                         'pass_td': row['pass_td'],
-                         'pass_td_percentage': row['pass_td_percentage'],
-                         'yards_per_att': row['yards_per_att'],
-                         'pass_yards_per_comp': row['pass_yards_per_comp'],
-                         'pass_yards_per_game': row['pass_yards_per_game'],
-                         'passer_rating': row['passer_rating'],
-                         'sacks': row['sacks'],
-                         'ints': row['ints'],
-                         'int_percentage': row['int_percentage'],
-                         'rush_att': row['rush_att'],
-                         'rush_yards': row['rush_yards'],
-                         'rush_td': row['rush_td'],
-                         'rush_yards_per_att': row['rush_yards_per_att'],
-                         'rush_yards_per_game': row['rush_yards_per_game'],
-                         'fumbles': row['fumbles'],
-                         'points_per_game': row['points_per_game'],
-                         'total_points': row['total_points'],
-                         'drives': row['drives'],
-                         'plays': row['plays'],
-                         'scoring_percentage': row['scoring_percentage'],
-                         'to_percentage': row['to_percentage'],
-                         'plays_per_drive': row['plays_per_drive'],
-                         'yards_per_drive': row['yards_per_drive'],
-                         'points_per_drive': row['points_per_drive'],
-                         'third_down_att': row['third_down_att'],
-                         'third_down_conv': row['third_down_conv'],
-                         'third_down_conv_rate': row['third_down_conv_rate'],
-                         'fourth_down_att': row['fourth_down_att'],
-                         'fourth_down_conv': row['fourth_down_conv'],
-                         'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-                         'rz_att': row['rz_att'],
-                         'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage']}
-            values = list(json_dict.values())
-
-            cursor.execute("""INSERT INTO nfl_team_offense (team_id, year, games, dvoa, epa_per_play, success_rate, dropback_epa,
-             dropback_sr, rush_epa, rush_sr, pass_comp, pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage, 
-             yards_per_att, pass_yards_per_comp, pass_yards_per_game, passer_rating, sacks, ints, int_percentage, 
-             rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, fumbles, points_per_game, total_points,
-             drives, plays, scoring_percentage, to_percentage, plays_per_drive, yards_per_drive, points_per_drive, third_down_att,
-             third_down_conv, third_down_conv_rate, fourth_down_att, fourth_down_conv, fourth_down_conv_rate, rz_att, rz_td, rz_percentage) 
-             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-                         'dvoa': row['dvoa'],
-                         'epa_per_play': row['epa_per_play'],
-                         'success_rate': row['success_rate'],
-                         'dropback_epa': row['dropback_epa'],
-                         'dropback_sr': row['dropback_sr'],
-                         'rush_epa': row['rush_epa'],
-                         'rush_sr': row['rush_sr'],
-                         'pass_comp': row['pass_comp'],
-                         'pass_att': row['pass_att'],
-                         'pass_comp_percentage': row['pass_comp_percentage'],
-                         'pass_yards': row['pass_yards'],
-                         'pass_td': row['pass_td'],
-                         'pass_td_percentage': row['pass_td_percentage'],
-                         'yards_per_att': row['yards_per_att'],
-                         'pass_yards_per_comp': row['pass_yards_per_comp'],
-                         'pass_yards_per_game': row['pass_yards_per_game'],
-                         'passer_rating': row['passer_rating'],
-                         'sacks': row['sacks'],
-                         'ints': row['ints'],
-                         'int_percentage': row['int_percentage'],
-                         'rush_att': row['rush_att'],
-                         'rush_yards': row['rush_yards'],
-                         'rush_td': row['rush_td'],
-                         'rush_yards_per_att': row['rush_yards_per_att'],
-                         'rush_yards_per_game': row['rush_yards_per_game'],
-                         'fumbles': row['fumbles'],
-                         'points_per_game': row['points_per_game'],
-                         'total_points': row['total_points'],
-                         'drives': row['drives'],
-                         'plays': row['plays'],
-                         'scoring_percentage': row['scoring_percentage'],
-                         'to_percentage': row['to_percentage'],
-                         'plays_per_drive': row['plays_per_drive'],
-                         'yards_per_drive': row['yards_per_drive'],
-                         'points_per_drive': row['points_per_drive'],
-                         'third_down_att': row['third_down_att'],
-                         'third_down_conv': row['third_down_conv'],
-                         'third_down_conv_rate': row['third_down_conv_rate'],
-                         'fourth_down_att': row['fourth_down_att'],
-                         'fourth_down_conv': row['fourth_down_conv'],
-                         'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-                         'rz_att': row['rz_att'],
-                         'rz_td': row['rz_td'],
-                         'rz_percentage': row['rz_percentage'],
-                         'team_id': row['team_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_team_offense 
-                    SET games = %s, dvoa = %s, epa_per_play = %s, success_rate = %s, dropback_epa = %s, dropback_sr = %s, 
-                    rush_epa = %s, rush_sr = %s, pass_comp = %s, pass_att = %s, pass_comp_percentage = %s, pass_yards = %s, 
-                    pass_td = %s, pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s,
-                    passer_rating = %s, sacks = %s, ints = %s, int_percentage = %s, rush_att = %s, rush_yards = %s, 
-                    rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, fumbles = %s, points_per_game = %s,
-                    total_points = %s, drives = %s, plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, 
-                    yards_per_drive = %s, points_per_drive = %s, third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, 
-                    fourth_down_att = %s, fourth_down_conv = %s, fourth_down_conv_rate = %s, rz_att = %s, rz_td = %s, rz_percentage = %s
-                    WHERE nfl_team_offense.team_id = %s AND nfl_team_offense.year = %s""",(values))
-
-        connection.commit()
-
-    return f"nfl_team_offense has been updated with the most recent years data."
-
 @nfl.route('/nfl/standings', methods=['POST', 'PUT'])
 def nfl_standings():
     file = request.files['nfl_standings']
@@ -1818,6 +1918,8 @@ def nfl_red_zone():
 
     return f"nfl_redzone_stats has been updated with the most recent years data."
 
+
+
 @nfl.route('/nfl/player_stats', methods=['POST'])
 def nfl_player_stats():
     file = request.files['nfl_game_log']
@@ -1863,6 +1965,8 @@ def nfl_player_stats():
 
 
     return f"nfl_player_stats has been u[dated ."
+
+
 
 @nfl.route('/nfl/weekly_rank', methods=['POST'])
 def nfl_weekly_ranks():
