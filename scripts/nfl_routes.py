@@ -1630,6 +1630,206 @@ def nfl_team_def_rz():
     return f"nfl_team_rz_defense has been updated with the most recent {json_dict['year']} data."
 
 
+# NFL TEAM DEFENSE SPLITS
+@nfl.route('/nfl/team/qb_split', methods=['POST', 'PUT'])
+def nfl_team_qb_splits():
+    file = request.files['nfl_qb_split_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'qb_pass_comp': row['qb_pass_comp'],
+                         'qb_pass_att': row['qb_pass_att'],
+                         'qb_comp_percentage': row['qb_comp_percentage'],
+                         'qb_pass_yards': row['qb_pass_yards'],
+                         'qb_pass_td': row['qb_pass_td'],
+                         'qb_rush_att': row['qb_rush_att'],
+                         'qb_rush_yards': row['qb_rush_yards'],
+                         'qb_rush_td': row['qb_rush_td'],
+                         }
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_defense_qb_splits (team_id, year, games, qb_pass_comp, qb_pass_att, qb_comp_percentage,
+             qb_pass_yards, qb_pass_td, qb_rush_att, qb_rush_yards, qb_rush_td) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'qb_pass_comp': row['qb_pass_comp'],
+                         'qb_pass_att': row['qb_pass_att'],
+                         'qb_comp_percentage': row['qb_comp_percentage'],
+                         'qb_pass_yards': row['qb_pass_yards'],
+                         'qb_pass_td': row['qb_pass_td'],
+                         'qb_rush_att': row['qb_rush_att'],
+                         'qb_rush_yards': row['qb_rush_yards'],
+                         'qb_rush_td': row['qb_rush_td'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_defense_qb_splits 
+                    SET games = %s, qb_pass_comp = %s, qb_pass_att = %s,  qb_comp_percentage = %s, qb_pass_yards = %s, 
+                    qb_pass_td = %s, qb_rush_att = %s, = %s, qb_rush_yards = %s, qb_rush_td = %s
+                    WHERE nfl_defense_qb_splits.team_id = %s AND nfl_defense_qb_splits.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_team_pass_offense has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/rb_split', methods=['POST', 'PUT'])
+def nfl_team_rb_splits():
+    file = request.files['nfl_rb_split_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'rb_att': row['rb_att'],
+                         'rb_yards': row['rb_yards'],
+                         'rb_td': row['rb_td'],
+                         'rb_targets': row['rb_targets'],
+                         'rb_rec': row['rb_rec'],
+                         'rb_rec_yards': row['rb_rec_yards'],
+                         'rb_rec_td': row['rb_rec_td']
+                         }
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_defense_rb_splits (team_id, year, games, rb_att, rb_yards, rb_td,
+             rb_targets, rb_rec, rb_rec_yards, rb_rec_td) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'rb_att': row['rb_att'],
+                         'rb_yards': row['rb_yards'],
+                         'rb_td': row['rb_td'],
+                         'rb_targets': row['rb_targets'],
+                         'rb_rec': row['rb_rec'],
+                         'rb_rec_yards': row['rb_rec_yards'],
+                         'rb_rec_td': row['rb_rec_td'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_defense_rb_splits 
+                    SET games = %s, rb_att = %s, rb_yards = %s,  rb_td = %s, rb_targets = %s, 
+                    rb_rec = %s, rb_rec_yards = %s, rb_rec_td= %s
+                    WHERE nfl_defense_rb_splits.team_id = %s AND nfl_defense_rb_splits.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_defense_rb_splits has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/wr_split', methods=['POST', 'PUT'])
+def nfl_team_wr_splits():
+    file = request.files['nfl_wr_split_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'wr_targets': row['wr_targets'],
+                         'wr_rec': row['wr_rec'],
+                         'wr_yards': row['wr_yards'],
+                         'wr_td': row['wr_td']
+                         }
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_defense_wr_splits (team_id, year, games, wr_targets, wr_rec, wr_yards,
+             wr_td) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'wr_targets': row['wr_targets'],
+                         'wr_rec': row['wr_rec'],
+                         'wr_yards': row['wr_yards'],
+                         'wr_td': row['wr_td'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_defense_wr_splits 
+                    SET games = %s, wr_targets = %s, wr_rec = %s,  wr_yards = %s, wr_td = %s
+                    WHERE nfl_defense_wr_splits.team_id = %s AND nfl_defense_wr_splits.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_defense_wr_splits has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/team/te_split', methods=['POST', 'PUT'])
+def nfl_team_wr_splits():
+    file = request.files['nfl_te_split_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'team_id': row['team_id'],
+                         'year': row['year'],
+                         'games': row['games'],
+                         'te_targets': row['te_targets'],
+                         'te_rec': row['te_rec'],
+                         'te_yards': row['te_yards'],
+                         'te_td': row['te_td']
+                         }
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_defense_te_splits (team_id, year, games, te_targets, te_rec, te_yards,
+             te_td) VALUES 
+             (%s, %s, %s, %s, %s, %s, %s) """, (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'games': row['games'],
+                         'te_targets': row['te_targets'],
+                         'te_rec': row['te_rec'],
+                         'te_yards': row['te_yards'],
+                         'te_td': row['te_td'],
+                         'team_id': row['team_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_defense_te_splits 
+                    SET games = %s, te_targets = %s, te_rec = %s,  te_yards = %s, te_td = %s
+                    WHERE nfl_defense_te_splits.team_id = %s AND nfl_defense_te_splits.year = %s""",(values))
+
+        connection.commit()
+
+    return f"nfl_defense_te_splits has been updated with the most recent {json_dict['year']} data."
+
+
+
 
 @nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
 def nfl_team_defense():
