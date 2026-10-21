@@ -1637,6 +1637,7 @@ def nfl_team_qb_splits():
 
     # Read CSV data
     df = pd.read_csv(file)
+    df = df.convert_dtypes()
 
     for ind, row in df.iterrows():
         connection = create_connection()
@@ -1691,6 +1692,7 @@ def nfl_team_rb_splits():
 
     # Read CSV data
     df = pd.read_csv(file)
+    df = df.convert_dtypes()
 
     for ind, row in df.iterrows():
         connection = create_connection()
@@ -1743,6 +1745,7 @@ def nfl_team_wr_splits():
 
     # Read CSV data
     df = pd.read_csv(file)
+    df = df.convert_dtypes()
 
     for ind, row in df.iterrows():
         connection = create_connection()
@@ -1788,6 +1791,8 @@ def nfl_team_te_splits():
 
     # Read CSV data
     df = pd.read_csv(file)
+    df = df.convert_dtypes()
+
 
     for ind, row in df.iterrows():
         connection = create_connection()
