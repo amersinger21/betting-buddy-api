@@ -1833,6 +1833,190 @@ def nfl_team_te_splits():
 
     return f"nfl_defense_te_splits has been updated with the most recent {json_dict['year']} data."
 
+# NFL PLAYER RED ZONE (PASS/RUSH/REC)
+@nfl.route('/nfl/player/rz/passing', methods=['POST', 'PUT'])
+def nfl_red_zone_passing():
+    file = request.files['nfl_rz_passing_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'player_id': row['player_id'],
+                         'year': row['year'],
+                         'rz_20_pass_att': row['rz_20_pass_att'],
+                         'rz_20_pass_comp': row['rz_20_pass_comp'],
+                         'rz_20_comp_percentage': row['rz_20_comp_percentage'],
+                         'rz_20_pass_yards': row['rz_20_pass_yards'],
+                         'rz_20_pass_td': row['rz_20_pass_td'],
+                         'rz_20_pass_int': row['rz_20_pass_int'],
+                         'rz_10_pass_att': row['rz_10_pass_att'],
+                         'rz_10_pass_comp': row['rz_10_pass_comp'],
+                         'rz_10_comp_percentage': row['rz_10_comp_percentage'],
+                         'rz_10_pass_yards': row['rz_10_pass_yards'],
+                         'rz_10_pass_td': row['rz_10_pass_td'],
+                         'rz_10_pass_int': row['rz_10_pass_int']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_red_zone_passing (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage,
+                 rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int, rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, 
+                 rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'rz_20_pass_att': row['rz_20_pass_att'],
+                         'rz_20_pass_comp': row['rz_20_pass_comp'],
+                         'rz_20_comp_percentage': row['rz_20_comp_percentage'],
+                         'rz_20_pass_yards': row['rz_20_pass_yards'],
+                         'rz_20_pass_td': row['rz_20_pass_td'],
+                         'rz_20_pass_int': row['rz_20_pass_int'],
+                         'rz_10_pass_att': row['rz_10_pass_att'],
+                         'rz_10_pass_comp': row['rz_10_pass_comp'],
+                         'rz_10_comp_percentage': row['rz_10_comp_percentage'],
+                         'rz_10_pass_yards': row['rz_10_pass_yards'],
+                         'rz_10_pass_td': row['rz_10_pass_td'],
+                         'rz_10_pass_int': row['rz_10_pass_int'],
+                         'player_id': row['player_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_red_zone_passing 
+                    SET rz_20_pass_att = %s, rz_20_pass_comp = %s, rz_20_comp_percentage = %s, rz_20_pass_yards = %s, rz_20_pass_td = %s, rz_20_pass_int = %s,
+                        rz_10_pass_att = %s, rz_10_pass_comp = %s, rz_10_comp_percentage = %s, rz_10_pass_yards = %s, rz_10_pass_td = %s, 
+                        rz_10_pass_int = %s
+                    WHERE nfl_red_zone_passing.player_id = %s AND nfl_red_zone_passing.year = %s""", (values))
+
+        connection.commit()
+
+    return f"nfl_redzone_passing has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/player/rz/rushing', methods=['POST', 'PUT'])
+def nfl_red_zone_rushing():
+    file = request.files['nfl_rz_rushing_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'player_id': row['player_id'],
+                         'year': row['year'],
+                         'rz_20_rush_att': row['rz_20_rush_att'],
+                         'rz_20_rush_yards': row['rz_20_rush_yards'],
+                         'rz_20_rush_td': row['rz_20_rush_td'],
+                         'rz_20_rush_percentage': row['rz_20_rush_percentage'],
+                         'rz_10_rush_att': row['rz_10_rush_att'],
+                         'rz_10_rush_yards': row['rz_10_rush_yards'],
+                         'rz_10_rush_td': row['rz_10_rush_td'],
+                         'rz_10_rush_percentage': row['rz_10_rush_percentage'],
+                         'rz_5_rush_att': row['rz_5_rush_att'],
+                         'rz_5_rush_yards': row['rz_5_rush_yards'],
+                         'rz_5_rush_td': row['rz_5_rush_td'],
+                         'rz_5_rush_percentage': row['rz_5_rush_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_red_zone_rushing (player_id, year, rz_20_rush_att, rz_20_rush_yards,
+             rz_20_rush_td, rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td,
+              rz_10_rush_percentage, rz_5_rush_att, rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'rz_20_rush_att': row['rz_20_rush_att'],
+                         'rz_20_rush_yards': row['rz_20_rush_yards'],
+                         'rz_20_rush_td': row['rz_20_rush_td'],
+                         'rz_20_rush_percentage': row['rz_20_rush_percentage'],
+                         'rz_10_rush_att': row['rz_10_rush_att'],
+                         'rz_10_rush_yards': row['rz_10_rush_yards'],
+                         'rz_10_rush_td': row['rz_10_rush_td'],
+                         'rz_10_rush_percentage': row['rz_10_rush_percentage'],
+                         'rz_5_rush_att': row['rz_5_rush_att'],
+                         'rz_5_rush_yards': row['rz_5_rush_yards'],
+                         'rz_5_rush_td': row['rz_5_rush_td'],
+                         'rz_5_rush_percentage': row['rz_5_rush_percentage'],
+                         'player_id': row['player_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_red_zone_rushing 
+                    SET rz_20_rush_att = %s, rz_20_rush_td = %s,
+                        rz_20_rush_yards = %s, rz_20_rush_percentage = %s, rz_10_rush_att = %s, rz_10_rush_td = %s, rz_10_rush_yards = %s, 
+                        rz_10_rush_percentage = %s, rz_5_rush_att = %s, rz_5_rush_td = %s, rz_5_rush_yards = %s, rz_5_rush_percentage = %s 
+                    WHERE nfl_red_zone_rushing.player_id = %s AND nfl_red_zone_rushing.year = %s""", (values))
+
+        connection.commit()
+
+    return f"nfl_redzone_rushing has been updated with the most recent {json_dict['year']} data."
+@nfl.route('/nfl/player/rz/receiving', methods=['POST', 'PUT'])
+def nfl_red_zone_receiving():
+    file = request.files['nfl_rz_receiving_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        # Add data
+        if flask.request.method == 'POST':
+            json_dict = {'player_id': row['player_id'],
+                         'year': row['year'],
+                         'rz_20_targets': row['rz_20_targets'],
+                         'rz_20_receptions': row['rz_20_receptions'],
+                         'rz_20_rec_yards': row['rz_20_rec_yards'],
+                         'rz_20_catch_percentage': row['rz_20_catch_percentage'],
+                         'rz_20_rec_td': row['rz_20_rec_td'],
+                         'rz_20_target_percentage': row['rz_20_target_percentage'],
+                         'rz_10_targets': row['rz_10_targets'],
+                         'rz_10_receptions': row['rz_10_receptions'],
+                         'rz_10_rec_yards': row['rz_10_rec_yards'],
+                         'rz_10_catch_percentage': row['rz_10_catch_percentage'],
+                         'rz_10_rec_td': row['rz_10_rec_td'],
+                         'rz_10_target_percentage': row['rz_10_target_percentage']}
+            values = list(json_dict.values())
+
+            cursor.execute("""INSERT INTO nfl_red_zone_receiving (player_id, year, rz_20_targets, rz_20_receptions, rz_20_rec_yards, 
+                 rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions, rz_10_rec_yards,
+                 rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage) 
+             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
+
+        # Update Data
+        elif flask.request.method == 'PUT':
+            json_dict = {'rz_20_targets': row['rz_20_targets'],
+                         'rz_20_receptions': row['rz_20_receptions'],
+                         'rz_20_rec_yards': row['rz_20_rec_yards'],
+                         'rz_20_catch_percentage': row['rz_20_catch_percentage'],
+                         'rz_20_rec_td': row['rz_20_rec_td'],
+                         'rz_20_target_percentage': row['rz_20_target_percentage'],
+                         'rz_10_targets': row['rz_10_targets'],
+                         'rz_10_receptions': row['rz_10_receptions'],
+                         'rz_10_rec_yards': row['rz_10_rec_yards'],
+                         'rz_10_catch_percentage': row['rz_10_catch_percentage'],
+                         'rz_10_rec_td': row['rz_10_rec_td'],
+                         'rz_10_target_percentage': row['rz_10_target_percentage'],
+                         'player_id': row['player_id'],
+                         'year': row['year']}
+            values = list(json_dict.values())
+
+            cursor.execute("""UPDATE nfl_red_zone_receiving 
+                    SET rz_20_targets = %s, rz_20_receptions = %s, rz_20_rec_yards = %s, rz_20_catch_percentage = %s, 
+                        rz_20_rec_td = %s, rz_20_target_percentage = %s, rz_10_targets = %s, rz_10_receptions = %s, rz_10_rec_yards = %s, 
+                        rz_10_catch_percentage = %s, rz_10_rec_td = %s, rz_10_target_percentage = %s
+                    WHERE nfl_red_zone_receiving.player_id = %s AND nfl_red_zone_receiving.year = %s""", (values))
+
+        connection.commit()
+
+    return f"nfl_red_zone_receiving has been updated with the most recent {json_dict['year']} data."
 
 
 
