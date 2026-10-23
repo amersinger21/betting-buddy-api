@@ -2018,122 +2018,7 @@ def nfl_red_zone_receiving():
 
     return f"nfl_red_zone_receiving has been updated with the most recent {json_dict['year']} data."
 
-
-
-@nfl.route('/nfl/team_defense', methods=['POST', 'PUT'])
-def nfl_team_defense():
-    file = request.files['nfl_team_defense']
-
-    # Read CSV data
-    df = pd.read_csv(file)
-
-    for ind, row in df.iterrows():
-        connection = create_connection()
-        cursor = connection.cursor()
-
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'team_id': row['team_id'], 'year': row['year'], 'games': row['games'],
-
-                     'dvoa': row['dvoa'], 'epa_per_play': row['epa_per_play'], 'success_rate': row['success_rate'],
-                     'dropback_epa': row['dropback_epa'], 'dropback_sr': row['dropback_sr'], 'rush_epa': row['rush_epa'],
-                     'rush_sr': row['rush_sr'],
-
-                     'pass_comp': row['pass_comp'], 'pass_att': row['pass_att'], 'pass_comp_percentage': row['pass_comp_percentage'],
-                     'pass_yards': row['pass_yards'], 'pass_td': row['pass_td'], 'pass_td_percentage': row['pass_td_percentage'],
-                     'yards_per_att': row['yards_per_att'],  'pass_yards_per_comp': row['pass_yards_per_comp'],
-                     'pass_yards_per_game': row['pass_yards_per_game'], 'passer_rating': row['passer_rating'],
-                     'qb_hits': row['qb_hits'], 'sacks': row['sacks'], 'ints': row['ints'], 'int_percentage': row['int_percentage'],
-                     'pass_deflections': row['pass_deflections'],
-
-                     'rush_att': row['rush_att'], 'rush_yards': row['rush_yards'], 'rush_td': row['rush_td'],
-                     'rush_yards_per_att': row['rush_yards_per_att'], 'rush_yards_per_game': row['rush_yards_per_game'],
-
-                     'points_per_game': row['points_per_game'], 'total_points': row['total_points'], 'drives': row['drives'],
-                     'plays': row['plays'], 'scoring_percentage': row['scoring_percentage'], 'to_percentage': row['to_percentage'],
-                     'plays_per_drive': row['plays_per_drive'], 'yards_per_drive': row['yards_per_drive'],
-                     'points_per_drive': row['points_per_drive'],
-
-                     'third_down_att': row['third_down_att'], 'third_down_conv': row['third_down_conv'],
-                     'third_down_conv_rate': row['third_down_conv_rate'], 'fourth_down_att': row['fourth_down_att'],
-                     'fourth_down_conv': row['fourth_down_conv'], 'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-
-                     'rz_att': row['rz_att'], 'rz_td': row['rz_td'], 'rz_percentage': row['rz_percentage'],
-
-                     'qb_rush_att': row['qb_rush_att'], 'qb_rush_yards': row['qb_rush_yards'], 'qb_rush_td': row['qb_rush_td'],
-                     'rb_att': row['rb_att'], 'rb_yards': row['rb_yards'], 'rb_td': row['rb_td'], 'rb_targets': row['rb_targets'],
-                     'rb_rec': row['rb_rec'], 'rb_rec_yards': row['rb_rec_yards'], 'rb_rec_td': row['rb_rec_td'],
-                     'wr_targets': row['wr_targets'], 'wr_rec': row['wr_rec'], 'wr_yards': row['wr_yards'], 'wr_td': row['wr_td'],
-                     'te_targets': row['te_targets'], 'te_rec': row['te_rec'], 'te_yards': row['te_yards'], 'te_td': row['te_td']}
-            values = list(json_dict.values())
-
-            cursor.execute('''INSERT INTO nfl_team_defense (team_id, year, games, dvoa, epa_per_play, success_rate, dropback_epa, 
-            dropback_sr, rush_epa, rush_sr, pass_comp, pass_att, pass_comp_percentage, pass_yards, pass_td, pass_td_percentage,
-            yards_per_att, pass_yards_per_comp, pass_yards_per_game, passer_rating, qb_hits, sacks, ints, int_percentage, 
-            pass_deflections, rush_att, rush_yards, rush_td, rush_yards_per_att, rush_yards_per_game, points_per_game, total_points, 
-            drives, plays, scoring_percentage, to_percentage, plays_per_drive, yards_per_drive, points_per_drive, third_down_att,
-            third_down_conv, third_down_conv_rate, fourth_down_att, fourth_down_conv, fourth_down_conv_rate, rz_att, rz_td, 
-            rz_percentage, qb_rush_att, qb_rush_yards, qb_rush_td, rb_att, rb_yards, rb_td, rb_targets, rb_rec, rb_rec_yards,
-            rb_rec_td, wr_targets, wr_rec, wr_yards, wr_td, te_targets, te_rec, te_yards, te_td) VALUES (%s, %s, %s, %s, %s, %s, 
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-            %s, %s, %s, %s)''', (values))
-
-        # Update data
-        elif flask.request.method == 'PUT':
-            json_dict = {'games': row['games'],
-
-                         'dvoa': row['dvoa'], 'epa_per_play': row['epa_per_play'], 'success_rate': row['success_rate'],
-                         'dropback_epa': row['dropback_epa'], 'dropback_sr': row['dropback_sr'], 'rush_epa': row['rush_epa'],
-                         'rush_sr': row['rush_sr'],
-
-                         'pass_comp': row['pass_comp'], 'pass_att': row['pass_att'], 'pass_comp_percentage': row['pass_comp_percentage'],
-                         'pass_yards': row['pass_yards'], 'pass_td': row['pass_td'], 'pass_td_percentage': row['pass_td_percentage'],
-                         'yards_per_att': row['yards_per_att'], 'pass_yards_per_comp': row['pass_yards_per_comp'],
-                         'pass_yards_per_game': row['pass_yards_per_game'], 'passer_rating': row['passer_rating'],
-                         'qb_hits': row['qb_hits'], 'sacks': row['sacks'], 'ints': row['ints'], 'int_percentage': row['int_percentage'],
-                         'pass_deflections': row['pass_deflections'],
-
-                         'rush_att': row['rush_att'], 'rush_yards': row['rush_yards'], 'rush_td': row['rush_td'],
-                         'rush_yards_per_att': row['rush_yards_per_att'], 'rush_yards_per_game': row['rush_yards_per_game'],
-
-                         'points_per_game': row['points_per_game'], 'total_points': row['total_points'], 'drives': row['drives'],
-                         'plays': row['plays'], 'scoring_percentage': row['scoring_percentage'], 'to_percentage': row['to_percentage'],
-                         'plays_per_drive': row['plays_per_drive'], 'yards_per_drive': row['yards_per_drive'],
-                         'points_per_drive': row['points_per_drive'],
-
-                         'third_down_att': row['third_down_att'], 'third_down_conv': row['third_down_conv'],
-                         'third_down_conv_rate': row['third_down_conv_rate'], 'fourth_down_att': row['fourth_down_att'],
-                         'fourth_down_conv': row['fourth_down_conv'], 'fourth_down_conv_rate': row['fourth_down_conv_rate'],
-
-                         'rz_att': row['rz_att'], 'rz_td': row['rz_td'], 'rz_percentage': row['rz_percentage'],
-
-                         'qb_rush_att': row['qb_rush_att'], 'qb_rush_yards': row['qb_rush_yards'], 'qb_rush_td': row['qb_rush_td'],
-                         'rb_att': row['rb_att'], 'rb_yards': row['rb_yards'], 'rb_td': row['rb_td'],'rb_targets': row['rb_targets'],
-                         'rb_rec': row['rb_rec'], 'rb_rec_yards': row['rb_rec_yards'], 'rb_rec_td': row['rb_rec_td'],
-                         'wr_targets': row['wr_targets'], 'wr_rec': row['wr_rec'], 'wr_yards': row['wr_yards'], 'wr_td': row['wr_td'],
-                         'te_targets': row['te_targets'], 'te_rec': row['te_rec'], 'te_yards': row['te_yards'], 'te_td': row['te_td'],
-
-                         'team_id': row['team_id'], 'year': row['year']}
-            values = list(json_dict.values())
-            print(values)
-
-            cursor.execute("""UPDATE nfl_team_defense
-                SET games = %s, dvoa = %s, epa_per_play = %s, success_rate = %s, dropback_epa = %s, dropback_sr = %s, rush_epa = %s, 
-                rush_sr = %s, pass_comp = %s, pass_att = %s, pass_comp_percentage = %s, pass_yards = %s, pass_td = %s, 
-                pass_td_percentage = %s, yards_per_att = %s, pass_yards_per_comp = %s, pass_yards_per_game = %s, passer_rating = %s, 
-                qb_hits = %s, sacks = %s, ints = %s, int_percentage = %s, pass_deflections = %s, rush_att = %s, rush_yards = %s,
-                rush_td = %s, rush_yards_per_att = %s, rush_yards_per_game = %s, points_per_game = %s, total_points = %s, drives = %s, 
-                plays = %s, scoring_percentage = %s, to_percentage = %s, plays_per_drive = %s, yards_per_drive = %s, points_per_drive = %s,
-                third_down_att = %s, third_down_conv = %s, third_down_conv_rate = %s, fourth_down_att = %s, fourth_down_conv = %s,
-                fourth_down_conv_rate = %s, rz_att = %s, rz_td = %s, rz_percentage = %s, qb_rush_att = %s, qb_rush_yards = %s,
-                qb_rush_td = %s, rb_att = %s, rb_yards = %s, rb_td = %s, rb_targets = %s, rb_rec = %s, rb_rec_yards = %s,
-                rb_rec_td = %s, wr_targets = %s, wr_rec = %s, wr_yards = %s, wr_td = %s, te_targets = %s, te_rec = %s, te_yards = %s, te_td = %s
-                WHERE nfl_team_defense.team_id = %s AND nfl_team_defense.year = %s""", (values))
-
-        connection.commit()
-
-    return f"nfl_team_defense has been updated with the most recent years data."
+# NFL STANDINGS
 @nfl.route('/nfl/standings', methods=['POST', 'PUT'])
 def nfl_standings():
     file = request.files['nfl_standings']
@@ -2188,9 +2073,11 @@ def nfl_standings():
 
     return f"nfl_team_offense has been updated with the most recent years data."
 
-@nfl.route('/nfl/red_zone', methods=['POST', 'PUT'])
-def nfl_red_zone():
-    file = request.files['nfl_red_zone']
+
+# NFL PLAYER GAME LOGS
+@nfl.route('/nfl/player/log/passing', methods=['POST'])
+def nfl_player_passing():
+    file = request.files['nfl_team_pass_log_template']
 
     # Read CSV data
     df = pd.read_csv(file)
@@ -2199,114 +2086,85 @@ def nfl_red_zone():
         connection = create_connection()
         cursor = connection.cursor()
 
-        # Add data
-        if flask.request.method == 'POST':
-            json_dict = {'player_id': row['player_id'],
-                         'year': row['year'],
-                         'rz_20_pass_att': row['rz_20_pass_att'],
-                         'rz_20_pass_comp': row['rz_20_pass_comp'],
-                         'rz_20_comp_percentage': row['rz_20_comp_percentage'],
-                         'rz_20_pass_yards': row['rz_20_pass_yards'],
-                         'rz_20_pass_td': row['rz_20_pass_td'],
-                         'rz_20_pass_int': row['rz_20_pass_int'],
-                         'rz_10_pass_att': row['rz_10_pass_att'],
-                         'rz_10_pass_comp': row['rz_10_pass_comp'],
-                         'rz_10_comp_percentage': row['rz_10_comp_percentage'],
-                         'rz_10_pass_yards': row['rz_10_pass_yards'],
-                         'rz_10_pass_td': row['rz_10_pass_td'],
-                         'rz_10_pass_int': row['rz_10_pass_int'],
-                         'rz_20_targets': row['rz_20_targets'],
-                         'rz_20_receptions': row['rz_20_receptions'],
-                         'rz_20_rec_yards': row['rz_20_rec_yards'],
-                         'rz_20_catch_percentage': row['rz_20_catch_percentage'],
-                         'rz_20_rec_td': row['rz_20_rec_td'],
-                         'rz_20_target_percentage': row['rz_20_target_percentage'],
-                         'rz_10_targets': row['rz_10_targets'],
-                         'rz_10_receptions': row['rz_10_receptions'],
-                         'rz_10_rec_yards': row['rz_10_rec_yards'],
-                         'rz_10_catch_percentage': row['rz_10_catch_percentage'],
-                         'rz_10_rec_td': row['rz_10_rec_td'],
-                         'rz_10_target_percentage': row['rz_10_target_percentage'],
-                         'rz_20_rush_att': row['rz_20_rush_att'],
-                         'rz_20_rush_yards': row['rz_20_rush_yards'],
-                         'rz_20_rush_td': row['rz_20_rush_td'],
-                         'rz_20_rush_percentage': row['rz_20_rush_percentage'],
-                         'rz_10_rush_att': row['rz_10_rush_att'],
-                         'rz_10_rush_yards': row['rz_10_rush_yards'],
-                         'rz_10_rush_td': row['rz_10_rush_td'],
-                         'rz_10_rush_percentage': row['rz_10_rush_percentage'],
-                         'rz_5_rush_att': row['rz_5_rush_att'],
-                         'rz_5_rush_yards': row['rz_5_rush_yards'],
-                         'rz_5_rush_td': row['rz_5_rush_td'],
-                         'rz_5_rush_percentage': row['rz_5_rush_percentage']}
-            values = list(json_dict.values())
+        json_dict = {'game_id': int(row['game_id']),
+                     'team_id': int(row['team_id']),
+                     'player_id': int(row['player_id']),
+                     'pass_att': int(row['pass_att']),
+                     'pass_comp': int(row['pass_comp']),
+                     'pass_yards': int(row['pass_yards']),
+                     'pass_td': int(row['pass_td']),
+                     'pass_longest': int(row['pass_longest']),
+                     'int': int(row['ints']),
+                     'sacks': int(row['sacks'])}
+        values = list(json_dict.values())
 
-            cursor.execute("""INSERT INTO nfl_redzone_stats (player_id, year, rz_20_pass_att, rz_20_pass_comp, rz_20_comp_percentage,
-                 rz_20_pass_yards, rz_20_pass_td, rz_20_pass_int, rz_10_pass_att, rz_10_pass_comp, rz_10_comp_percentage, 
-                 rz_10_pass_yards, rz_10_pass_td, rz_10_pass_int, rz_20_targets, rz_20_receptions, rz_20_rec_yards, 
-                 rz_20_catch_percentage, rz_20_rec_td, rz_20_target_percentage, rz_10_targets, rz_10_receptions, rz_10_rec_yards,
-                 rz_10_catch_percentage, rz_10_rec_td, rz_10_target_percentage, rz_20_rush_att, rz_20_rush_yards, rz_20_rush_td,
-                 rz_20_rush_percentage, rz_10_rush_att, rz_10_rush_yards, rz_10_rush_td, rz_10_rush_percentage, rz_5_rush_att, 
-                 rz_5_rush_yards, rz_5_rush_td, rz_5_rush_percentage) 
-             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
-             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""", (values))
-
-        # Update Data
-        elif flask.request.method == 'PUT':
-            json_dict = {'rz_20_pass_att': row['rz_20_pass_att'],
-                         'rz_20_pass_comp': row['rz_20_pass_comp'],
-                         'rz_20_comp_percentage': row['rz_20_comp_percentage'],
-                         'rz_20_pass_yards': row['rz_20_pass_yards'],
-                         'rz_20_pass_td': row['rz_20_pass_td'],
-                         'rz_20_pass_int': row['rz_20_pass_int'],
-                         'rz_10_pass_att': row['rz_10_pass_att'],
-                         'rz_10_pass_comp': row['rz_10_pass_comp'],
-                         'rz_10_comp_percentage': row['rz_10_comp_percentage'],
-                         'rz_10_pass_yards': row['rz_10_pass_yards'],
-                         'rz_10_pass_td': row['rz_10_pass_td'],
-                         'rz_10_pass_int': row['rz_10_pass_int'],
-                         'rz_20_targets': row['rz_20_targets'],
-                         'rz_20_receptions': row['rz_20_receptions'],
-                         'rz_20_rec_yards': row['rz_20_rec_yards'],
-                         'rz_20_catch_percentage': row['rz_20_catch_percentage'],
-                         'rz_20_rec_td': row['rz_20_rec_td'],
-                         'rz_20_target_percentage': row['rz_20_target_percentage'],
-                         'rz_10_targets': row['rz_10_targets'],
-                         'rz_10_receptions': row['rz_10_receptions'],
-                         'rz_10_rec_yards': row['rz_10_rec_yards'],
-                         'rz_10_catch_percentage': row['rz_10_catch_percentage'],
-                         'rz_10_rec_td': row['rz_10_rec_td'],
-                         'rz_10_target_percentage': row['rz_10_target_percentage'],
-                         'rz_20_rush_att': row['rz_20_rush_att'],
-                         'rz_20_rush_yards': row['rz_20_rush_yards'],
-                         'rz_20_rush_td': row['rz_20_rush_td'],
-                         'rz_20_rush_percentage': row['rz_20_rush_percentage'],
-                         'rz_10_rush_att': row['rz_10_rush_att'],
-                         'rz_10_rush_yards': row['rz_10_rush_yards'],
-                         'rz_10_rush_td': row['rz_10_rush_td'],
-                         'rz_10_rush_percentage': row['rz_10_rush_percentage'],
-                         'rz_5_rush_att': row['rz_5_rush_att'],
-                         'rz_5_rush_yards': row['rz_5_rush_yards'],
-                         'rz_5_rush_td': row['rz_5_rush_td'],
-                         'rz_5_rush_percentage': row['rz_5_rush_percentage'],
-                         'player_id': row['player_id'],
-                         'year': row['year']}
-            values = list(json_dict.values())
-
-            cursor.execute("""UPDATE nfl_redzone_stats 
-                    SET rz_20_pass_att = %s, rz_20_pass_comp = %s, rz_20_comp_percentage = %s, rz_20_pass_yards = %s, rz_20_pass_td = %s, rz_20_pass_int = %s,
-                        rz_10_pass_att = %s, rz_10_pass_comp = %s, rz_10_comp_percentage = %s, rz_10_pass_yards = %s, rz_10_pass_td = %s, 
-                        rz_10_pass_int = %s, rz_20_targets = %s, rz_20_receptions = %s, rz_20_rec_yards = %s, rz_20_catch_percentage = %s, 
-                        rz_20_rec_td = %s, rz_20_target_percentage = %s, rz_10_targets = %s, rz_10_receptions = %s, rz_10_rec_yards = %s, 
-                        rz_10_catch_percentage = %s, rz_10_rec_td = %s, rz_10_target_percentage = %s, rz_20_rush_att = %s, rz_20_rush_td = %s,
-                        rz_20_rush_yards = %s, rz_20_rush_percentage = %s, rz_10_rush_att = %s, rz_10_rush_td = %s, rz_10_rush_yards = %s, 
-                        rz_10_rush_percentage = %s, rz_5_rush_att = %s, rz_5_rush_td = %s, rz_5_rush_yards = %s, rz_5_rush_percentage = %s 
-                    WHERE nfl_redzone_stats.player_id = %s AND nfl_redzone_stats.year = %s""", (values))
+        cursor.execute("""INSERT INTO nfl_player_passing (game_id, team_id, player_id, pass_att, pass_comp, 
+                            pass_yards, pass_td, pass_longest, ints, sacks) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                       (values))
 
         connection.commit()
 
-    return f"nfl_redzone_stats has been updated with the most recent years data."
+    return f"nfl_player_passing has been updated with most recent data."
+@nfl.route('/nfl/player/log/rushing', methods=['POST'])
+def nfl_player_rushing():
+    file = request.files['nfl_team_rush_log_template']
 
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'game_id': int(row['game_id']),
+                     'team_id': int(row['team_id']),
+                     'player_id': int(row['player_id']),
+                     'rush_att': int(row['rush_att']),
+                     'rush_yards': int(row['rush_yards']),
+                     'rush_td': int(row['rush_td']),
+                     'rush_longest': int(row['rush_longest']),
+                     'fumbles': int(row['fumbles'])}
+        values = list(json_dict.values())
+
+        cursor.execute("""INSERT INTO nfl_player_rushing (game_id, team_id, player_id, rush_att, rush_yards, rush_td,
+                                    rush_longest, fumbles) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                       (values))
+
+        connection.commit()
+
+    return f"nfl_player_rushing has been updated with most recent data."
+@nfl.route('/nfl/player/log/receiving', methods=['POST'])
+def nfl_player_receiving():
+    file = request.files['nfl_team_rec_log_template']
+
+    # Read CSV data
+    df = pd.read_csv(file)
+
+    for ind, row in df.iterrows():
+        connection = create_connection()
+        cursor = connection.cursor()
+
+        json_dict = {'game_id': int(row['game_id']),
+                     'team_id': int(row['team_id']),
+                     'player_id': int(row['player_id']),
+                     'targets': int(row['targets']),
+                     'rec': int(row['rec']),
+                     'rec_yards': int(row['rec_yards']),
+                     'rec_td': int(row['rec_td']),
+                     'rec_longest': int(row['rec_longest']),
+                     'fumbles': int(row['fumbles'])}
+        values = list(json_dict.values())
+
+        cursor.execute("""INSERT INTO nfl_player_receiving (game_id, team_id, player_id, targets, rec, rec_yards, rec_td, 
+                                    rec_longest, fumbles) 
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                       (values))
+
+        connection.commit()
+
+    return f"nfl_player_receiving has been updated with most recent data."
 
 
 @nfl.route('/nfl/player_stats', methods=['POST'])
