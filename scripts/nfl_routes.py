@@ -2087,7 +2087,6 @@ def nfl_player_passing():
         cursor = connection.cursor()
 
         json_dict = {'game_id': int(row['game_id']),
-                     'team_id': int(row['team_id']),
                      'player_id': int(row['player_id']),
                      'pass_att': int(row['pass_att']),
                      'pass_comp': int(row['pass_comp']),
@@ -2098,9 +2097,9 @@ def nfl_player_passing():
                      'sacks': int(row['sacks'])}
         values = list(json_dict.values())
 
-        cursor.execute("""INSERT INTO nfl_player_passing (game_id, team_id, player_id, pass_att, pass_comp, 
+        cursor.execute("""INSERT INTO nfl_player_passing (game_id, player_id, pass_att, pass_comp, 
                             pass_yards, pass_td, pass_longest, ints, sacks) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                        (values))
 
         connection.commit()
@@ -2118,7 +2117,6 @@ def nfl_player_rushing():
         cursor = connection.cursor()
 
         json_dict = {'game_id': int(row['game_id']),
-                     'team_id': int(row['team_id']),
                      'player_id': int(row['player_id']),
                      'rush_att': int(row['rush_att']),
                      'rush_yards': int(row['rush_yards']),
@@ -2127,9 +2125,9 @@ def nfl_player_rushing():
                      'fumbles': int(row['fumbles'])}
         values = list(json_dict.values())
 
-        cursor.execute("""INSERT INTO nfl_player_rushing (game_id, team_id, player_id, rush_att, rush_yards, rush_td,
+        cursor.execute("""INSERT INTO nfl_player_rushing (game_id, player_id, rush_att, rush_yards, rush_td,
                                     rush_longest, fumbles) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                        (values))
 
         connection.commit()
@@ -2147,7 +2145,6 @@ def nfl_player_receiving():
         cursor = connection.cursor()
 
         json_dict = {'game_id': int(row['game_id']),
-                     'team_id': int(row['team_id']),
                      'player_id': int(row['player_id']),
                      'targets': int(row['targets']),
                      'rec': int(row['rec']),
@@ -2157,9 +2154,9 @@ def nfl_player_receiving():
                      'fumbles': int(row['fumbles'])}
         values = list(json_dict.values())
 
-        cursor.execute("""INSERT INTO nfl_player_receiving (game_id, team_id, player_id, targets, rec, rec_yards, rec_td, 
+        cursor.execute("""INSERT INTO nfl_player_receiving (game_id, player_id, targets, rec, rec_yards, rec_td, 
                                     rec_longest, fumbles) 
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
                        (values))
 
         connection.commit()
