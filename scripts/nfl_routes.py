@@ -2157,7 +2157,7 @@ def nfl_player_receiving():
                      'fumbles': int(row['fumbles'])}
         values = list(json_dict.values())
 
-        cursor.execute("""INSERT INTO nfl_player_receiving (game_id, player_id, roster_id targets, rec, rec_yards, rec_td, 
+        cursor.execute("""INSERT INTO nfl_player_receiving (game_id, player_id, roster_id, targets, rec, rec_yards, rec_td, 
                                     rec_longest, fumbles) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                        (values))
