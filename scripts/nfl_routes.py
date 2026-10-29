@@ -1374,7 +1374,7 @@ def nfl_game_info():
             values = list(json_dict.values())
             print(values)
 
-            cursor.execute('''INSERT INTO nfl_games (week, year, home_id, home_score, away_id, away_score, winner, 
+            cursor.execute('''INSERT INTO nfl_games (week, year, game_date, home_id, home_score, away_id, away_score, winner, 
             margin_of_victory, weather_id, vegas_line, vegas_line_result, over_under, total_points, over_under_result) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''', (values))
 
