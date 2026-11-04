@@ -20,7 +20,7 @@ def add_roster():
         connection = create_connection()
         cursor = connection.cursor()
 
-        values = [row['year'], row['sport_id'], row['team_id'], row['player_id'], row['position']]
+        values = [row['year'], row['week'], row['sport_id'], row['team_id'], row['player_id'], row['position']]
 
         # execute sql query inserting into table
         cursor.execute(
