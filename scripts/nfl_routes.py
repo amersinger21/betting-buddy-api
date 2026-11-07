@@ -2695,7 +2695,7 @@ def nfl_player_passing():
                      'sacks': int(row['sacks'])}
         values = list(json_dict.values())
 
-        cursor.execute("""INSERT INTO nfl_player_passing (game_id, player_id, roster_id, pass_att, pass_comp, 
+        cursor.execute("""INSERT INTO nfl_player_passing (game_id, player_id, roster_id, pass_comp, pass_att, 
                             pass_yards, pass_td, pass_longest, ints, sacks) 
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                        (values))
