@@ -24,7 +24,7 @@ def player_position():
 
         # execute sql query inserting into table
         cursor.execute(
-            "INSERT INTO roster (player_id, position) VALUES (%s, %s)",
+            "INSERT INTO positions (player_id, position) VALUES (%s, %s)",
             (values))
 
         connection.commit()
