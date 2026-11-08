@@ -10,8 +10,8 @@ roster = Blueprint("roster", __name__)
 #                  'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
 
 @roster.route('/roster', methods=['POST'])
-def add_roster():
-    file = request.files['roster_template']
+def player_position():
+    file = request.files['player_position']
 
     # Read CSV data
     df = pd.read_csv(file)
@@ -20,11 +20,11 @@ def add_roster():
         connection = create_connection()
         cursor = connection.cursor()
 
-        values = [row['year'], row['week'], row['sport_id'], row['team_id'], row['player_id'], row['position']]
+        values = [row['player_id'], row['position']]
 
         # execute sql query inserting into table
         cursor.execute(
-            "INSERT INTO roster (year, week, sport_id, team_id, player_id, position) VALUES (%s, %s, %s, %s, %s, %s)",
+            "INSERT INTO roster (player_id, position) VALUES (%s, %s)",
             (values))
 
         connection.commit()
