@@ -31,9 +31,9 @@ def player_position():
             cursor.execute(
                 "INSERT INTO positions (player_id, position) VALUES (%s, %s)",
                 (values))
-        # Update Data
+
         elif flask.request.method == 'PUT':
-            values = [row['player_id'], row['position']]
+            values = [row['position'], row['player_id']]
             cursor.execute("""UPDATE positions 
                     SET position = %s
                     WHERE positions.player_id = %s""",(values))
