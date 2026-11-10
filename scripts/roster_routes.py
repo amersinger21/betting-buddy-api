@@ -10,7 +10,7 @@ roster = Blueprint("roster", __name__)
 #                  'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
 #                  'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
 
-@roster.route('/player_position', methods=['POST'])
+@roster.route('/player_position', methods=['POST', 'PUT'])
 def player_position():
     file = request.files['player_position']
 
