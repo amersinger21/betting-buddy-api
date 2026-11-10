@@ -1,4 +1,5 @@
 from .db import create_connection
+import flask
 from flask import Blueprint, request, jsonify
 import pandas as pd
 
@@ -9,7 +10,7 @@ roster = Blueprint("roster", __name__)
 #                  'MIA': 20, 'MIN': 21, 'NE': 22, 'NO': 23, 'NYG': 24, 'NYJ': 25, 'PHI': 26, 'PIT': 27, 'SEA': 28,
 #                  'SF': 29, 'TB': 30, 'TEN': 31, 'WAS': 32}
 
-@roster.route('/roster', methods=['POST'])
+@roster.route('/player_position', methods=['POST'])
 def player_position():
     file = request.files['player_position']
 
@@ -20,13 +21,22 @@ def player_position():
         connection = create_connection()
         cursor = connection.cursor()
 
-        values = [row['player_id'], row['position']]
 
-        # execute sql query inserting into table
-        cursor.execute(
-            "INSERT INTO positions (player_id, position) VALUES (%s, %s)",
-            (values))
 
+
+        if flask.request.method == 'POST':
+            values = [row['player_id'], row['position']]
+
+            # execute sql query inserting into table
+            cursor.execute(
+                "INSERT INTO positions (player_id, position) VALUES (%s, %s)",
+                (values))
+        # Update Data
+        elif flask.request.method == 'PUT':
+            values = [row['player_id'], row['position']]
+            cursor.execute("""UPDATE positions 
+                    SET position = %s
+                    WHERE positions.player_id = %s""",(values))
         connection.commit()
         # print(f"{row['first_name']} {row['last_name']} has been added to player tabel.")
 
