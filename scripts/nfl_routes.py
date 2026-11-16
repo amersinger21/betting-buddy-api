@@ -484,44 +484,44 @@ def player_game_logs():
                             OR (team.id = nfl_games.away_id AND nfl_games.home_id = {opp_id}))"""
     else:
         where_clause = f"""WHERE (nfl_player_passing.player_id = {player_id})
-                            AND nfl_games.year >= 2023"""
+                            AND nfl_games.year >= 2022"""
 
     player_query = f'''SELECT CONCAT(player.first_name, ' ', player.last_name) AS player_name, 
-			              team.name,
-			              roster.position, 
-			              nfl_games.week, 
-                    nfl_games.year,
-                    nfl_games.home_score,
-                    nfl_games.away_score,
-                    home_t.name AS home_team, 
-                    away_t.name AS away_team, 
-			              nfl_player_passing.pass_att,
-                    nfl_player_passing.pass_comp,
-                    nfl_player_passing.pass_yards,
-                    stadium.stadium_type
-                FROM nfl_player_passing
-                JOIN
-                    player ON player.id = nfl_player_passing.player_id
-                JOIN
-                    nfl_games on nfl_games.id = nfl_player_passing.game_id
-                JOIN
-                    roster on roster.id = nfl_player_passing.roster_id	
-                JOIN
-                    team on team.id = roster.team_id
-                JOIN 
-                    team AS home_t ON nfl_games.home_id = home_t.id
-                JOIN 
-                    team AS away_t ON nfl_games.away_id = away_t.id
-                JOIN 
-                    stadium on stadium.team_id = home_t.id
-                {where_clause}'''
+                        team.name,
+                        positions.position, 
+                        nfl_games.week, 
+                        nfl_games.year,
+                        nfl_games.home_score,
+                        nfl_games.away_score,
+                        home_t.name AS home_team, 
+                        away_t.name AS away_team, 
+                        nfl_player_passing.pass_att,
+                        nfl_player_passing.pass_comp,
+                        nfl_player_passing.pass_yards,
+                        stadium.stadium_type
+                        FROM nfl_player_passing
+                        JOIN
+                            player ON player.id = nfl_player_passing.player_id
+                        JOIN
+                            nfl_games on nfl_games.id = nfl_player_passing.game_id
+                        JOIN
+                          positions on positions.player_id = nfl_player_passing.player_id
+                        JOIN
+                          team on team.id = nfl_player_passing.team_id
+                        JOIN 
+                            team AS home_t ON nfl_games.home_id = home_t.id
+                        JOIN 
+                            team AS away_t ON nfl_games.away_id = away_t.id
+                        JOIN 
+                            stadium on stadium.team_id = home_t.id
+                        {where_clause}'''
     cursor.execute(player_query)
 
     results = list(cursor.fetchall())
 
     row_indicator = 1
     for tup in results:
-        row_dict_temp = {'player_name': '', 'team_bame': '', 'position': '', 'week': '', 'year': '', 'home_score': '',
+        row_dict_temp = {'player_name': '', 'team_name': '', 'position': '', 'week': '', 'year': '', 'home_score': '',
                          'away_score': '',  'home_team': '', 'away_team': '',  'pass_att': '',
                          'pass_comp': '', f"{column_name}": '', 'stadium_type': ''}
         index = 0
