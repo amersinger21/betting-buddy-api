@@ -445,6 +445,7 @@ def nfl_pass_stat_occurrence_stadium():
     return json_output
 
 
+
 # Passing Game Logs
 @nfl.route('/nfl/player/passing/game_logs', methods=['GET'])
 def player_game_logs():
@@ -537,6 +538,149 @@ def player_game_logs():
     return json_output
 
 
+@nfl.route('/nfl/player/qb_breakdown', methods=['GET'])
+def qb_stat_breakdown():
+    qb_id = int(request.args.get('qb_id', None))
+
+    breakdown_cols = ['total_targets', 'total_rec', 'total_rec_yards', 'tgt_percentage', 'yard_percentage',
+                      'position', 'year']
+
+    json_output = {}
+
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    player_query = f'''SELECT 
+                        SUM(targets) AS total_targets,
+                        SUM(rec) AS total_rec,
+                        SUM(rec_yards) AS total_rec_yards,
+                        
+                        ROUND((SUM(targets) / SUM(SUM(targets)) OVER(PARTITION BY nfl_games.year)) * 100, 2) AS tgt_percentage,
+                        ROUND((SUM(rec_yards) / SUM(SUM(rec_yards)) OVER(PARTITION BY nfl_games.year)) * 100, 2) AS yards_perecentage,
+                          
+                        positions.position,
+                        nfl_games.year
+                        
+                        FROM nfl_player_receiving
+                        JOIN
+                        player ON player.id = nfl_player_receiving.player_id
+                        JOIN
+                        positions ON positions.player_id = nfl_player_receiving.player_id
+                        JOIN 
+                        nfl_games on nfl_games.id = nfl_player_receiving.game_id
+                        WHERE nfl_games.year >= 2022
+                        
+                        AND nfl_player_receiving.team_id IN
+                          (SELECT nfl_player_passing.team_id FROM nfl_player_passing 
+                          WHERE nfl_player_passing.player_id ={qb_id})
+                        
+                        GROUP BY
+                        year, position'''
+    cursor.execute(player_query)
+
+    results = list(cursor.fetchall())
+
+    df_breakdown = pd.DataFrame(results, columns=breakdown_cols).reset_index(drop=True)
+
+    # WR Data
+    df_wr = df_breakdown[df_breakdown['position'] == 'WR']
+    wr_stats = {
+        2022: {'targets': int(df_wr[df_wr['year'] == 2022]['total_targets'].tolist()[0]),
+               'recs': int(df_wr[df_wr['year'] == 2022]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_wr[df_wr['year'] == 2022]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': float(df_wr[df_wr['year'] == 2022]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': float(df_wr[df_wr['year'] == 2022]['yard_percentage'].tolist()[0])},
+        2023: {'targets': int(df_wr[df_wr['year'] == 2023]['total_targets'].tolist()[0]),
+               'recs': int(df_wr[df_wr['year'] == 2023]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_wr[df_wr['year'] == 2023]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_wr[df_wr['year'] == 2023]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_wr[df_wr['year'] == 2023]['yard_percentage'].tolist()[0])},
+        2024: {'targets': int(df_wr[df_wr['year'] == 2024]['total_targets'].tolist()[0]),
+               'recs': int(df_wr[df_wr['year'] == 2024]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_wr[df_wr['year'] == 2024]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_wr[df_wr['year'] == 2024]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_wr[df_wr['year'] == 2024]['yard_percentage'].tolist()[0])},
+        2025: {'targets': int(df_wr[df_wr['year'] == 2025]['total_targets'].tolist()[0]),
+               'recs': int(df_wr[df_wr['year'] == 2025]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_wr[df_wr['year'] == 2025]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_wr[df_wr['year'] == 2025]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_wr[df_wr['year'] == 2025]['yard_percentage'].tolist()[0])},
+        2026: {'targets': int(df_wr[df_wr['year'] == 2026]['total_targets'].tolist()[0]),
+               'recs': int(df_wr[df_wr['year'] == 2026]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_wr[df_wr['year'] == 2026]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_wr[df_wr['year'] == 2026]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_wr[df_wr['year'] == 2026]['yard_percentage'].tolist()[0])}
+    }
+
+    # RB Data
+    df_rb = df_breakdown[df_breakdown['position'] == 'RB']
+    rb_stats = {
+        2022: {'targets': int(df_rb[df_rb['year'] == 2022]['total_targets'].tolist()[0]),
+               'recs': int(df_rb[df_rb['year'] == 2022]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_rb[df_rb['year'] == 2022]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': float(df_rb[df_rb['year'] == 2022]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': float(df_rb[df_rb['year'] == 2022]['yard_percentage'].tolist()[0])},
+        2023: {'targets': int(df_rb[df_rb['year'] == 2023]['total_targets'].tolist()[0]),
+               'recs': int(df_rb[df_rb['year'] == 2023]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_rb[df_rb['year'] == 2023]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_rb[df_rb['year'] == 2023]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_rb[df_rb['year'] == 2023]['yard_percentage'].tolist()[0])},
+        2024: {'targets': int(df_rb[df_rb['year'] == 2024]['total_targets'].tolist()[0]),
+               'recs': int(df_rb[df_rb['year'] == 2024]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_rb[df_rb['year'] == 2024]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_rb[df_rb['year'] == 2024]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_rb[df_rb['year'] == 2024]['yard_percentage'].tolist()[0])},
+        2025: {'targets': int(df_rb[df_rb['year'] == 2025]['total_targets'].tolist()[0]),
+               'recs': int(df_rb[df_rb['year'] == 2025]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_rb[df_rb['year'] == 2025]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_rb[df_rb['year'] == 2025]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_rb[df_rb['year'] == 2025]['yard_percentage'].tolist()[0])},
+        2026: {'targets': int(df_rb[df_rb['year'] == 2026]['total_targets'].tolist()[0]),
+               'recs': int(df_rb[df_rb['year'] == 2026]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_rb[df_rb['year'] == 2026]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_rb[df_rb['year'] == 2026]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_rb[df_rb['year'] == 2026]['yard_percentage'].tolist()[0])}
+    }
+
+    # TE Data
+    df_te = df_breakdown[df_breakdown['position'] == 'TE']
+    te_stats = {
+        2022: {'targets': int(df_te[df_te['year'] == 2022]['total_targets'].tolist()[0]),
+               'recs': int(df_te[df_te['year'] == 2022]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_te[df_te['year'] == 2022]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': float(df_te[df_te['year'] == 2022]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': float(df_te[df_te['year'] == 2022]['yard_percentage'].tolist()[0])},
+        2023: {'targets': int(df_te[df_te['year'] == 2023]['total_targets'].tolist()[0]),
+               'recs': int(df_te[df_te['year'] == 2023]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_te[df_te['year'] == 2023]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_te[df_te['year'] == 2023]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_te[df_te['year'] == 2023]['yard_percentage'].tolist()[0])},
+        2024: {'targets': int(df_te[df_te['year'] == 2024]['total_targets'].tolist()[0]),
+               'recs': int(df_te[df_te['year'] == 2024]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_te[df_te['year'] == 2024]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_te[df_te['year'] == 2024]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_te[df_te['year'] == 2024]['yard_percentage'].tolist()[0])},
+        2025: {'targets': int(df_te[df_te['year'] == 2025]['total_targets'].tolist()[0]),
+               'recs': int(df_te[df_te['year'] == 2025]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_te[df_te['year'] == 2025]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_te[df_te['year'] == 2025]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_te[df_te['year'] == 2025]['yard_percentage'].tolist()[0])},
+        2026: {'targets': int(df_te[df_te['year'] == 2026]['total_targets'].tolist()[0]),
+               'recs': int(df_te[df_te['year'] == 2026]['total_rec'].tolist()[0]),
+               'rec_yards': int(df_te[df_te['year'] == 2026]['total_rec_yards'].tolist()[0]),
+               'tgt_percentage': int(df_te[df_te['year'] == 2026]['tgt_percentage'].tolist()[0]),
+               'yard_percentage': int(df_te[df_te['year'] == 2026]['yard_percentage'].tolist()[0])}
+    }
+
+    json_output['WR'] = wr_stats
+    json_output['RB'] = rb_stats
+    json_output['TE'] = te_stats
+
+    json_output = jsonify(json_output)
+    json_output.headers.add("Access-Control-Allow-Origin", "*")
+    return json_output
+
+
 @nfl.route('/nfl/player/passing_logs', methods=['GET'])
 def nfl_player_passing_logs():
     player_id = int(request.args.get('id', None))
@@ -621,6 +765,10 @@ def nfl_player_passing_logs():
     json_output = jsonify(json_output)
     json_output.headers.add("Access-Control-Allow-Origin", "*")
     return json_output
+
+
+
+
 
 @nfl.route('/nfl/player/game_logs', methods=['GET'])
 def nfl_player_game_logs():
@@ -3416,129 +3564,129 @@ def nfl_bet_occurrence_summary():
     return json_output
 
 @nfl.route('/nfl/summary/player_summary', methods=['GET'])
-def nfl_player_stat_summary():
-    # Initialize variables
-    player_id = int(request.args.get('id', None))
-    column_name = request.args.get('stat', None)
-    json_output = {}
-
-    if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-        query_cols = 'rush_att, rush_yards, rush_td, rush_longest'
-        cols =  ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
-    elif column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']:
-        query_cols = 'pass_att, pass_comp, pass_yards, pass_td, pass_longest'
-        cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
-    else:
-        query_cols = 'rec, targets, rec_yards, rec_td, rec_longest'
-        cols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
-
-    df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'home_id', 'away_id'] + cols
-
-    # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    player_query = f'''SELECT
-                    CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
-                    player.position, game_id, player_id, team_id, opp_id, nfl_games.home_id, nfl_games.away_id, {query_cols}
-                    FROM
-                    nfl_player_stats
-                    JOIN
-                    player ON player.id = nfl_player_stats.player_id
-                    JOIN
-                    nfl_games on nfl_games.id = nfl_player_stats.game_id
-                    WHERE nfl_games.year >= 2025 AND nfl_player_stats.player_id = {player_id}'''
-
-    cursor.execute(player_query)
-    results = list(cursor.fetchall())
-
-    # Create game log from returned sql query
-    df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
-
-    df_home = df_logs[df_logs['home_id'].isin(df_logs['team_id'].values.tolist())]
-    df_away = df_logs[df_logs['away_id'].isin(df_logs['team_id'].values.tolist())]
-
-    if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
-        stat_avg_dict = {'avg_rec': round(df_logs['rec'].mean(),1),
-                         'avg_targets': round(df_logs['targets'].mean(), 1),
-                         'avg_rec_yards': round(df_logs['rec_yards'].mean(),1),
-                         'avg_rec_td': round(df_logs['rec_td'].mean(), 1),
-                         'avg_rec_longest': round(df_logs['rec_longest'].mean(), 1)}
-        stat_home_dict = {'home_rec': round(df_home['rec'].mean(),1),
-                         'home_targets': round(df_home['targets'].mean(), 1),
-                         'home_rec_yards': round(df_home['rec_yards'].mean(),1),
-                         'home_rec_td': round(df_home['rec_td'].mean(), 1),
-                         'home_rec_longest': round(df_home['rec_longest'].mean(), 1)}
-        stat_away_dict = {'away_rec': round(df_away['rec'].mean(),1),
-                         'away_targets': round(df_away['targets'].mean(), 1),
-                         'away_rec_yards': round(df_away['rec_yards'].mean(),1),
-                         'away_rec_td': round(df_away['rec_td'].mean(), 1),
-                         'away_rec_longest': round(df_away['rec_longest'].mean(), 1)}
-    elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
-        stat_avg_dict = {'avg_rush_att': round(df_logs['rush_att'].mean(), 1),
-                         'avg_rush_yards': round(df_logs['rush_yards'].mean(), 1),
-                         'avg_rush_td': round(df_logs['rush_td'].mean(), 1),
-                         'avg_rush_longest': round(df_logs['rush_longest'].mean(), 1)}
-        stat_home_dict = {'home_rush_att': round(df_home['pass_att'].mean(),1),
-                         'home_rush_yards': round(df_home['pass_yards'].mean(),1),
-                         'home_rush_td': round(df_home['pass_td'].mean(), 1),
-                         'home_rush_longest': round(df_home['pass_longest'].mean(), 1)}
-        stat_away_dict = {'away_rush_att': round(df_away['pass_att'].mean(),1),
-                         'away_rush_yards': round(df_away['pass_yards'].mean(),1),
-                         'away_rush_td': round(df_away['pass_td'].mean(), 1),
-                         'away_rush_longest': round(df_away['pass_longest'].mean(), 1)}
-    else:
-        stat_avg_dict = {'avg_pass_att': round(df_logs['pass_att'].mean(),1),
-                         'avg_pass_comp': round(df_logs['pass_comp'].mean(), 1),
-                         'avg_pass_yards': round(df_logs['pass_yards'].mean(),1),
-                         'avg_pass_td': round(df_logs['pass_td'].mean(), 1),
-                         'avg_pass_longest': round(df_logs['pass_longest'].mean(), 1)}
-        stat_home_dict = {'home_pass_att': round(df_home['pass_att'].mean(),1),
-                         'home_pass_comp': round(df_home['pass_comp'].mean(), 1),
-                         'home_pass_yards': round(df_home['pass_yards'].mean(),1),
-                         'home_pass_td': round(df_home['pass_td'].mean(), 1),
-                         'home_pass_longest': round(df_home['pass_longest'].mean(), 1)}
-        stat_away_dict = {'away_pass_att': round(df_away['pass_att'].mean(),1),
-                         'away_pass_comp': round(df_away['pass_comp'].mean(), 1),
-                         'away_pass_yards': round(df_away['pass_yards'].mean(),1),
-                         'away_pass_td': round(df_away['pass_td'].mean(), 1),
-                         'away_pass_longest': round(df_away['pass_longest'].mean(), 1)}
-
-    json_output.update({'player_avg_stats': stat_avg_dict})
-    json_output.update({'player_home_avg': stat_home_dict})
-    json_output.update({'player_away_avgs': stat_away_dict})
-
-    json_output = jsonify(json_output)
-    json_output.headers.add("Access-Control-Allow-Origin", "*")
-    return json_output
-@nfl.route('/nfl/summary/record', methods=['GET'])
-def nfl_team_record():
-    team_id = int(request.args.get('team_id', None))
-
-    # SQL Query that returns the next game information
-    connection = create_connection()
-    cursor = connection.cursor()
-
-    player_query = f'''SELECT team.name, nfl_standings.team_id, nfl_standings.wins, nfl_standings.losses,
-                        nfl_standings.ties, nfl_standings.win_loss_percentage
-                    FROM nfl_standings
-                    JOIN team ON team.id = nfl_standings.team_id
-                    WHERE nfl_standings.year = {nfl_current_year} AND nfl_standings.team_id = {team_id}'''
-    cursor.execute(player_query)
-    results = cursor.fetchone()
-
-    json_output = {
-        'team_name': results[0],
-        'team_id': results[1],
-        'wins': results[2],
-        'losses': results[3],
-        'ties': results[4],
-        'win_loss_percentage': f"{results[5] * 100}%",
-    }
-
-    json_output = jsonify(json_output)
-    json_output.headers.add("Access-Control-Allow-Origin", "*")
-    return json_output
+# def nfl_player_stat_summary():
+#     # Initialize variables
+#     player_id = int(request.args.get('id', None))
+#     column_name = request.args.get('stat', None)
+#     json_output = {}
+#
+#     if column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+#         query_cols = 'rush_att, rush_yards, rush_td, rush_longest'
+#         cols =  ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']
+#     elif column_name in ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']:
+#         query_cols = 'pass_att, pass_comp, pass_yards, pass_td, pass_longest'
+#             cols = ['pass_att', 'pass_comp', 'pass_yards', 'pass_td', 'pass_longest']
+#     else:
+#         query_cols = 'rec, targets, rec_yards, rec_td, rec_longest'
+#         cols = ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']
+#
+#     df_columns = ['name', 'year', 'week', 'pos', 'game_id', 'player_id', 'team_id', 'opp_id', 'home_id', 'away_id'] + cols
+#
+#     # GET ALL GAME LOGS - Create a query, cursor and result list. Loop through list and merge to create 'df_all_games'
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     player_query = f'''SELECT
+#                     CONCAT(player.first_name, ' ', player.last_name) AS player_name, nfl_games.year, nfl_games.week,
+#                     player.position, game_id, player_id, team_id, opp_id, nfl_games.home_id, nfl_games.away_id, {query_cols}
+#                     FROM
+#                     nfl_player_stats
+#                     JOIN
+#                     player ON player.id = nfl_player_stats.player_id
+#                     JOIN
+#                     nfl_games on nfl_games.id = nfl_player_stats.game_id
+#                     WHERE nfl_games.year >= 2025 AND nfl_player_stats.player_id = {player_id}'''
+#
+#     cursor.execute(player_query)
+#     results = list(cursor.fetchall())
+#
+#     # Create game log from returned sql query
+#     df_logs = pd.DataFrame(results, columns=df_columns).reset_index(drop=True)
+#
+#     df_home = df_logs[df_logs['home_id'].isin(df_logs['team_id'].values.tolist())]
+#     df_away = df_logs[df_logs['away_id'].isin(df_logs['team_id'].values.tolist())]
+#
+#     if column_name in ['rec', 'targets', 'rec_yards', 'rec_td', 'rec_longest']:
+#         stat_avg_dict = {'avg_rec': round(df_logs['rec'].mean(),1),
+#                          'avg_targets': round(df_logs['targets'].mean(), 1),
+#                          'avg_rec_yards': round(df_logs['rec_yards'].mean(),1),
+#                          'avg_rec_td': round(df_logs['rec_td'].mean(), 1),
+#                          'avg_rec_longest': round(df_logs['rec_longest'].mean(), 1)}
+#         stat_home_dict = {'home_rec': round(df_home['rec'].mean(),1),
+#                          'home_targets': round(df_home['targets'].mean(), 1),
+#                          'home_rec_yards': round(df_home['rec_yards'].mean(),1),
+#                          'home_rec_td': round(df_home['rec_td'].mean(), 1),
+#                          'home_rec_longest': round(df_home['rec_longest'].mean(), 1)}
+#         stat_away_dict = {'away_rec': round(df_away['rec'].mean(),1),
+#                          'away_targets': round(df_away['targets'].mean(), 1),
+#                          'away_rec_yards': round(df_away['rec_yards'].mean(),1),
+#                          'away_rec_td': round(df_away['rec_td'].mean(), 1),
+#                          'away_rec_longest': round(df_away['rec_longest'].mean(), 1)}
+#     elif column_name in ['rush_att', 'rush_yards', 'rush_td', 'rush_longest']:
+#         stat_avg_dict = {'avg_rush_att': round(df_logs['rush_att'].mean(), 1),
+#                          'avg_rush_yards': round(df_logs['rush_yards'].mean(), 1),
+#                          'avg_rush_td': round(df_logs['rush_td'].mean(), 1),
+#                          'avg_rush_longest': round(df_logs['rush_longest'].mean(), 1)}
+#         stat_home_dict = {'home_rush_att': round(df_home['pass_att'].mean(),1),
+#                          'home_rush_yards': round(df_home['pass_yards'].mean(),1),
+#                          'home_rush_td': round(df_home['pass_td'].mean(), 1),
+#                          'home_rush_longest': round(df_home['pass_longest'].mean(), 1)}
+#         stat_away_dict = {'away_rush_att': round(df_away['pass_att'].mean(),1),
+#                          'away_rush_yards': round(df_away['pass_yards'].mean(),1),
+#                          'away_rush_td': round(df_away['pass_td'].mean(), 1),
+#                          'away_rush_longest': round(df_away['pass_longest'].mean(), 1)}
+#     else:
+#         stat_avg_dict = {'avg_pass_att': round(df_logs['pass_att'].mean(),1),
+#                          'avg_pass_comp': round(df_logs['pass_comp'].mean(), 1),
+#                          'avg_pass_yards': round(df_logs['pass_yards'].mean(),1),
+#                          'avg_pass_td': round(df_logs['pass_td'].mean(), 1),
+#                          'avg_pass_longest': round(df_logs['pass_longest'].mean(), 1)}
+#         stat_home_dict = {'home_pass_att': round(df_home['pass_att'].mean(),1),
+#                          'home_pass_comp': round(df_home['pass_comp'].mean(), 1),
+#                          'home_pass_yards': round(df_home['pass_yards'].mean(),1),
+#                          'home_pass_td': round(df_home['pass_td'].mean(), 1),
+#                          'home_pass_longest': round(df_home['pass_longest'].mean(), 1)}
+#         stat_away_dict = {'away_pass_att': round(df_away['pass_att'].mean(),1),
+#                          'away_pass_comp': round(df_away['pass_comp'].mean(), 1),
+#                          'away_pass_yards': round(df_away['pass_yards'].mean(),1),
+#                          'away_pass_td': round(df_away['pass_td'].mean(), 1),
+#                          'away_pass_longest': round(df_away['pass_longest'].mean(), 1)}
+#
+#     json_output.update({'player_avg_stats': stat_avg_dict})
+#     json_output.update({'player_home_avg': stat_home_dict})
+#     json_output.update({'player_away_avgs': stat_away_dict})
+#
+#     json_output = jsonify(json_output)
+#     json_output.headers.add("Access-Control-Allow-Origin", "*")
+#     return json_output
+# @nfl.route('/nfl/summary/record', methods=['GET'])
+# def nfl_team_record():
+#     team_id = int(request.args.get('team_id', None))
+#
+#     # SQL Query that returns the next game information
+#     connection = create_connection()
+#     cursor = connection.cursor()
+#
+#     player_query = f'''SELECT team.name, nfl_standings.team_id, nfl_standings.wins, nfl_standings.losses,
+#                         nfl_standings.ties, nfl_standings.win_loss_percentage
+#                     FROM nfl_standings
+#                     JOIN team ON team.id = nfl_standings.team_id
+#                     WHERE nfl_standings.year = {nfl_current_year} AND nfl_standings.team_id = {team_id}'''
+#     cursor.execute(player_query)
+#     results = cursor.fetchone()
+#
+#     json_output = {
+#         'team_name': results[0],
+#         'team_id': results[1],
+#         'wins': results[2],
+#         'losses': results[3],
+#         'ties': results[4],
+#         'win_loss_percentage': f"{results[5] * 100}%",
+#     }
+#
+#     json_output = jsonify(json_output)
+#     json_output.headers.add("Access-Control-Allow-Origin", "*")
+#     return json_output
 
 
 
